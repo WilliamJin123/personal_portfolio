@@ -1,0 +1,1303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>William Jin — drafts</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap" rel="stylesheet" />
+  <style>
+    /* ============ SHELL ============ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body {
+      font-family: 'Inter Tight', system-ui, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background: #ececea;
+      color: #1a1a1a;
+      overflow: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+    button { font: inherit; cursor: pointer; }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      height: 100vh;
+    }
+
+    .picker {
+      border-right: 1px solid rgba(0, 0, 0, 0.08);
+      padding: 28px 24px;
+      background: #ececea;
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+    }
+    .picker-head {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #777;
+      line-height: 1.5;
+    }
+    .picker-head .title {
+      font-family: 'Newsreader', Georgia, serif;
+      font-size: 22px;
+      font-style: italic;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      color: #1a1a1a;
+      text-transform: none;
+      display: block;
+      margin-top: 6px;
+      margin-bottom: 4px;
+    }
+    .picker-list { display: flex; flex-direction: column; gap: 2px; }
+    .picker-btn {
+      display: grid;
+      grid-template-columns: 26px 1fr 14px;
+      gap: 8px;
+      align-items: center;
+      padding: 9px 10px;
+      border: none;
+      background: transparent;
+      border-radius: 6px;
+      text-align: left;
+      transition: background 0.15s ease, color 0.15s ease;
+    }
+    .picker-btn:hover { background: rgba(0, 0, 0, 0.05); }
+    .picker-btn[data-active="true"] { background: #1a1a1a; color: #fff; }
+    .picker-btn[data-active="true"] .num,
+    .picker-btn[data-active="true"] .meta { color: rgba(255,255,255,0.5); }
+    .picker-btn .num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: #999;
+      letter-spacing: 0.04em;
+    }
+    .picker-btn .name { font-size: 13px; letter-spacing: -0.005em; }
+    .picker-btn .name .meta {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      color: #999;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .picker-btn .arrow { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #ccc; }
+    .picker-btn[data-active="true"] .arrow { color: #fff; }
+    .picker-foot {
+      margin-top: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      color: #999;
+      line-height: 1.6;
+    }
+    .picker-foot kbd {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      padding: 2px 5px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      background: #fff;
+      color: #555;
+    }
+
+    .stage { position: relative; overflow: hidden; }
+    .variant {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      pointer-events: none;
+      overflow: auto;
+      transition: opacity 0.3s ease;
+    }
+    .variant[data-active="true"] {
+      opacity: 1;
+      pointer-events: auto;
+      z-index: 1;
+    }
+
+    /* ============================================================ */
+    /* 01 — PAPER (agno-influenced + cluely-style interactions)      */
+    /* ============================================================ */
+    .v-paper {
+      background: #f4f0e6;
+      color: #1a1a1a;
+      font-family: 'Newsreader', Georgia, serif;
+    }
+    .v-paper .container {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 64px 80px 140px;
+    }
+    .v-paper .topline {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #8a7e63;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #d8d0bd;
+      margin-bottom: 80px;
+      animation: paper-fade 0.6s ease 0.05s both;
+    }
+
+    /* Hero/Stack split — left scrolls, right sticky diagram */
+    .v-paper .hero-stack {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr);
+      gap: 80px;
+      margin-bottom: 140px;
+    }
+    .v-paper .left-col { min-width: 0; }
+    .v-paper .right-col { min-width: 0; position: relative; }
+
+    .v-paper .hero-text {
+      padding-top: 8px;
+      margin-bottom: 120px;
+      max-width: 540px;
+    }
+    .v-paper h1 {
+      font-size: clamp(48px, 6vw, 80px);
+      font-weight: 400;
+      letter-spacing: -0.025em;
+      line-height: 1.02;
+      margin-bottom: 32px;
+      animation: paper-rise 0.9s cubic-bezier(.2,.7,.2,1) 0.18s both;
+    }
+    .v-paper h1 em { font-style: italic; font-weight: 400; }
+    .v-paper .sub {
+      font-size: 19px;
+      font-weight: 300;
+      font-style: italic;
+      max-width: 480px;
+      line-height: 1.55;
+      color: #3a3528;
+      margin-bottom: 56px;
+      animation: paper-rise 0.9s cubic-bezier(.2,.7,.2,1) 0.38s both;
+    }
+    .v-paper .actions {
+      display: flex;
+      gap: 32px;
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 14px;
+      font-style: normal;
+      animation: paper-rise 0.9s cubic-bezier(.2,.7,.2,1) 0.54s both;
+    }
+    .v-paper .actions a {
+      color: #1a1a1a;
+      padding-bottom: 4px;
+      border-bottom: 1px solid currentColor;
+      transition: padding-left 0.2s ease;
+    }
+    .v-paper .actions a:hover { padding-left: 14px; }
+
+    /* Sticky diagram */
+    .v-paper .diagram-sticky {
+      position: sticky;
+      top: 56px;
+    }
+    .v-paper .diagram-sticky svg { width: 100%; height: auto; display: block; max-height: 78vh; }
+    .v-paper .diagram .pillar { stroke: #1a1a1a; stroke-width: 0.4; opacity: 0.4; fill: none; }
+    .v-paper .diagram .plane { stroke: #1a1a1a; stroke-width: 0.9; fill: #f4f0e6; transition: stroke-width 0.3s ease; }
+    .v-paper .diagram .corner { fill: #1a1a1a; }
+    .v-paper .diagram .marker { stroke: #1a1a1a; fill: none; stroke-width: 0.6; }
+    .v-paper .diagram .marker-fill { fill: #1a1a1a; }
+    .v-paper .diagram .marker-line { stroke: #1a1a1a; stroke-width: 0.5; opacity: 0.7; }
+    .v-paper .diagram .cursor-blink {
+      stroke: #1a1a1a;
+      stroke-width: 0.9;
+      animation: paper-blink 1.1s steps(2, jump-none) infinite;
+    }
+    @keyframes paper-blink {
+      0%, 49.9% { opacity: 1; }
+      50%, 100% { opacity: 0; }
+    }
+    .v-paper .diagram .node-pulse { animation: paper-pulse 6s ease-in-out infinite; }
+    .v-paper .diagram .n2 { animation-delay: 1.5s; }
+    .v-paper .diagram .n3 { animation-delay: 3s; }
+    .v-paper .diagram .n4 { animation-delay: 4.5s; }
+    @keyframes paper-pulse {
+      0%, 16%, 100% { opacity: 1; }
+      8%            { opacity: 0.25; }
+    }
+    .v-paper .diagram .label-mono {
+      fill: #1a1a1a;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10.5px;
+      letter-spacing: 0.14em;
+    }
+    .v-paper .diagram .label-italic {
+      fill: #6a5f48;
+      font-family: 'Newsreader', Georgia, serif;
+      font-style: italic;
+      font-size: 11.5px;
+    }
+    .v-paper .diagram .label-tiny {
+      fill: #8a7e63;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+    }
+    .v-paper .diagram .axis { stroke: #1a1a1a; stroke-width: 0.3; opacity: 0.3; }
+
+    .v-paper .diagram .plane-grp {
+      cursor: pointer;
+      transition: opacity 0.4s ease;
+    }
+    .v-paper .diagram .plane-a-grp { animation: paper-rise 0.9s ease 0.42s both; }
+    .v-paper .diagram .plane-b-grp { animation: paper-rise 0.9s ease 0.58s both; }
+    .v-paper .diagram .plane-c-grp { animation: paper-rise 0.9s ease 0.74s both; }
+
+    /* Active-layer dimming */
+    .v-paper .diagram[data-active="A"] .plane-b-grp,
+    .v-paper .diagram[data-active="A"] .plane-c-grp { opacity: 0.32; }
+    .v-paper .diagram[data-active="B"] .plane-a-grp,
+    .v-paper .diagram[data-active="B"] .plane-c-grp { opacity: 0.32; }
+    .v-paper .diagram[data-active="C"] .plane-a-grp,
+    .v-paper .diagram[data-active="C"] .plane-b-grp { opacity: 0.32; }
+    .v-paper .diagram[data-active="A"] .plane-a-grp .plane,
+    .v-paper .diagram[data-active="B"] .plane-b-grp .plane,
+    .v-paper .diagram[data-active="C"] .plane-c-grp .plane { stroke-width: 1.4; }
+
+    /* Stack reference rows */
+    .v-paper .stack-section { padding-top: 0; }
+    .v-paper .section-h {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: #8a7e63;
+      padding-bottom: 14px;
+      border-bottom: 1px solid #d8d0bd;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+    }
+    .v-paper .stack-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: 48px 160px 1fr;
+      column-gap: 28px;
+      row-gap: 6px;
+      align-items: baseline;
+      padding: 28px 0 28px 16px;
+      border-bottom: 1px solid #d8d0bd;
+      cursor: pointer;
+      transition: background 0.3s ease, padding-left 0.3s ease;
+    }
+    .v-paper .stack-row::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: #1a1a1a;
+      transform: scaleY(0);
+      transform-origin: top;
+      transition: transform 0.35s cubic-bezier(.2,.7,.2,1);
+    }
+    .v-paper .stack-row[data-active="true"]::before { transform: scaleY(1); }
+    .v-paper .stack-row[data-active="true"] {
+      background: rgba(26, 26, 26, 0.025);
+    }
+    .v-paper .stack-row .layer-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #8a7e63;
+      letter-spacing: 0.1em;
+      transition: color 0.3s ease;
+    }
+    .v-paper .stack-row[data-active="true"] .layer-num { color: #1a1a1a; }
+    .v-paper .stack-row .layer-name {
+      font-size: 30px;
+      font-style: italic;
+      font-weight: 400;
+      letter-spacing: -0.012em;
+    }
+    .v-paper .stack-row .layer-tools {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 14px;
+      color: #3a3528;
+      line-height: 1.55;
+      grid-column: 2 / -1;
+      max-width: 480px;
+    }
+    .v-paper .stack-row .layer-proof {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      color: #8a7e63;
+      letter-spacing: 0.04em;
+      grid-column: 2 / -1;
+      margin-top: 4px;
+    }
+    .v-paper .stack-row .layer-proof .arrow { margin-right: 6px; }
+
+    /* Bottom sections (work, about) — full width */
+    .v-paper .section { margin-bottom: 120px; }
+    .v-paper .work-item {
+      display: grid;
+      grid-template-columns: 60px 1fr 80px;
+      gap: 32px;
+      align-items: baseline;
+      padding: 24px 0;
+      border-bottom: 1px solid #d8d0bd;
+      color: inherit;
+      transition: padding-left 0.2s ease;
+    }
+    .v-paper .work-item:hover { padding-left: 12px; }
+    .v-paper .work-item:last-child { border-bottom: none; }
+    .v-paper .work-num {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #8a7e63;
+    }
+    .v-paper .work-name {
+      font-size: 26px;
+      font-style: italic;
+      font-weight: 400;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+    .v-paper .work-desc {
+      font-family: 'Inter Tight', sans-serif;
+      font-size: 13.5px;
+      font-style: normal;
+      color: #3a3528;
+      line-height: 1.5;
+    }
+    .v-paper .work-year {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: #8a7e63;
+      text-align: right;
+    }
+
+    .v-paper .about {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      gap: 80px;
+      padding-top: 20px;
+    }
+    .v-paper .about-body {
+      font-size: 17px;
+      line-height: 1.7;
+      color: #3a3528;
+    }
+    .v-paper .about-body p + p { margin-top: 14px; }
+    .v-paper .about-body strong { font-weight: 500; color: #1a1a1a; }
+    .v-paper .about-meta {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+    }
+    .v-paper .about-meta div {
+      display: grid;
+      grid-template-columns: 70px 1fr;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid #d8d0bd;
+    }
+    .v-paper .about-meta .lbl { color: #8a7e63; }
+
+    @keyframes paper-fade { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes paper-rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================================ */
+    /* 02 — INK                                                       */
+    /* ============================================================ */
+    .v-ink {
+      background: #ffffff;
+      color: #0a0a0a;
+      font-family: 'Inter Tight', sans-serif;
+      font-feature-settings: 'ss01';
+    }
+    .v-ink .container { max-width: 1100px; margin: 0 auto; padding: 80px 80px 120px; }
+    .v-ink .topline {
+      display: flex;
+      justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #888;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #eaeaea;
+      margin-bottom: 80px;
+    }
+    .v-ink .hero {
+      display: grid;
+      grid-template-columns: 1fr 280px;
+      gap: 60px;
+      align-items: center;
+      margin-bottom: 100px;
+    }
+    .v-ink h1 {
+      font-size: clamp(56px, 8vw, 108px);
+      font-weight: 700;
+      letter-spacing: -0.045em;
+      line-height: 0.92;
+      margin-bottom: 40px;
+    }
+    .v-ink .sub {
+      font-size: 19px;
+      line-height: 1.5;
+      color: #555;
+      max-width: 520px;
+      margin-bottom: 40px;
+    }
+    .v-ink .actions { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+    .v-ink .actions a { font-size: 14px; font-weight: 500; }
+    .v-ink .btn-primary {
+      background: #0a0a0a;
+      color: #fff;
+      padding: 13px 22px;
+      border-radius: 999px;
+      transition: opacity 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .v-ink .btn-primary:hover { opacity: 0.85; }
+    .v-ink .btn-ghost {
+      color: #0a0a0a;
+      padding-bottom: 3px;
+      border-bottom: 1.5px solid #0a0a0a;
+      transition: opacity 0.2s ease;
+    }
+    .v-ink .btn-ghost:hover { opacity: 0.5; }
+
+    .v-ink .hero-svg { width: 280px; height: 280px; justify-self: end; }
+    .v-ink .hero-svg path, .v-ink .hero-svg line, .v-ink .hero-svg circle.s {
+      fill: none; stroke: #0a0a0a; stroke-width: 0.8;
+    }
+    .v-ink .hero-svg circle.f { fill: #0a0a0a; }
+    .v-ink .ico { transform-origin: 140px 140px; animation: ink-spin 50s linear infinite; }
+    .v-ink .ico-tilt { transform-origin: 140px 140px; animation: ink-tilt 18s ease-in-out infinite; }
+    @keyframes ink-spin { to { transform: rotate(360deg); } }
+    @keyframes ink-tilt { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(0.85); } }
+
+    .v-ink .section-h {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: 0.15em; text-transform: uppercase;
+      color: #888; margin-bottom: 24px;
+    }
+    .v-ink .work-item {
+      display: grid; grid-template-columns: 70px 1fr 24px;
+      gap: 32px; align-items: baseline;
+      padding: 26px 0; border-top: 1px solid #eaeaea;
+      color: inherit; transition: padding-left 0.25s ease;
+    }
+    .v-ink .work-list a:last-child { border-bottom: 1px solid #eaeaea; }
+    .v-ink .work-item:hover { padding-left: 12px; }
+    .v-ink .work-year { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #888; }
+    .v-ink .work-name { font-size: 22px; font-weight: 600; letter-spacing: -0.018em; margin-bottom: 4px; }
+    .v-ink .work-desc { font-size: 14px; color: #555; line-height: 1.5; max-width: 540px; }
+    .v-ink .work-arrow { color: #ccc; font-size: 16px; transition: color 0.2s, transform 0.2s; }
+    .v-ink .work-item:hover .work-arrow { color: #0a0a0a; transform: translateX(4px); }
+    .v-ink .about { margin-top: 100px; max-width: 620px; font-size: 18px; line-height: 1.7; color: #555; }
+    .v-ink .about p + p { margin-top: 14px; }
+    .v-ink .about strong { color: #0a0a0a; font-weight: 500; }
+    .v-ink .contact {
+      margin-top: 40px; font-family: 'JetBrains Mono', monospace; font-size: 13px;
+      display: flex; gap: 32px; flex-wrap: wrap; color: #0a0a0a;
+    }
+    .v-ink .contact a { border-bottom: 1px solid #ccc; padding-bottom: 2px; }
+    .v-ink .contact a:hover { border-color: #0a0a0a; }
+
+    /* ============================================================ */
+    /* 03 — ECLIPSE                                                   */
+    /* ============================================================ */
+    .v-eclipse { background: #0e0e0c; color: #e8e6df; font-family: 'JetBrains Mono', monospace; }
+    .v-eclipse .container { max-width: 960px; margin: 0 auto; padding: 80px 80px 120px; }
+    .v-eclipse .topline {
+      display: flex; justify-content: space-between;
+      font-size: 11px; letter-spacing: 0.15em; color: #5a5852;
+      padding-bottom: 16px; border-bottom: 1px solid #1f1e1a;
+      margin-bottom: 80px;
+    }
+    .v-eclipse .hero { display: grid; grid-template-columns: 1fr 280px; gap: 80px; align-items: center; margin-bottom: 100px; }
+    .v-eclipse h1 { font-size: clamp(34px, 4.6vw, 56px); font-weight: 400; letter-spacing: -0.015em; line-height: 1.18; margin-bottom: 32px; }
+    .v-eclipse h1 .role { color: #8a8780; }
+    .v-eclipse .sub { font-size: 13.5px; line-height: 1.8; color: #8a8780; max-width: 520px; margin-bottom: 40px; }
+    .v-eclipse .actions { display: flex; gap: 8px; font-size: 12.5px; flex-wrap: wrap; }
+    .v-eclipse .actions a {
+      color: #e8e6df; padding: 10px 16px;
+      border: 1px solid #2a2925; border-radius: 3px;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .v-eclipse .actions a:hover { border-color: #5a5852; background: #161510; }
+    .v-eclipse .actions a.primary { background: #e8e6df; color: #0e0e0c; border-color: #e8e6df; }
+    .v-eclipse .actions a.primary:hover { background: #161510; color: #e8e6df; }
+    .v-eclipse .hero-svg { width: 280px; height: 280px; justify-self: end; }
+    .v-eclipse .e-big { fill: #0e0e0c; stroke: #e8e6df; stroke-width: 0.7; }
+    .v-eclipse .e-lats { fill: none; stroke: #e8e6df; stroke-width: 0.4; opacity: 0.35; }
+    .v-eclipse .e-small {
+      fill: #0e0e0c; stroke: #e8e6df; stroke-width: 0.7;
+      animation: eclipse-pass 28s ease-in-out infinite;
+    }
+    @keyframes eclipse-pass {
+      0%, 100% { transform: translateX(-72px); }
+      50%      { transform: translateX(72px); }
+    }
+    .v-eclipse .section-h { font-size: 11px; letter-spacing: 0.15em; color: #5a5852; padding-bottom: 12px; border-bottom: 1px solid #1f1e1a; margin-bottom: 8px; }
+    .v-eclipse .work-item {
+      display: grid; grid-template-columns: 70px 1fr 24px; gap: 24px;
+      padding: 18px 0; font-size: 13px; border-bottom: 1px solid #18171a; color: inherit;
+    }
+    .v-eclipse .work-year { color: #5a5852; }
+    .v-eclipse .work-name { transition: color 0.2s; }
+    .v-eclipse .work-name span { color: #8a8780; }
+    .v-eclipse .work-item:hover .work-name { color: #fff; }
+    .v-eclipse .work-arrow { color: #5a5852; transition: color 0.2s, transform 0.2s; }
+    .v-eclipse .work-item:hover .work-arrow { color: #e8e6df; transform: translateX(4px); }
+    .v-eclipse .about { margin-top: 60px; font-size: 13px; line-height: 1.85; color: #8a8780; max-width: 600px; }
+    .v-eclipse .about p + p { margin-top: 12px; }
+    .v-eclipse .about strong { color: #e8e6df; font-weight: 500; }
+    .v-eclipse .contact { margin-top: 40px; font-size: 12px; color: #8a8780;
+      display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 24px; max-width: 480px;
+    }
+    .v-eclipse .contact div { display: grid; grid-template-columns: 50px 1fr; gap: 12px; padding: 6px 0; }
+    .v-eclipse .contact .lbl { color: #5a5852; }
+    .v-eclipse .contact a { color: #e8e6df; }
+    .v-eclipse .contact a:hover { text-decoration: underline; }
+
+    /* ============================================================ */
+    /* 04 — GRID                                                      */
+    /* ============================================================ */
+    .v-grid { background: #f6f5f1; color: #0a0a0a; font-family: 'Inter Tight', sans-serif; position: relative; }
+    .v-grid .grid-bg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    .v-grid .container {
+      position: relative; z-index: 1;
+      max-width: 1200px; margin: 0 auto;
+      padding: 60px 60px 100px;
+      display: grid; grid-template-columns: repeat(12, 1fr);
+      gap: 24px; row-gap: 80px;
+    }
+    .v-grid .topline {
+      grid-column: 1 / -1;
+      display: flex; justify-content: space-between; align-items: baseline;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #888;
+      padding-bottom: 14px; border-bottom: 2px solid #0a0a0a;
+    }
+    .v-grid .topline .red { color: #a72831; }
+    .v-grid .hero-left { grid-column: 1 / 9; }
+    .v-grid h1 { font-size: clamp(64px, 10vw, 152px); font-weight: 700; letter-spacing: -0.05em; line-height: 0.86; margin: 0; }
+    .v-grid h1 .red { color: #a72831; }
+    .v-grid .hero-right { grid-column: 9 / 13; position: relative; display: flex; flex-direction: column; justify-content: flex-end; gap: 24px; }
+    .v-grid .geom-svg { width: 120px; height: 120px; position: absolute; top: 0; right: 0; }
+    .v-grid .geom-circle { fill: none; stroke: #0a0a0a; stroke-width: 1; }
+    .v-grid .geom-square { fill: #a72831; transform-origin: 60px 60px; animation: grid-rot 36s linear infinite; }
+    @keyframes grid-rot { to { transform: rotate(360deg); } }
+    .v-grid .sub { font-size: 14px; line-height: 1.5; color: #444; }
+    .v-grid .actions { display: flex; flex-direction: column; gap: 4px; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .v-grid .actions a {
+      display: flex; justify-content: space-between; padding: 10px 0;
+      border-bottom: 1px solid #c8c5b8; color: #0a0a0a; transition: border-color 0.2s ease;
+    }
+    .v-grid .actions a:hover { border-color: #0a0a0a; }
+    .v-grid .actions a.primary { color: #a72831; }
+    .v-grid .work { grid-column: 1 / -1; }
+    .v-grid .work-h {
+      display: flex; justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace; font-size: 11px;
+      letter-spacing: 0.14em; text-transform: uppercase; color: #888; margin-bottom: 24px;
+    }
+    .v-grid .work-h .red { color: #a72831; }
+    .v-grid .work-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+    .v-grid .work-card { position: relative; padding: 24px 0 56px; border-top: 2px solid #0a0a0a; color: inherit; }
+    .v-grid .work-card .num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #888; display: flex; justify-content: space-between; margin-bottom: 36px; }
+    .v-grid .work-card h3 { font-size: 32px; font-weight: 600; letter-spacing: -0.025em; margin-bottom: 8px; }
+    .v-grid .work-card p { font-size: 13.5px; color: #555; line-height: 1.5; }
+    .v-grid .work-card::after { content: '→'; position: absolute; bottom: 16px; right: 0; font-size: 18px; color: #cfcab9; transition: color 0.2s, transform 0.2s; }
+    .v-grid .work-card:hover::after { color: #a72831; transform: translateX(4px); }
+    .v-grid .about { grid-column: 1 / 8; }
+    .v-grid .about-h { font-family: 'JetBrains Mono', monospace; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: #888; margin-bottom: 16px; }
+    .v-grid .about p { font-size: 17px; line-height: 1.65; color: #333; margin-bottom: 10px; }
+    .v-grid .about p strong { color: #0a0a0a; font-weight: 500; }
+    .v-grid .contact { grid-column: 9 / 13; }
+    .v-grid .contact-list { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .v-grid .contact-list div { display: grid; grid-template-columns: 60px 1fr; gap: 14px; padding: 9px 0; border-bottom: 1px solid #c8c5b8; }
+    .v-grid .contact-list .lbl { color: #888; }
+
+    /* ============================================================ */
+    /* 05 — MARGINALIA                                                */
+    /* ============================================================ */
+    .v-margin { background: #f5f1e8; color: #1a1a1a; font-family: 'Newsreader', Georgia, serif; }
+    .v-margin .container {
+      max-width: 1180px; margin: 0 auto;
+      padding: 80px 60px 120px;
+      display: grid;
+      grid-template-columns: 200px minmax(0, 1fr) 200px;
+      column-gap: 32px; row-gap: 64px;
+    }
+    .v-margin .topline {
+      grid-column: 1 / -1;
+      display: flex; justify-content: space-between;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #897e63;
+      padding-bottom: 14px; border-bottom: 1px solid #d6cdb7;
+    }
+    .v-margin .main { grid-column: 2; }
+    .v-margin .marg-l, .v-margin .marg-r { font-style: italic; font-size: 13px; line-height: 1.45; color: #2e3e7a; align-self: start; }
+    .v-margin .marg-l { grid-column: 1; text-align: right; padding-top: 22px; }
+    .v-margin .marg-r { grid-column: 3; padding-top: 22px; }
+    .v-margin .marg-l svg, .v-margin .marg-r svg { display: block; margin-bottom: 4px; }
+    .v-margin .marg-l svg { margin-left: auto; }
+    .v-margin .marg-l p, .v-margin .marg-r p { color: #2e3e7a; }
+    .v-margin h1 { font-size: clamp(48px, 6.5vw, 80px); font-weight: 400; letter-spacing: -0.022em; line-height: 1.02; margin-bottom: 32px; }
+    .v-margin h1 em { font-style: italic; font-weight: 400; }
+    .v-margin .sub { font-size: 19px; line-height: 1.6; color: #3a3528; font-style: italic; max-width: 560px; margin-bottom: 36px; }
+    .v-margin .actions { display: flex; gap: 28px; font-family: 'Inter Tight', sans-serif; font-size: 14px; }
+    .v-margin .actions a { color: #1a1a1a; padding-bottom: 3px; border-bottom: 1px solid currentColor; transition: padding-left 0.2s ease; }
+    .v-margin .actions a:hover { padding-left: 12px; }
+    .v-margin .actions a.primary { color: #2e3e7a; font-family: 'Newsreader', Georgia, serif; font-style: italic; font-size: 16px; }
+    .v-margin .section-h {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: #897e63;
+      padding-bottom: 12px; border-bottom: 1px solid #d6cdb7; margin-bottom: 8px;
+    }
+    .v-margin .work-item { display: grid; grid-template-columns: 44px 1fr 70px; gap: 20px; align-items: baseline; padding: 18px 0; border-bottom: 1px solid #e2dac0; color: inherit; }
+    .v-margin .work-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #897e63; }
+    .v-margin .work-name { font-size: 22px; font-style: italic; letter-spacing: -0.008em; }
+    .v-margin .work-name span { display: block; font-family: 'Inter Tight', sans-serif; font-style: normal; font-size: 13px; color: #3a3528; margin-top: 2px; }
+    .v-margin .work-year { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: #897e63; text-align: right; }
+    .v-margin .about-body { font-size: 17px; line-height: 1.7; color: #3a3528; }
+    .v-margin .about-body p + p { margin-top: 12px; }
+    .v-margin .about-body strong { font-weight: 500; color: #1a1a1a; }
+    .v-margin .about-meta { margin-top: 28px; font-family: 'JetBrains Mono', monospace; font-size: 12px; display: grid; grid-template-columns: repeat(2, 1fr); gap: 4px 32px; }
+    .v-margin .about-meta div { display: grid; grid-template-columns: 60px 1fr; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e2dac0; }
+    .v-margin .about-meta .lbl { color: #897e63; }
+
+    /* Mobile */
+    @media (max-width: 980px) {
+      .shell { grid-template-columns: 1fr; }
+      .picker {
+        flex-direction: row; align-items: center;
+        overflow-x: auto; padding: 14px 16px; gap: 12px;
+        border-right: none; border-bottom: 1px solid rgba(0,0,0,0.08);
+      }
+      .picker-head, .picker-foot { display: none; }
+      .picker-list { flex-direction: row; gap: 6px; }
+      .picker-btn { grid-template-columns: auto auto; gap: 6px; padding: 6px 10px; }
+      .picker-btn .name .meta { display: none; }
+      .picker-btn .arrow { display: none; }
+      .v-paper .container, .v-ink .container, .v-eclipse .container, .v-margin .container { padding: 40px 24px; }
+      .v-paper .hero-stack { grid-template-columns: 1fr; gap: 60px; margin-bottom: 80px; }
+      .v-paper .hero-text { margin-bottom: 60px; }
+      .v-paper .diagram-sticky { position: static; }
+      .v-paper .stack-row { grid-template-columns: 36px 1fr; }
+      .v-paper .stack-row .layer-tools, .v-paper .stack-row .layer-proof { grid-column: 1 / -1; }
+      .v-paper .about { grid-template-columns: 1fr; gap: 32px; }
+      .v-ink .hero, .v-eclipse .hero { grid-template-columns: 1fr; gap: 32px; }
+      .v-ink .hero-svg, .v-eclipse .hero-svg { width: 180px; height: 180px; }
+      .v-grid .container { grid-template-columns: 1fr; gap: 28px; row-gap: 40px; padding: 40px 24px; }
+      .v-grid .hero-left, .v-grid .hero-right, .v-grid .about, .v-grid .contact { grid-column: 1; }
+      .v-grid .work-grid { grid-template-columns: 1fr; }
+      .v-margin .container { grid-template-columns: 1fr; padding: 40px 24px; }
+      .v-margin .marg-l, .v-margin .marg-r { grid-column: 1; text-align: left; padding-top: 0; }
+      .v-margin .marg-l svg, .v-margin .marg-r svg { margin-left: 0; }
+      .v-margin .main { grid-column: 1; }
+      .v-margin .about-meta { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- ============ PICKER ============ -->
+  <aside class="picker">
+    <div class="picker-head">
+      Aesthetic drafts
+      <span class="title">william jin</span>
+      five minimal directions
+    </div>
+    <div class="picker-list" role="tablist">
+      <button class="picker-btn" data-variant="paper">
+        <span class="num">01</span>
+        <span class="name">Paper<span class="meta">Newsreader · cream · stack</span></span>
+        <span class="arrow">›</span>
+      </button>
+      <button class="picker-btn" data-variant="ink">
+        <span class="num">02</span>
+        <span class="name">Ink<span class="meta">Inter Tight · white · polyhedron</span></span>
+        <span class="arrow">›</span>
+      </button>
+      <button class="picker-btn" data-variant="eclipse">
+        <span class="num">03</span>
+        <span class="name">Eclipse<span class="meta">JetBrains · dark warm · sphere</span></span>
+        <span class="arrow">›</span>
+      </button>
+      <button class="picker-btn" data-variant="grid">
+        <span class="num">04</span>
+        <span class="name">Grid<span class="meta">Inter Tight · swiss · bauhaus mark</span></span>
+        <span class="arrow">›</span>
+      </button>
+      <button class="picker-btn" data-variant="margin">
+        <span class="num">05</span>
+        <span class="name">Marginalia<span class="meta">Newsreader · paper · annotations</span></span>
+        <span class="arrow">›</span>
+      </button>
+    </div>
+    <div class="picker-foot">
+      <kbd>↑</kbd> <kbd>↓</kbd> cycle<br>
+      <kbd>1</kbd>–<kbd>5</kbd> jump
+    </div>
+  </aside>
+
+  <!-- ============ STAGE ============ -->
+  <main class="stage">
+
+    <!-- ─────────── 01 PAPER ─────────── -->
+    <section class="variant v-paper" data-variant="paper">
+      <div class="container">
+        <div class="topline">
+          <span>William Jin · NYC · 2026</span>
+          <span>Plate 01 / 05</span>
+        </div>
+
+        <div class="hero-stack">
+          <div class="left-col">
+            <!-- Hero text -->
+            <div class="hero-text">
+              <h1>William Jin,<br><em>software engineer.</em></h1>
+              <p class="sub">At the seam of design, ML research, and full-stack systems. Currently in New York, available for select roles in 2026.</p>
+              <div class="actions">
+                <a href="/resume.pdf">Download résumé</a>
+                <a href="#work">Selected work</a>
+                <a href="mailto:jinwilliam.jin@gmail.com">Contact</a>
+              </div>
+            </div>
+
+            <!-- Stack reference rows (scroll-anchored to diagram) -->
+            <div class="stack-section">
+              <div class="section-h"><span>The stack, annotated</span><span>A — C</span></div>
+
+              <div class="stack-row" data-layer="A">
+                <span class="layer-num">A</span>
+                <span class="layer-name">Interface</span>
+                <span class="layer-tools">React, design systems, motion specs, type. Frontend craft as a load-bearing discipline — interfaces that earn their motion budget.</span>
+                <span class="layer-proof"><span class="arrow">→</span>Atlas · Halcyon</span>
+              </div>
+
+              <div class="stack-row" data-layer="B">
+                <span class="layer-num">B</span>
+                <span class="layer-name">Systems</span>
+                <span class="layer-tools">TypeScript, Rust, Node. Sync engines, CLIs, the durable parts under the UI. Sub-100ms cross-region collaboration.</span>
+                <span class="layer-proof"><span class="arrow">→</span>Halcyon · Atlas (CLI)</span>
+              </div>
+
+              <div class="stack-row" data-layer="C">
+                <span class="layer-num">C</span>
+                <span class="layer-name">Research</span>
+                <span class="layer-tools">Python, PyTorch, DuckDB. Retrieval, ranking, evaluation harnesses that feel as considered as the model they score.</span>
+                <span class="layer-proof"><span class="arrow">→</span>Sift</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sticky right column with the diagram -->
+          <div class="right-col">
+            <div class="diagram diagram-sticky" data-active="A" aria-hidden="true">
+              <svg viewBox="0 0 540 600" preserveAspectRatio="xMidYMid meet">
+                <text class="label-tiny" x="270" y="24" text-anchor="middle">SYSTEM · OVERVIEW</text>
+
+                <!-- pillars behind planes -->
+                <line class="pillar" x1="130" y1="110" x2="130" y2="470"/>
+                <line class="pillar" x1="410" y1="110" x2="410" y2="470"/>
+                <line class="pillar" x1="270" y1="40"  x2="270" y2="540"/>
+
+                <!-- Plane A — Interface -->
+                <g class="plane-grp plane-a-grp" data-layer="A">
+                  <path class="plane" d="M 270 180 L 410 110 L 270 40 L 130 110 Z"/>
+                  <circle class="corner" cx="270" cy="180" r="1.6"/>
+                  <circle class="corner" cx="410" cy="110" r="1.6"/>
+                  <circle class="corner" cx="270" cy="40"  r="1.6"/>
+                  <circle class="corner" cx="130" cy="110" r="1.6"/>
+                  <!-- inner: window mockup with cursor -->
+                  <rect class="marker" x="248" y="98" width="44" height="28"/>
+                  <line class="marker-line" x1="248" y1="106" x2="292" y2="106"/>
+                  <circle class="marker-fill" cx="253" cy="102" r="0.9"/>
+                  <circle class="marker-fill" cx="257" cy="102" r="0.9"/>
+                  <circle class="marker-fill" cx="261" cy="102" r="0.9"/>
+                  <line class="marker-line" x1="254" y1="113" x2="284" y2="113"/>
+                  <line class="marker-line" x1="254" y1="118" x2="276" y2="118"/>
+                  <line class="cursor-blink" x1="278" y1="115" x2="278" y2="121"/>
+                  <!-- label -->
+                  <text class="label-mono" x="430" y="110">A · INTERFACE</text>
+                  <text class="label-italic" x="430" y="126">react · motion · type</text>
+                </g>
+
+                <!-- Plane B — Systems -->
+                <g class="plane-grp plane-b-grp" data-layer="B">
+                  <path class="plane" d="M 270 360 L 410 290 L 270 220 L 130 290 Z"/>
+                  <circle class="corner" cx="270" cy="360" r="1.6"/>
+                  <circle class="corner" cx="410" cy="290" r="1.6"/>
+                  <circle class="corner" cx="270" cy="220" r="1.6"/>
+                  <circle class="corner" cx="130" cy="290" r="1.6"/>
+                  <!-- inner: connected graph (4 nodes, edges, pulsing) -->
+                  <line class="marker-line" x1="240" y1="296" x2="270" y2="278"/>
+                  <line class="marker-line" x1="270" y1="278" x2="300" y2="296"/>
+                  <line class="marker-line" x1="240" y1="296" x2="270" y2="310"/>
+                  <line class="marker-line" x1="270" y1="310" x2="300" y2="296"/>
+                  <line class="marker-line" x1="240" y1="296" x2="300" y2="296"/>
+                  <circle class="marker-fill node-pulse n1" cx="240" cy="296" r="2.4"/>
+                  <circle class="marker-fill node-pulse n2" cx="270" cy="278" r="2.4"/>
+                  <circle class="marker-fill node-pulse n3" cx="300" cy="296" r="2.4"/>
+                  <circle class="marker-fill node-pulse n4" cx="270" cy="310" r="2.4"/>
+                  <!-- label -->
+                  <text class="label-mono" x="430" y="290">B · SYSTEMS</text>
+                  <text class="label-italic" x="430" y="306">typescript · rust · node</text>
+                </g>
+
+                <!-- Plane C — Research -->
+                <g class="plane-grp plane-c-grp" data-layer="C">
+                  <path class="plane" d="M 270 540 L 410 470 L 270 400 L 130 470 Z"/>
+                  <circle class="corner" cx="270" cy="540" r="1.6"/>
+                  <circle class="corner" cx="410" cy="470" r="1.6"/>
+                  <circle class="corner" cx="270" cy="400" r="1.6"/>
+                  <circle class="corner" cx="130" cy="470" r="1.6"/>
+                  <!-- inner: scatter + curve with traveling dot -->
+                  <path id="paper-curve" class="marker" d="M 215 482 Q 270 462 325 484" opacity="0.65"/>
+                  <circle class="marker-fill" cx="220" cy="479" r="1.6"/>
+                  <circle class="marker-fill" cx="240" cy="472" r="1.6"/>
+                  <circle class="marker-fill" cx="260" cy="466" r="1.6"/>
+                  <circle class="marker-fill" cx="282" cy="471" r="1.6"/>
+                  <circle class="marker-fill" cx="304" cy="478" r="1.6"/>
+                  <!-- traveling dot along the curve -->
+                  <circle cx="0" cy="0" r="2.2" fill="#1a1a1a">
+                    <animateMotion dur="9s" repeatCount="indefinite" path="M 215 482 Q 270 462 325 484"/>
+                  </circle>
+                  <!-- label -->
+                  <text class="label-mono" x="430" y="470">C · RESEARCH</text>
+                  <text class="label-italic" x="430" y="486">python · ml · retrieval</text>
+                </g>
+
+                <!-- Bottom annotation strip -->
+                <line class="axis" x1="20" y1="568" x2="520" y2="568"/>
+                <text class="label-tiny" x="20"  y="586">FIG. I — STACK</text>
+                <text class="label-tiny" x="270" y="586" text-anchor="middle">3 LAYERS / 1 PERSON</text>
+                <text class="label-tiny" x="520" y="586" text-anchor="end">SCALE 1 : 1</text>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected work -->
+        <div class="section">
+          <div class="section-h"><span>Selected work</span><span>2023 — 2026</span></div>
+          <a class="work-item" href="#">
+            <span class="work-num">01</span>
+            <div>
+              <div class="work-name">Halcyon</div>
+              <div class="work-desc">Realtime collaborative editor with CRDT-backed text and structured blocks.</div>
+            </div>
+            <span class="work-year">2025</span>
+          </a>
+          <a class="work-item" href="#">
+            <span class="work-num">02</span>
+            <div>
+              <div class="work-name">Sift</div>
+              <div class="work-desc">ML evaluation pipeline for retrieval — relevance, recall, drift.</div>
+            </div>
+            <span class="work-year">2024</span>
+          </a>
+          <a class="work-item" href="#">
+            <span class="work-num">03</span>
+            <div>
+              <div class="work-name">Atlas</div>
+              <div class="work-desc">Design system for a 60-person product org, with a token-shipping CLI.</div>
+            </div>
+            <span class="work-year">2023</span>
+          </a>
+        </div>
+
+        <!-- About -->
+        <div class="section">
+          <div class="section-h"><span>About</span><span>NYC · 2026</span></div>
+          <div class="about" style="padding-top: 28px;">
+            <div class="about-body">
+              <p>I'm <strong>William</strong> — an engineer who likes the parts of building software where <strong>taste, math, and craft</strong> have to live in the same file.</p>
+              <p>Currently thinking about tools that earn their interface, and what makes an evaluation harness feel as considered as the model it scores.</p>
+            </div>
+            <div class="about-meta">
+              <div><span class="lbl">Email</span><span>jinwilliam.jin@gmail.com</span></div>
+              <div><span class="lbl">GitHub</span><span>@williamjin</span></div>
+              <div><span class="lbl">Based</span><span>New York City</span></div>
+              <div><span class="lbl">Stack</span><span>TS · Python · Rust</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── 02 INK ─────────── -->
+    <section class="variant v-ink" data-variant="ink">
+      <div class="container">
+        <div class="topline">
+          <span>William Jin — Software Engineer</span>
+          <span>02 / 05 — Ink</span>
+        </div>
+        <div class="hero">
+          <div>
+            <h1>William Jin.<br>Builds<br>quietly.</h1>
+            <p class="sub">Engineer working between frontend craft, ML research, and the full-stack systems underneath. Available for roles in 2026.</p>
+            <div class="actions">
+              <a class="btn-primary" href="/resume.pdf">
+                Download Résumé
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M7 2v8"/><path d="m3.5 6.5 3.5 3.5 3.5-3.5"/><path d="M2.5 12h9"/></svg>
+              </a>
+              <a class="btn-ghost" href="#work">Selected work</a>
+              <a class="btn-ghost" href="mailto:jinwilliam.jin@gmail.com">Email</a>
+            </div>
+          </div>
+          <svg class="hero-svg" viewBox="0 0 280 280" aria-hidden="true">
+            <g class="ico">
+              <g class="ico-tilt">
+                <path d="M 140 30 L 240 100 L 200 215 L 80 215 L 40 100 Z"/>
+                <path d="M 140 30 L 140 215"/>
+                <path d="M 240 100 L 80 215"/>
+                <path d="M 40 100 L 200 215"/>
+                <path d="M 240 100 L 40 100"/>
+                <path d="M 140 30 L 80 215"/>
+                <path d="M 140 30 L 200 215"/>
+                <circle class="f" cx="140" cy="30"  r="1.7"/>
+                <circle class="f" cx="240" cy="100" r="1.7"/>
+                <circle class="f" cx="200" cy="215" r="1.7"/>
+                <circle class="f" cx="80"  cy="215" r="1.7"/>
+                <circle class="f" cx="40"  cy="100" r="1.7"/>
+              </g>
+            </g>
+          </svg>
+        </div>
+        <div>
+          <div class="section-h">Selected · Work</div>
+          <div class="work-list">
+            <a class="work-item" href="#">
+              <span class="work-year">2025</span>
+              <div>
+                <div class="work-name">Halcyon — collaborative editor</div>
+                <div class="work-desc">CRDT-backed realtime text + structured blocks. Sub-100ms cross-region sync.</div>
+              </div>
+              <span class="work-arrow">→</span>
+            </a>
+            <a class="work-item" href="#">
+              <span class="work-year">2024</span>
+              <div>
+                <div class="work-name">Sift — retrieval evaluation</div>
+                <div class="work-desc">ML pipeline for measuring relevance, recall, and drift in retrieval systems.</div>
+              </div>
+              <span class="work-arrow">→</span>
+            </a>
+            <a class="work-item" href="#">
+              <span class="work-year">2023</span>
+              <div>
+                <div class="work-name">Atlas — design system</div>
+                <div class="work-desc">Tokens, motion specs, and a CLI shipped across a 60-person product org.</div>
+              </div>
+              <span class="work-arrow">→</span>
+            </a>
+          </div>
+        </div>
+        <div class="about">
+          <div class="section-h" style="margin-bottom: 18px;">About</div>
+          <p>I'm <strong>William</strong>. I like the parts of building software where taste, math, and craft live in the same file.</p>
+          <p>I move between research code, product UI, and the systems underneath. Based in New York, open to frontend / design-engineer, ML, and full-stack roles.</p>
+          <div class="contact">
+            <a href="mailto:jinwilliam.jin@gmail.com">jinwilliam.jin@gmail.com</a>
+            <a href="https://github.com/williamjin">github / @williamjin</a>
+            <a href="https://linkedin.com/in/williamjin">linkedin / in/williamjin</a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── 03 ECLIPSE ─────────── -->
+    <section class="variant v-eclipse" data-variant="eclipse">
+      <div class="container">
+        <div class="topline">
+          <span>wj.se / 2026</span>
+          <span>~ 03 / 05 ~ eclipse</span>
+        </div>
+        <div class="hero">
+          <div>
+            <h1>
+              william jin<br>
+              <span class="role">// software engineer.</span>
+            </h1>
+            <p class="sub">
+              designing &amp; shipping interfaces, ml pipelines, and the systems
+              beneath them. currently in new york. open to work.
+            </p>
+            <div class="actions">
+              <a class="primary" href="/resume.pdf">↓ resume.pdf</a>
+              <a href="#work">work</a>
+              <a href="mailto:jinwilliam.jin@gmail.com">mail</a>
+              <a href="https://github.com/williamjin">github</a>
+            </div>
+          </div>
+          <svg class="hero-svg" viewBox="0 0 280 280" aria-hidden="true">
+            <circle class="e-big" cx="140" cy="140" r="92"/>
+            <g class="e-lats">
+              <ellipse cx="140" cy="140" rx="92" ry="20"/>
+              <ellipse cx="140" cy="140" rx="92" ry="48"/>
+              <ellipse cx="140" cy="140" rx="92" ry="76"/>
+              <line x1="48"  y1="140" x2="232" y2="140"/>
+              <line x1="140" y1="48"  x2="140" y2="232"/>
+            </g>
+            <circle class="e-small" cx="140" cy="140" r="56"/>
+          </svg>
+        </div>
+        <div>
+          <div class="section-h">// selected work</div>
+          <a class="work-item" href="#"><span class="work-year">2025</span><span class="work-name">halcyon <span>— collaborative editor (crdt)</span></span><span class="work-arrow">→</span></a>
+          <a class="work-item" href="#"><span class="work-year">2024</span><span class="work-name">sift <span>— ml retrieval eval pipeline</span></span><span class="work-arrow">→</span></a>
+          <a class="work-item" href="#"><span class="work-year">2023</span><span class="work-name">atlas <span>— design system &amp; token cli</span></span><span class="work-arrow">→</span></a>
+        </div>
+        <div>
+          <div class="section-h" style="margin-top: 60px;">// about</div>
+          <div class="about">
+            <p>i'm <strong>william</strong>. i work in the seam between <strong>design</strong>, <strong>ml research</strong>, and <strong>full-stack systems</strong>.</p>
+            <p>currently nyc-based. open to frontend / design-engineer, ml research, or full-stack roles. say hi.</p>
+          </div>
+          <div class="contact">
+            <div><span class="lbl">mail</span><a href="mailto:jinwilliam.jin@gmail.com">jinwilliam.jin@gmail.com</a></div>
+            <div><span class="lbl">gh</span><a href="https://github.com/williamjin">@williamjin</a></div>
+            <div><span class="lbl">li</span><a href="https://linkedin.com/in/williamjin">in/williamjin</a></div>
+            <div><span class="lbl">cv</span><a href="/resume.pdf">resume.pdf ↗</a></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── 04 GRID ─────────── -->
+    <section class="variant v-grid" data-variant="grid">
+      <svg class="grid-bg" aria-hidden="true" preserveAspectRatio="none">
+        <defs>
+          <pattern id="grid04" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+            <path d="M 60 0 L 0 0 0 60" fill="none" stroke="rgba(0,0,0,0.05)" stroke-width="0.5"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid04)"/>
+      </svg>
+      <div class="container">
+        <div class="topline">
+          <span>William Jin <span class="red">·</span> Software Engineer</span>
+          <span>04 / 05 — Grid</span>
+        </div>
+        <div class="hero-left"><h1>William<br>Jin<span class="red">.</span></h1></div>
+        <div class="hero-right">
+          <svg class="geom-svg" viewBox="0 0 120 120" aria-hidden="true">
+            <circle class="geom-circle" cx="60" cy="60" r="56"/>
+            <rect class="geom-square" x="36" y="36" width="48" height="48"/>
+          </svg>
+          <p class="sub">Software engineer working between design, ML research, and full-stack systems. Based in New York.</p>
+          <div class="actions">
+            <a class="primary" href="/resume.pdf"><span>Résumé</span><span>↓</span></a>
+            <a href="#work"><span>Selected work</span><span>→</span></a>
+            <a href="mailto:jinwilliam.jin@gmail.com"><span>Email</span><span>→</span></a>
+            <a href="https://github.com/williamjin"><span>GitHub</span><span>↗</span></a>
+          </div>
+        </div>
+        <div class="work">
+          <div class="work-h"><span>Selected work</span><span class="red">2023 — 2026</span></div>
+          <div class="work-grid">
+            <a class="work-card" href="#"><div class="num"><span>01</span><span>2025</span></div><h3>Halcyon</h3><p>Realtime collaborative editor. CRDT text and structured blocks. Sub-100ms cross-region sync.</p></a>
+            <a class="work-card" href="#"><div class="num"><span>02</span><span>2024</span></div><h3>Sift</h3><p>ML evaluation pipeline for retrieval systems. Relevance, recall, drift — plugs into prod in two lines.</p></a>
+            <a class="work-card" href="#"><div class="num"><span>03</span><span>2023</span></div><h3>Atlas</h3><p>Design system for a 60-person product org. Token primitives, motion specs, and a shipping CLI.</p></a>
+          </div>
+        </div>
+        <div class="about">
+          <div class="about-h">About</div>
+          <p>I'm <strong>William</strong>, an engineer who likes the parts where taste, math, and craft live in the same file. I work between research code, product UI, and the systems beneath both.</p>
+          <p>Based in NYC. Open to frontend / design-engineer, ML, and full-stack roles in 2026.</p>
+        </div>
+        <div class="contact">
+          <div class="about-h">Contact</div>
+          <div class="contact-list">
+            <div><span class="lbl">Mail</span><span>jinwilliam.jin@gmail.com</span></div>
+            <div><span class="lbl">GH</span><span>@williamjin</span></div>
+            <div><span class="lbl">LI</span><span>in/williamjin</span></div>
+            <div><span class="lbl">CV</span><span>resume.pdf ↗</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─────────── 05 MARGINALIA ─────────── -->
+    <section class="variant v-margin" data-variant="margin">
+      <div class="container">
+        <div class="topline">
+          <span>William Jin · Notebook</span>
+          <span>05 / 05 — Marginalia</span>
+        </div>
+        <aside class="marg-l">
+          <svg viewBox="0 0 160 50" width="140" height="40" aria-hidden="true">
+            <path d="M 10 36 Q 80 36 150 14" stroke="#2e3e7a" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+            <path d="M 142 10 L 152 14 L 144 22" stroke="#2e3e7a" stroke-width="0.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p>on the proprietor, in his own restless hand.</p>
+        </aside>
+        <div class="main">
+          <h1>William Jin,<br><em>software engineer</em></h1>
+          <p class="sub">At the seam of design, ML research, and full-stack systems. Currently in New York, available for select roles in 2026.</p>
+          <div class="actions">
+            <a class="primary" href="/resume.pdf">↗ download a copy of the résumé</a>
+            <a href="#work">Selected work</a>
+            <a href="mailto:jinwilliam.jin@gmail.com">Mail</a>
+          </div>
+        </div>
+        <aside class="marg-r">
+          <svg viewBox="0 0 160 50" width="140" height="40" aria-hidden="true">
+            <path d="M 150 36 Q 80 36 10 14" stroke="#2e3e7a" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+            <path d="M 18 10 L 8 14 L 16 22" stroke="#2e3e7a" stroke-width="0.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p>cf. the second leaf for footnotes — single-page pdf, 84 kb.</p>
+        </aside>
+        <aside class="marg-l">
+          <svg viewBox="0 0 160 60" width="140" height="50" aria-hidden="true">
+            <path d="M 10 46 Q 80 46 150 20" stroke="#2e3e7a" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+            <path d="M 142 16 L 152 20 L 144 28" stroke="#2e3e7a" stroke-width="0.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p>three pieces, in reverse chronology; each annotated overleaf.</p>
+        </aside>
+        <div class="main">
+          <div class="section-h">— Selected Work</div>
+          <a class="work-item" href="#"><span class="work-num">i.</span><span class="work-name">Halcyon<span>realtime collaborative editor · crdt-backed</span></span><span class="work-year">2025</span></a>
+          <a class="work-item" href="#"><span class="work-num">ii.</span><span class="work-name">Sift<span>ml retrieval evaluation pipeline</span></span><span class="work-year">2024</span></a>
+          <a class="work-item" href="#"><span class="work-num">iii.</span><span class="work-name">Atlas<span>design system for a 60-person product org</span></span><span class="work-year">2023</span></a>
+        </div>
+        <aside class="marg-r"></aside>
+        <aside class="marg-l"></aside>
+        <div class="main">
+          <div class="section-h">— On the Author</div>
+          <div class="about-body">
+            <p>I'm <strong>William</strong>. I like the parts of building software where <strong>taste, math, and craft</strong> have to live in the same file. I move between research code, product UI, and the systems beneath them.</p>
+            <p>Lately thinking about tools that earn their interface, and when an animation is doing real work versus performing busyness.</p>
+          </div>
+          <div class="about-meta">
+            <div><span class="lbl">Mail</span><span>jinwilliam.jin@gmail.com</span></div>
+            <div><span class="lbl">GH</span><span>@williamjin</span></div>
+            <div><span class="lbl">Based</span><span>New York City</span></div>
+            <div><span class="lbl">Stack</span><span>TS · Python · Rust</span></div>
+          </div>
+        </div>
+        <aside class="marg-r">
+          <svg viewBox="0 0 160 60" width="140" height="50" aria-hidden="true">
+            <path d="M 150 46 Q 80 46 10 18" stroke="#2e3e7a" stroke-width="0.7" fill="none" stroke-linecap="round"/>
+            <path d="M 18 14 L 8 18 L 16 26" stroke="#2e3e7a" stroke-width="0.7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <p>or: an engineer who reads more than he writes.</p>
+        </aside>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  (function () {
+    const variants = ['paper', 'ink', 'eclipse', 'grid', 'margin'];
+    let active = 'paper';
+
+    function setActive(v) {
+      if (!variants.includes(v)) return;
+      active = v;
+      document.querySelectorAll('.picker-btn').forEach(b =>
+        b.setAttribute('data-active', String(b.dataset.variant === v)));
+      document.querySelectorAll('.variant').forEach(s =>
+        s.setAttribute('data-active', String(s.dataset.variant === v)));
+      const activeVariant = document.querySelector('.variant[data-active="true"]');
+      if (activeVariant) activeVariant.scrollTop = 0;
+    }
+
+    document.querySelectorAll('.picker-btn').forEach(b => {
+      b.addEventListener('click', () => setActive(b.dataset.variant));
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.target && /^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+      const i = variants.indexOf(active);
+      if (e.key === 'ArrowDown' || e.key === 'j') {
+        setActive(variants[(i + 1) % variants.length]);
+        e.preventDefault();
+      } else if (e.key === 'ArrowUp' || e.key === 'k') {
+        setActive(variants[(i - 1 + variants.length) % variants.length]);
+        e.preventDefault();
+      } else if (/^[1-5]$/.test(e.key)) {
+        setActive(variants[parseInt(e.key, 10) - 1]);
+      }
+    });
+
+    setActive('paper');
+
+    /* ============ PAPER: scroll/hover sync ============ */
+    (function paperSync() {
+      const root = document.querySelector('.variant[data-variant="paper"]');
+      if (!root) return;
+      const diagram = root.querySelector('.diagram-sticky');
+      const rows = Array.from(root.querySelectorAll('.stack-row'));
+      const planes = {
+        A: root.querySelector('.plane-a-grp'),
+        B: root.querySelector('.plane-b-grp'),
+        C: root.querySelector('.plane-c-grp')
+      };
+      if (!diagram || !rows.length) return;
+
+      let scrollLayer = 'A';
+
+      function paint(layer) {
+        if (!layer) return;
+        diagram.setAttribute('data-active', layer);
+        rows.forEach(r => r.setAttribute('data-active', String(r.dataset.layer === layer)));
+      }
+
+      paint('A');
+
+      const obs = new IntersectionObserver(entries => {
+        entries.forEach(e => {
+          if (e.isIntersecting) {
+            scrollLayer = e.target.dataset.layer;
+            paint(scrollLayer);
+          }
+        });
+      }, { root, rootMargin: '-42% 0px -42% 0px', threshold: 0 });
+      rows.forEach(r => obs.observe(r));
+
+      rows.forEach(r => {
+        r.addEventListener('mouseenter', () => paint(r.dataset.layer));
+        r.addEventListener('mouseleave', () => paint(scrollLayer));
+      });
+
+      Object.entries(planes).forEach(([layer, el]) => {
+        if (!el) return;
+        el.addEventListener('mouseenter', () => paint(layer));
+        el.addEventListener('mouseleave', () => paint(scrollLayer));
+      });
+    })();
+  })();
+</script>
+
+</body>
+</html>

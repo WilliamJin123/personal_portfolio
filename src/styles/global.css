@@ -1,0 +1,43 @@
+/* ============ DESIGN TOKENS — PAPER ============ */
+:root {
+  --paper: #f4f0e6;
+  --paper-edge: #d8d0bd;
+  --paper-edge-soft: #e2dac0;
+  --ink: #1a1a1a;
+  --ink-warm: #3a3528;
+  --ink-faint: #6a5f48;
+  --ink-mute: #8a7e63;
+  --accent-anno: #2e3e7a;
+
+  --serif: 'Newsreader', Georgia, serif;
+  --sans: 'Inter Tight', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+}
+
+/* ============ RESET ============ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  min-height: 100vh;
+}
+a { color: inherit; text-decoration: none; }
+button { font: inherit; cursor: pointer; border: none; background: transparent; }
+img, svg { display: block; max-width: 100%; }
+
+/* ============ MOTION PREFERENCE ============ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,45 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import ProjectPage from '../../components/ProjectPage';
+
+export async function getStaticPaths() {
+  const projects = await getCollection('projects', ({ data }) => !data.draft);
+  const sorted = projects.sort((a, b) => {
+    if (a.data.order !== undefined && b.data.order !== undefined) {
+      return a.data.order - b.data.order;
+    }
+    return Number(b.data.year) - Number(a.data.year);
+  });
+
+  return sorted.map((project, i) => {
+    const prev = i > 0 ? sorted[i - 1] : null;
+    const next = i < sorted.length - 1 ? sorted[i + 1] : null;
+    return {
+      params: { slug: project.id },
+      props: {
+        project,
+        prev: prev ? { slug: prev.id, title: prev.data.title } : null,
+        next: next ? { slug: next.id, title: next.data.title } : null
+      }
+    };
+  });
+}
+
+interface Props {
+  project: CollectionEntry<'projects'>;
+  prev: { slug: string; title: string } | null;
+  next: { slug: string; title: string } | null;
+}
+
+const { project, prev, next } = Astro.props as Props;
+const { Content } = await render(project);
+---
+<Base
+  title={`${project.data.title} — [Your Name]`}
+  description={project.data.summary}
+>
+  <ProjectPage data={project.data} prev={prev} next={next}>
+    <Content />
+  </ProjectPage>
+</Base>

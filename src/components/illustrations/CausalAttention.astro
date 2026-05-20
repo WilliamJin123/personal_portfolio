@@ -1,0 +1,69 @@
+---
+// 8×8 causal attention pattern (lower-triangular, recency-weighted fill).
+// A diagonal scanner traces the main diagonal in 8 discrete steps.
+// All in-svg text removed.
+
+const SIZE = 8;
+const CELL = 30;
+const GAP = 2;
+const STEP = CELL + GAP;
+const X0 = 50;
+const Y0 = 44;
+
+function opacity(i: number, j: number): number {
+  if (j > i) return 0;
+  if (i === 0) return 0.7;
+  return 0.18 + (j / i) * 0.7;
+}
+
+const scanXs = Array.from({ length: SIZE }, (_, k) => X0 + k * STEP).join(';');
+const scanYs = Array.from({ length: SIZE }, (_, k) => Y0 + k * STEP).join(';');
+
+const cells = [];
+for (let i = 0; i < SIZE; i++) {
+  for (let j = 0; j < SIZE; j++) {
+    cells.push({ i, j, x: X0 + j * STEP, y: Y0 + i * STEP, o: opacity(i, j) });
+  }
+}
+---
+<svg
+  class="ill-attn"
+  viewBox="0 0 360 320"
+  preserveAspectRatio="xMidYMid meet"
+  aria-hidden="true"
+>
+  {cells.map((c) => (
+    c.o === 0 ? (
+      <rect class="attn-empty" x={c.x} y={c.y} width={CELL} height={CELL} />
+    ) : (
+      <rect class="attn-cell"  x={c.x} y={c.y} width={CELL} height={CELL} style={`fill-opacity: ${c.o.toFixed(2)}`} />
+    )
+  ))}
+
+  <rect class="attn-scan" x={X0} y={Y0} width={CELL} height={CELL}>
+    <animate attributeName="x" values={scanXs} dur="8s" repeatCount="indefinite" calcMode="discrete" />
+    <animate attributeName="y" values={scanYs} dur="8s" repeatCount="indefinite" calcMode="discrete" />
+  </rect>
+</svg>
+
+<style>
+  .ill-attn { width: 100%; height: auto; display: block; max-width: 420px; margin: 0 auto; }
+  .ill-attn .attn-cell {
+    fill: var(--ink);
+    stroke: var(--ink);
+    stroke-width: 0.3;
+    stroke-opacity: 0.5;
+  }
+  .ill-attn .attn-empty {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 0.3;
+    stroke-opacity: 0.18;
+  }
+  .ill-attn .attn-scan {
+    fill: none;
+    stroke: var(--accent-anno);
+    stroke-width: 1.5;
+    pointer-events: none;
+  }
+</style>
