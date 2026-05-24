@@ -1,43 +1,54 @@
-/* ============ DESIGN TOKENS — PAPER ============ */
-:root {
-  --paper: #f4f0e6;
-  --paper-edge: #d8d0bd;
-  --paper-edge-soft: #e2dac0;
-  --ink: #1a1a1a;
-  --ink-warm: #3a3528;
-  --ink-faint: #6a5f48;
-  --ink-mute: #8a7e63;
-  --accent-anno: #2e3e7a;
+/* ============ BARE TOKENS + RESET ============
+   Minimal baseline. Dark canvas, ivory ink, monospace, serif, sans available.
+   Rebuild design tokens (palette, type system, motion) on the next iteration.
+============================================ */
 
-  --serif: 'Newsreader', Georgia, serif;
-  --sans: 'Inter Tight', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+:root {
+  /* Surfaces */
+  --canvas:        #0e0e0f;
+  --canvas-card:   #161617;
+  --canvas-raise:  #1c1c1d;
+
+  /* Ink */
+  --ink:           #ece8df;
+  --ink-mute:      #8a8780;
+  --ink-faint:     #4a4843;
+
+  /* Rules */
+  --rule:          #232322;
+
+  /* Type families (loaded in Base.astro) */
+  --sans:    'Geist', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --serif:   'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --mono:    'Geist Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  color-scheme: dark;
 }
 
 /* ============ RESET ============ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--canvas);
+}
+
 body {
-  background: var(--paper);
+  background: var(--canvas);
   color: var(--ink);
-  font-family: var(--serif);
-  font-size: 16px;
-  line-height: 1.55;
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
   min-height: 100vh;
 }
+
 a { color: inherit; text-decoration: none; }
-button { font: inherit; cursor: pointer; border: none; background: transparent; }
+button { font: inherit; cursor: pointer; border: none; background: transparent; color: inherit; }
 img, svg { display: block; max-width: 100%; }
 
-/* ============ MOTION PREFERENCE ============ */
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
-}
+.mono { font-family: var(--mono); }
+
+::selection { background: var(--ink); color: var(--canvas); }

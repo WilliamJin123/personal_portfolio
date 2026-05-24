@@ -7,8 +7,8 @@ interface Props {
 }
 
 const {
-  title = '[Your Name] — software engineer',
-  description = 'Personal portfolio of [Your Name].'
+  title = '[Your Name]',
+  description = 'Portfolio of [Your Name].'
 } = Astro.props;
 ---
 <!DOCTYPE html>
@@ -17,6 +17,7 @@ const {
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#0e0e0f" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title}</title>
     <meta name="description" content={description} />
@@ -25,7 +26,7 @@ const {
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@300..600&family=Instrument+Serif:ital@0;1&display=swap"
     />
   </head>
   <body>

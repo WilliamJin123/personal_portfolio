@@ -25,9 +25,19 @@ const projects = defineCollection({
     links: z
       .array(z.object({ label: z.string(), href: z.string() }))
       .optional(),
+    /** Hero image for the detail panel. Omit for an automatic placeholder. */
+    hero: z
+      .object({
+        src: z.string().optional(),
+        alt: z.string().optional(),
+        aspect: z.string().default('16/9')
+      })
+      .optional(),
     draft: z.boolean().optional(),
     /** Sort order within section; lower numbers appear first. Defaults to year desc. */
-    order: z.number().optional()
+    order: z.number().optional(),
+    /** Short marginalia displayed in the right gutter of the home codex. Italic, conversational. */
+    note: z.string().optional()
   })
 });
 
