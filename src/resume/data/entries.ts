@@ -131,7 +131,7 @@ export const entries: ResumeEntry[] = [
     id: 'solana-sdk',
     section: 'projects',
     title: 'Solana Swift SDK',
-    subtitle: 'Grant-Funded Development - Solana Foundation',
+    grants: ['Solana Foundation Grant'],
     dateLabel: 'Oct 2025 - Nov 2025',
     link: { label: 'repo', href: 'https://github.com/The-SolShare-Team' },
     bullets: [
@@ -142,7 +142,7 @@ export const entries: ResumeEntry[] = [
       },
       {
         id: 'ship',
-        text: 'Shipping open-source SDK via Swift Package Manager with documentation by early-mid November',
+        text: 'Shipped the open-source SDK via **Swift Package Manager** with full documentation',
         tags: ['open-source'],
       },
     ],

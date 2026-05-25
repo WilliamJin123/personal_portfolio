@@ -22,6 +22,7 @@ const toView = (e: (typeof entries)[number]) => {
     link: e.link ?? null,
     bulletsHtml: e.bullets.map((b) => tokensToHtml(tokenize(b.text))),
     awards: e.awards ?? [],
+    grants: e.grants ?? [],
     stack: m.stack ?? [],
     images: m.images ?? [],
     footnotes: m.footnotes ?? [],
@@ -50,7 +51,7 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
 <style is:global>
   :root{
     --paper:#eceef1; --paper2:#e2e5ea; --ink:#16181c; --mute:#6b6f78; --faint:#a6abb3;
-    --rule:rgba(20,24,32,.13); --amber:#bd741b; --amber-rgb:189,116,27;
+    --rule:rgba(20,24,32,.13); --amber:#bd741b; --amber-rgb:189,116,27; --grant:#3a7d5c; --grant-rgb:58,125,92;
     --sans:'Geist',system-ui,sans-serif; --mono:'Geist Mono',ui-monospace,monospace;
   }
   *{box-sizing:border-box;margin:0;padding:0}
@@ -149,7 +150,7 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   .chips span:hover .ic{background:var(--amber)}
 
   /* selected work — projects / experience master-detail (List-5) */
-  .work{padding:60px 0 18px;border-top:1px solid var(--rule)}
+  .work{padding:60px 0 110px;border-top:1px solid var(--rule)}
   .work-head{margin-bottom:28px}
   .work-eye{display:block;margin-bottom:16px}
   .work-bar{display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap}
@@ -165,12 +166,12 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
 
   .wmd{display:grid;grid-template-columns:0.56fr 1.5fr 1.6fr;gap:clamp(16px,2.2vw,36px);align-items:start}
   .wlist{display:flex;flex-direction:column;border-top:1px solid var(--rule)}
-  .witem{position:relative;text-align:left;background:none;border:0;border-bottom:1px dashed var(--rule);padding:14px 12px 14px 16px;cursor:pointer;display:flex;align-items:baseline;gap:12px;color:var(--mute);transition:color .3s,padding .3s}
+  .witem{position:relative;text-align:left;background:none;border:0;border-bottom:1px dashed var(--rule);padding:14px 12px 14px 16px;cursor:pointer;display:flex;align-items:baseline;gap:12px;color:var(--mute);transition:color .3s,transform .3s}
   .witem .wn{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--faint);transition:color .3s}
   .witem .wt{font-size:15px;font-weight:480;letter-spacing:-.01em}
   .witem .wtw{display:flex;flex-direction:column;gap:2px;min-width:0}
   .witem .wdate{font-family:var(--mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
-  .witem:hover{color:var(--ink);padding-left:24px}
+  .witem:hover{color:var(--ink);transform:translateX(8px)}
   .witem.active{color:var(--ink)}
   .witem.active .wn{color:var(--amber)}
   .witem .wbar{position:absolute;left:-1px;top:50%;width:2px;height:0;background:var(--amber);transform:translateY(-50%);transition:height .35s ease}
@@ -201,10 +202,12 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   .wd-stack span{font-family:var(--mono);font-size:12px;border:1px solid var(--rule);border-radius:999px;padding:6px 12px;color:var(--ink);background:var(--paper);display:flex;align-items:center;gap:8px;white-space:nowrap}
   .wd-stack span .ic{width:14px;height:14px;flex-shrink:0;background:var(--ink);-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
   .wd-awards{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}
-  .award{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:var(--amber);background:rgba(var(--amber-rgb),.08);border:1px solid rgba(var(--amber-rgb),.42);border-radius:999px;padding:6px 12px 6px 11px;white-space:nowrap}
-  .award svg{width:13px;height:13px;flex-shrink:0}
-  @keyframes rAward{0%{opacity:0;transform:scale(.6) translateY(8px);box-shadow:0 0 0 0 rgba(var(--amber-rgb),.45)}55%{transform:scale(1.12)}70%{box-shadow:0 0 0 7px rgba(var(--amber-rgb),0)}100%{opacity:1;transform:scale(1) translateY(0);box-shadow:0 0 0 0 rgba(var(--amber-rgb),0)}}
-  .wdetail.play .award{animation:rAward .62s cubic-bezier(.2,.8,.3,1) backwards;animation-delay:calc(.16s + var(--ai)*.12s)}
+  .award,.grant{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;letter-spacing:.03em;border-radius:999px;padding:6px 12px 6px 11px;white-space:nowrap}
+  .award{color:var(--amber);background:rgba(var(--amber-rgb),.08);border:1px solid rgba(var(--amber-rgb),.42);--glow:var(--amber-rgb)}
+  .grant{color:var(--grant);background:rgba(var(--grant-rgb),.08);border:1px solid rgba(var(--grant-rgb),.42);--glow:var(--grant-rgb)}
+  .award svg,.grant svg{width:13px;height:13px;flex-shrink:0}
+  @keyframes rBadge{0%{opacity:0;transform:scale(.6) translateY(8px);box-shadow:0 0 0 0 rgba(var(--glow),.45)}55%{transform:scale(1.12)}70%{box-shadow:0 0 0 7px rgba(var(--glow),0)}100%{opacity:1;transform:scale(1) translateY(0);box-shadow:0 0 0 0 rgba(var(--glow),0)}}
+  .wdetail.play .award,.wdetail.play .grant{animation:rBadge .62s cubic-bezier(.2,.8,.3,1) backwards;animation-delay:calc(.16s + var(--ai)*.12s)}
 
   @keyframes rRise{from{opacity:0;transform:translateY(13px);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
   @keyframes rBold{0%{transform:scale(.88);color:var(--mute)}45%{color:var(--amber)}60%{transform:scale(1.08)}100%{transform:scale(1);color:var(--ink)}}
@@ -749,12 +752,14 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
 
     const moveInk=()=>{const b=seg.querySelector('.sg.active');if(b){segink.style.left=b.offsetLeft+'px';segink.style.width=b.offsetWidth+'px';}};
     const chips=st=>st.map(it=>{const label=typeof it==='string'?it:it.label,slug=typeof it==='string'?it:it.icon,ic=slug?(slug[0]==='/'?slug:iconURL(slug)):'';return `<span style="--i:url('${ic}')"><span class="ic"></span>${label}</span>`;}).join('');
+    const TROPHY='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>';
+    const DOLLAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>';
     const metaLine=e=>[e.role,e.dateLabel,e.location].filter(Boolean).join(' · ');
     const cardSub=e=>e.subtitle || metaLine(e);
     const renderList=()=>{listEl.innerHTML=data().map((e,i)=>`<button class="witem${i===sel?' active':''}" data-i="${i}"><span class="wbar"></span><span class="wn">${pad(i+1)}</span><span class="wtw"><span class="wt">${e.title}</span><span class="wdate">${e.dateLabel}</span></span></button>`).join('');};
     const renderCards=()=>{wcards.innerHTML=data().map((e,i)=>`<button class="wcard" data-i="${i}"><div class="wc-img"><span class="m">image — tbd</span></div><div class="wc-b"><div class="wc-n">${e.title}</div><div class="wc-s">${cardSub(e)}</div></div></button>`).join('');};
     const paintGallery=()=>{const e=data()[sel],n=e.images.length;gcount.textContent=pad(img+1)+' / '+pad(Math.max(n,1));gfoot.textContent=e.footnotes[img]||'image — optional';gph.textContent=n?('image '+pad(img+1)):'image — tbd';};
-    const paint=()=>{const e=data()[sel];idxEl.textContent=pad(sel+1);nameEl.textContent=e.title;metaEl.textContent=metaLine(e);if(e.subtitle){subtitleEl.textContent=e.subtitle;subtitleEl.hidden=false;}else{subtitleEl.hidden=true;}if(e.awards&&e.awards.length){awardsEl.innerHTML=e.awards.map((a,j)=>`<span class="award" style="--ai:${j}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>${a}</span>`).join('');awardsEl.hidden=false;}else{awardsEl.hidden=true;}if(e.link){linkEl.textContent=e.link.label+' ↗';linkEl.href=e.link.href;linkEl.hidden=false;}else{linkEl.hidden=true;}bulletsEl.innerHTML=e.bulletsHtml.map((h,i)=>`<li class="rbullet" style="--bi:${i}">${h}</li>`).join('');stackEl.innerHTML=chips(e.stack);img=0;paintGallery();};
+    const paint=()=>{const e=data()[sel];idxEl.textContent=pad(sel+1);nameEl.textContent=e.title;metaEl.textContent=metaLine(e);if(e.subtitle){subtitleEl.textContent=e.subtitle;subtitleEl.hidden=false;}else{subtitleEl.hidden=true;}const honors=[...(e.awards||[]).map(a=>['award',TROPHY,a]),...(e.grants||[]).map(g=>['grant',DOLLAR,g])];if(honors.length){awardsEl.innerHTML=honors.map(([c,ic,t],j)=>`<span class="${c}" style="--ai:${j}">${ic}${t}</span>`).join('');awardsEl.hidden=false;}else{awardsEl.hidden=true;}if(e.link){linkEl.textContent=e.link.label+' ↗';linkEl.href=e.link.href;linkEl.hidden=false;}else{linkEl.hidden=true;}bulletsEl.innerHTML=e.bulletsHtml.map((h,i)=>`<li class="rbullet" style="--bi:${i}">${h}</li>`).join('');stackEl.innerHTML=chips(e.stack);img=0;paintGallery();};
     const renderDetail=animate=>{paint();if(animate){wdetail.classList.remove('play');void wdetail.offsetWidth;wdetail.classList.add('play');}};
     const select=(i,animate)=>{sel=i;[...listEl.children].forEach((c,j)=>c.classList.toggle('active',j===i));renderDetail(animate);};
     const switchSet=ns=>{if(ns===set)return;set=ns;sel=0;seg.querySelectorAll('.sg').forEach(b=>b.classList.toggle('active',b.dataset.set===ns));moveInk();renderList();renderCards();renderDetail(true);syncHeight();};

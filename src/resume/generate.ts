@@ -47,6 +47,7 @@ function project(e: ResumeEntry, ids: string[]): string {
     : `{${escapeLatex(e.title)}}`;
   const subtitle = [
     ...(e.awards ?? []).map((a) => `\\award{${escapeLatex(a)}}`),
+    ...(e.grants ?? []).map((g) => `\\grant{${escapeLatex(g)}}`),
     e.subtitle ? escapeLatex(e.subtitle) : '',
   ]
     .filter(Boolean)

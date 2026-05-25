@@ -20,7 +20,8 @@ export interface ResumeEntry {
   dateLabel: string;     // e.g. "July 2025 - Sept 2025"
   location?: string;
   subtitle?: string;     // projects: context line (event / grant / "Personal Project")
-  awards?: string[];     // wins/honors — emphasized (UI badges, \award in LaTeX)
+  awards?: string[];     // wins/honors — amber trophy badges (UI) + \award (LaTeX)
+  grants?: string[];     // funding/grants — green money badges (UI) + \grant (LaTeX)
   link?: { label: string; href: string };
   bullets: ResumeBullet[];
   include?: boolean;     // default true; in the résumé pool
