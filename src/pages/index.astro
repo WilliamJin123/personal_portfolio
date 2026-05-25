@@ -183,15 +183,27 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   .gfoot{color:var(--faint);letter-spacing:.04em}
 
   .wdetail{padding-top:2px}
-  .wdetail>*{transition:opacity .3s ease,transform .3s ease}
-  .wdetail.swap>*{opacity:0;transform:translateY(9px)}
   .wd-idx{color:var(--amber);margin-bottom:12px}
   .wd-name{font-size:clamp(24px,2.9vw,38px);font-weight:540;letter-spacing:-.025em;line-height:1.06}
-  .wd-sub{margin-top:9px;color:var(--mute);text-transform:none;letter-spacing:.04em}
-  .wd-desc{margin-top:18px;font-size:14px;line-height:1.6;color:var(--mute);max-height:168px;overflow:auto;padding-right:8px}
+  .wd-meta{margin-top:9px;color:var(--mute);text-transform:none;letter-spacing:.04em}
+  .wd-subtitle{margin-top:8px;font-size:13px;font-style:italic;color:var(--mute);line-height:1.45}
+  .wd-link{display:inline-block;margin-top:14px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .rbul{list-style:none;margin:18px 0 0;padding:0}
+  .rbullet{position:relative;font-size:14px;line-height:1.6;color:var(--ink);margin-bottom:13px;padding-left:16px}
+  .rbullet::before{content:"–";position:absolute;left:0;color:var(--faint)}
+  .rbold{font-weight:680;color:var(--ink)}
+  .rlink{color:var(--ink);text-decoration:none;background:linear-gradient(var(--amber),var(--amber)) left bottom/100% 1.6px no-repeat;padding-bottom:1px}
+  .rlink:hover{color:var(--amber)}
   .wd-stack{margin-top:20px;display:flex;flex-wrap:wrap;gap:9px}
   .wd-stack span{font-family:var(--mono);font-size:12px;border:1px solid var(--rule);border-radius:999px;padding:6px 12px;color:var(--ink);background:var(--paper);display:flex;align-items:center;gap:8px;white-space:nowrap}
   .wd-stack span .ic{width:14px;height:14px;flex-shrink:0;background:var(--ink);-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+
+  @keyframes rRise{from{opacity:0;transform:translateY(11px)}to{opacity:1;transform:none}}
+  @keyframes rInk{0%{color:var(--mute)}45%{color:var(--amber)}100%{color:var(--ink)}}
+  @keyframes rUl{from{background-size:0 1.6px}to{background-size:100% 1.6px}}
+  .wdetail.play .rbullet{animation:rRise .6s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--bi)*.11s)}
+  .wdetail.play .rbold{animation:rInk .75s ease backwards;animation-delay:calc(var(--bi)*.11s + .12s)}
+  .wdetail.play .rlink{animation:rUl .55s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--bi)*.11s + .2s)}
 
   .wcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:clamp(14px,1.6vw,22px)}
   .wcard{text-align:left;background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:0;cursor:pointer;overflow:hidden;transition:border-color .25s,transform .25s}
@@ -545,8 +557,10 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
         <div class="wdetail" id="wdetail">
           <div class="wd-idx m" id="wdidx">01</div>
           <h3 class="wd-name" id="wdname">—</h3>
-          <div class="wd-sub m" id="wdsub">—</div>
-          <div class="wd-desc" id="wddesc">—</div>
+          <div class="wd-meta m" id="wdmeta">—</div>
+          <div class="wd-subtitle" id="wdsubtitle" hidden></div>
+          <a class="wd-link rlink" id="wdlink" target="_blank" rel="noreferrer" style="--bi:0" hidden></a>
+          <ul class="rbul" id="wdbullets"></ul>
           <div class="wd-stack" id="wdstack"></div>
         </div>
       </div>
@@ -715,22 +729,10 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   (function(){
     const ICONS={react:'react',typescript:'typescript',firebase:'firebase',swift:'swift',python:'python',pytorch:'pytorch',java:'openjdk',postgresql:'postgresql',docker:'docker',node:'nodedotjs',huggingface:'huggingface'};
     const iconURL=k=>`https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/${ICONS[k]||k}.svg`;
-    const WORK={
-      projects:[
-        {t:'Project Title One',s:'Solo build · 2025',imgs:3,foot:'fig. a — interface mock',desc:'[ one or two sentences on what this project is and the problem it solves — placeholder copy to size the layout. ]',stack:['swift','firebase','python']},
-        {t:'Project Title Two',s:'Hackathon · 2025',imgs:2,foot:'fig. a — system diagram',desc:'[ short placeholder description for the second project; swap in the real write-up later. ]',stack:['react','typescript','node']},
-        {t:'Project Title Three',s:'Personal project · 2025',imgs:1,foot:'fig. a — output sample',desc:'[ placeholder number three, long enough to show the scroll area when the copy runs past a few lines in the detail column. ]',stack:['python','pytorch','huggingface']},
-        {t:'Project Title Four',s:'Course project · 2024',imgs:2,foot:'fig. a — artifact',desc:'[ fourth placeholder entry. ]',stack:['java','docker']},
-      ],
-      work:[
-        {t:'Company One',s:'Software Engineer · Summer 2025',imgs:2,foot:'fig. a — internal tool',desc:'[ what you worked on and shipped at this role — placeholder copy. ]',stack:['java','postgresql','docker']},
-        {t:'Company Two',s:'Developer · Summer 2025',imgs:1,foot:'fig. a — dashboard',desc:'[ second role placeholder description. ]',stack:['python','react']},
-        {t:'Company Three',s:'Participant · 2025',imgs:1,foot:'fig. a — prototype',desc:'[ third role placeholder. ]',stack:['python','huggingface']},
-      ],
-    };
+    const WORK=JSON.parse(document.getElementById('work-data').textContent);
     const seg=document.getElementById('wseg'), segink=document.getElementById('segink');
     const listEl=document.getElementById('wlist'), wcards=document.getElementById('wcards'), wmd=document.getElementById('wmd'), wdetail=document.getElementById('wdetail');
-    const nameEl=document.getElementById('wdname'), subEl=document.getElementById('wdsub'), descEl=document.getElementById('wddesc'), idxEl=document.getElementById('wdidx'), stackEl=document.getElementById('wdstack');
+    const nameEl=document.getElementById('wdname'), metaEl=document.getElementById('wdmeta'), subtitleEl=document.getElementById('wdsubtitle'), bulletsEl=document.getElementById('wdbullets'), linkEl=document.getElementById('wdlink'), idxEl=document.getElementById('wdidx'), stackEl=document.getElementById('wdstack');
     const gcount=document.getElementById('gcount'), gfoot=document.getElementById('gfoot'), gph=document.getElementById('gph'), gprev=document.getElementById('gprev'), gnext=document.getElementById('gnext');
     const vswitch=document.getElementById('vswitch'), vink=document.getElementById('vswitchink'), workBody=wmd.parentElement;
     let set='projects', sel=0, img=0, view='list';
@@ -738,11 +740,13 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
 
     const moveInk=()=>{const b=seg.querySelector('.sg.active');if(b){segink.style.left=b.offsetLeft+'px';segink.style.width=b.offsetWidth+'px';}};
     const chips=st=>st.map(k=>`<span style="--i:url('${iconURL(k)}')"><span class="ic"></span>${k}</span>`).join('');
-    const renderList=()=>{listEl.innerHTML=data().map((e,i)=>`<button class="witem${i===sel?' active':''}" data-i="${i}"><span class="wbar"></span><span class="wn">${pad(i+1)}</span><span class="wt">${e.t}</span></button>`).join('');};
-    const renderCards=()=>{wcards.innerHTML=data().map((e,i)=>`<button class="wcard" data-i="${i}"><div class="wc-img"><span class="m">image — tbd</span></div><div class="wc-b"><div class="wc-n">${e.t}</div><div class="wc-s">${e.s}</div></div></button>`).join('');};
-    const paintGallery=()=>{const e=data()[sel];gcount.textContent=pad(img+1)+' / '+pad(e.imgs);gfoot.textContent=e.foot;gph.textContent='image '+pad(img+1)+' — tbd';};
-    const paint=()=>{const e=data()[sel];idxEl.textContent=pad(sel+1);nameEl.textContent=e.t;subEl.textContent=e.s;descEl.textContent=e.desc;stackEl.innerHTML=chips(e.stack);img=0;paintGallery();};
-    const renderDetail=animate=>{if(animate){wdetail.classList.add('swap');setTimeout(()=>{paint();wdetail.classList.remove('swap');},250);}else paint();};
+    const metaLine=e=>[e.role,e.dateLabel,e.location].filter(Boolean).join(' · ');
+    const cardSub=e=>e.subtitle || metaLine(e);
+    const renderList=()=>{listEl.innerHTML=data().map((e,i)=>`<button class="witem${i===sel?' active':''}" data-i="${i}"><span class="wbar"></span><span class="wn">${pad(i+1)}</span><span class="wt">${e.title}</span></button>`).join('');};
+    const renderCards=()=>{wcards.innerHTML=data().map((e,i)=>`<button class="wcard" data-i="${i}"><div class="wc-img"><span class="m">image — tbd</span></div><div class="wc-b"><div class="wc-n">${e.title}</div><div class="wc-s">${cardSub(e)}</div></div></button>`).join('');};
+    const paintGallery=()=>{const e=data()[sel],n=e.images.length;gcount.textContent=pad(img+1)+' / '+pad(Math.max(n,1));gfoot.textContent=e.footnotes[img]||'image — optional';gph.textContent=n?('image '+pad(img+1)):'image — tbd';};
+    const paint=()=>{const e=data()[sel];idxEl.textContent=pad(sel+1);nameEl.textContent=e.title;metaEl.textContent=metaLine(e);if(e.subtitle){subtitleEl.textContent=e.subtitle;subtitleEl.hidden=false;}else{subtitleEl.hidden=true;}if(e.link){linkEl.textContent=e.link.label+' ↗';linkEl.href=e.link.href;linkEl.hidden=false;}else{linkEl.hidden=true;}bulletsEl.innerHTML=e.bulletsHtml.map((h,i)=>`<li class="rbullet" style="--bi:${i}">${h}</li>`).join('');stackEl.innerHTML=chips(e.stack);img=0;paintGallery();};
+    const renderDetail=animate=>{paint();if(animate){wdetail.classList.remove('play');void wdetail.offsetWidth;wdetail.classList.add('play');}};
     const select=(i,animate)=>{sel=i;[...listEl.children].forEach((c,j)=>c.classList.toggle('active',j===i));renderDetail(animate);};
     const switchSet=ns=>{if(ns===set)return;set=ns;sel=0;seg.querySelectorAll('.sg').forEach(b=>b.classList.toggle('active',b.dataset.set===ns));moveInk();renderList();renderCards();renderDetail(true);syncHeight();};
     const moveVInk=()=>{const b=vswitch.querySelector('.vopt.active');if(b){vink.style.left=b.offsetLeft+'px';vink.style.width=b.offsetWidth+'px';}};
@@ -760,14 +764,17 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
     seg.querySelectorAll('.sg').forEach(b=>b.addEventListener('click',()=>switchSet(b.dataset.set)));
     listEl.addEventListener('click',e=>{const b=e.target.closest('.witem');if(b)select(+b.dataset.i,true);});
     wcards.addEventListener('click',e=>{const b=e.target.closest('.wcard');if(b){select(+b.dataset.i,false);setView(false);}});
-    gprev.addEventListener('click',()=>{const e=data()[sel];img=(img-1+e.imgs)%e.imgs;paintGallery();});
-    gnext.addEventListener('click',()=>{const e=data()[sel];img=(img+1)%e.imgs;paintGallery();});
+    gprev.addEventListener('click',()=>{const e=data()[sel];if(!e.images.length)return;img=(img-1+e.images.length)%e.images.length;paintGallery();});
+    gnext.addEventListener('click',()=>{const e=data()[sel];if(!e.images.length)return;img=(img+1)%e.images.length;paintGallery();});
     vswitch.querySelectorAll('.vopt').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view==='card')));
 
     renderList();renderCards();paint();moveInk();moveVInk();
     addEventListener('resize',()=>{moveInk();moveVInk();syncHeight();});
     if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{moveInk();moveVInk();syncHeight();});
     requestAnimationFrame(()=>requestAnimationFrame(syncHeight));
+
+    let workSeen=false;
+    new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting&&!workSeen){workSeen=true;renderDetail(true);}});},{threshold:.25}).observe(document.getElementById('work'));
   })();
 
   // flair — instrument readout
