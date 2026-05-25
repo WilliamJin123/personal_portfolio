@@ -5,6 +5,34 @@
 // still back the /work/[slug] project pages.
 //   - the global style block is emitted unscoped, verbatim
 //   - the inline client script is emitted as-is, not bundled by Vite
+import { entries } from '../resume/data/entries';
+import { tokenize } from '../resume/tokenize';
+import { tokensToHtml } from '../resume/html';
+import { portfolioMedia } from '../data/portfolio-media';
+
+const toView = (e: (typeof entries)[number]) => {
+  const m = portfolioMedia[e.id] ?? {};
+  return {
+    id: e.id,
+    title: e.title,
+    role: e.role ?? '',
+    dateLabel: e.dateLabel,
+    location: e.location ?? '',
+    subtitle: e.subtitle ?? '',
+    link: e.link ?? null,
+    bulletsHtml: e.bullets.map((b) => tokensToHtml(tokenize(b.text))),
+    stack: m.stack ?? [],
+    images: m.images ?? [],
+    footnotes: m.footnotes ?? [],
+  };
+};
+
+const workData = {
+  projects: entries.filter((e) => e.section === 'projects').map(toView),
+  work: entries.filter((e) => e.section === 'experience').map(toView),
+};
+// Escape `<` so the serialized JSON can't break out of the <script> tag.
+const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -536,6 +564,7 @@
   <div class="hud-row"><span class="hk">waterloo</span><span class="hv"><span class="dot"></span><span id="hud-time">--:--:--</span></span></div>
 </div>
 
+<script is:inline type="application/json" id="work-data" set:html={workJson}></script>
 <script is:inline>
   const clamp=x=>Math.max(0,Math.min(1,x));
 
