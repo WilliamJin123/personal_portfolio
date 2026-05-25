@@ -239,3 +239,10 @@ Thumbs.db
 .vercel/
 .cloudflare/
 .wrangler/
+
+# brainstorming visual companion scratch
+.superpowers/
+
+# Resume system
+/out/
+/src/resume/data/
