@@ -45,10 +45,16 @@ function project(e: ResumeEntry, ids: string[]): string {
   const name = e.link
     ? `{\\href{${e.link.href}}{\\textcolor{black}{${escapeLatex(e.title)}~\\raisebox{0.1em}{\\scalebox{0.8}{\\faExternalLink*}}}}}`
     : `{${escapeLatex(e.title)}}`;
+  const subtitle = [
+    ...(e.awards ?? []).map((a) => `\\award{${escapeLatex(a)}}`),
+    e.subtitle ? escapeLatex(e.subtitle) : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
   return [
     '  \\resumeProject',
     `  ${name}`,
-    `  {${escapeLatex(e.subtitle ?? '')}}`,
+    `  {${subtitle}}`,
     `  {${escapeLatex(e.dateLabel)}}{}`,
     items(e, ids),
   ].join('\n');

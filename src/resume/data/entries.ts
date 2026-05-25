@@ -2,6 +2,31 @@ import type { ResumeEntry } from '../types';
 
 export const entries: ResumeEntry[] = [
   {
+    id: 'csc',
+    section: 'experience',
+    title: 'Correctional Service of Canada',
+    location: 'Ottawa, Ontario (Remote)',
+    role: 'AI Analyst',
+    dateLabel: 'Jan 2026 - May 2026',
+    bullets: [
+      {
+        id: 'rag',
+        text: 'Developed a **RAG** chatbot (10+ engineer team) for employees to query an internal regulation corpus, built on **Azure OpenAI**, **Azure AI Search**, and Container Apps',
+        tags: ['ai', 'rag', 'azure'],
+      },
+      {
+        id: 'ui',
+        text: 'Built front-end features including a **citation panel** and thumbs-up/down response analytics to surface sources and capture user feedback for evaluation',
+        tags: ['frontend', 'analytics'],
+      },
+      {
+        id: 'chunking',
+        text: 'Redesigned the chunking pipeline to parse documents to **HTML** via **Azure Document Intelligence**, eliminating mid-chunk truncation and PDF formatting errors, improving retrieval accuracy **15%** and answer grounding **10%** over baseline across **300** test prompts',
+        tags: ['ai', 'rag', 'azure'],
+      },
+    ],
+  },
+  {
     id: 'ualberta',
     section: 'experience',
     title: 'University of Alberta Energy Mechatronics Lab',
@@ -46,7 +71,7 @@ export const entries: ResumeEntry[] = [
       },
       {
         id: 'tests',
-        text: 'Wrote **JMockit** unit tests and debugged UI issues in Curam components',
+        text: 'Wrote **JMockit** unit tests and debugged UI issues in **Curam** components',
         tags: ['testing', 'java'],
       },
     ],
@@ -80,7 +105,8 @@ export const entries: ResumeEntry[] = [
     id: 'solshare',
     section: 'projects',
     title: 'SolShare',
-    subtitle: '1st for Cohere API best use, won Solana best consumer payment experience at Hack the North',
+    subtitle: 'Hack the North',
+    awards: ['1st Place: Cohere API Best Use', 'Solana Best Consumer Payment Experience'],
     dateLabel: 'Sept 2025',
     link: { label: 'repo', href: 'https://github.com/orgs/HTN-2025/repositories' },
     bullets: [

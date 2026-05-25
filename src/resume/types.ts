@@ -19,7 +19,8 @@ export interface ResumeEntry {
   role?: string;         // job title / degree
   dateLabel: string;     // e.g. "July 2025 - Sept 2025"
   location?: string;
-  subtitle?: string;     // projects: award / grant line
+  subtitle?: string;     // projects: context line (event / grant / "Personal Project")
+  awards?: string[];     // wins/honors — emphasized (UI badges, \award in LaTeX)
   link?: { label: string; href: string };
   bullets: ResumeBullet[];
   include?: boolean;     // default true; in the résumé pool

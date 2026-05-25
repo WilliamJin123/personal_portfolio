@@ -21,6 +21,7 @@ const toView = (e: (typeof entries)[number]) => {
     subtitle: e.subtitle ?? '',
     link: e.link ?? null,
     bulletsHtml: e.bullets.map((b) => tokensToHtml(tokenize(b.text))),
+    awards: e.awards ?? [],
     stack: m.stack ?? [],
     images: m.images ?? [],
     footnotes: m.footnotes ?? [],
@@ -162,11 +163,13 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   .vswitch .vopt.active{color:var(--paper)}
   .vswitch-ink{position:absolute;top:3px;bottom:3px;left:3px;width:0;background:var(--amber);border-radius:7px;z-index:0;transition:left .42s cubic-bezier(.7,0,.15,1),width .42s cubic-bezier(.7,0,.15,1)}
 
-  .wmd{display:grid;grid-template-columns:0.56fr 1.92fr 1.04fr;gap:clamp(16px,2.2vw,36px);align-items:start}
+  .wmd{display:grid;grid-template-columns:0.56fr 1.5fr 1.6fr;gap:clamp(16px,2.2vw,36px);align-items:start}
   .wlist{display:flex;flex-direction:column;border-top:1px solid var(--rule)}
   .witem{position:relative;text-align:left;background:none;border:0;border-bottom:1px dashed var(--rule);padding:14px 12px 14px 16px;cursor:pointer;display:flex;align-items:baseline;gap:12px;color:var(--mute);transition:color .3s,padding .3s}
   .witem .wn{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--faint);transition:color .3s}
   .witem .wt{font-size:15px;font-weight:480;letter-spacing:-.01em}
+  .witem .wtw{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .witem .wdate{font-family:var(--mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
   .witem:hover{color:var(--ink);padding-left:24px}
   .witem.active{color:var(--ink)}
   .witem.active .wn{color:var(--amber)}
@@ -197,6 +200,11 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   .wd-stack{margin-top:20px;display:flex;flex-wrap:wrap;gap:9px}
   .wd-stack span{font-family:var(--mono);font-size:12px;border:1px solid var(--rule);border-radius:999px;padding:6px 12px;color:var(--ink);background:var(--paper);display:flex;align-items:center;gap:8px;white-space:nowrap}
   .wd-stack span .ic{width:14px;height:14px;flex-shrink:0;background:var(--ink);-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
+  .wd-awards{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}
+  .award{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;letter-spacing:.03em;color:var(--amber);background:rgba(var(--amber-rgb),.08);border:1px solid rgba(var(--amber-rgb),.42);border-radius:999px;padding:6px 12px 6px 11px;white-space:nowrap}
+  .award svg{width:13px;height:13px;flex-shrink:0}
+  @keyframes rAward{0%{opacity:0;transform:scale(.6) translateY(8px);box-shadow:0 0 0 0 rgba(var(--amber-rgb),.45)}55%{transform:scale(1.12)}70%{box-shadow:0 0 0 7px rgba(var(--amber-rgb),0)}100%{opacity:1;transform:scale(1) translateY(0);box-shadow:0 0 0 0 rgba(var(--amber-rgb),0)}}
+  .wdetail.play .award{animation:rAward .62s cubic-bezier(.2,.8,.3,1) backwards;animation-delay:calc(.16s + var(--ai)*.12s)}
 
   @keyframes rRise{from{opacity:0;transform:translateY(13px);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
   @keyframes rBold{0%{transform:scale(.88);color:var(--mute)}45%{color:var(--amber)}60%{transform:scale(1.08)}100%{transform:scale(1);color:var(--ink)}}
@@ -559,6 +567,7 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
           <h3 class="wd-name" id="wdname">—</h3>
           <div class="wd-meta m" id="wdmeta">—</div>
           <div class="wd-subtitle" id="wdsubtitle" hidden></div>
+          <div class="wd-awards" id="wdawards" hidden></div>
           <a class="wd-link rlink" id="wdlink" target="_blank" rel="noreferrer" style="--bi:0" hidden></a>
           <ul class="rbul" id="wdbullets"></ul>
           <div class="wd-stack" id="wdstack"></div>
@@ -732,20 +741,20 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
     const WORK=JSON.parse(document.getElementById('work-data').textContent);
     const seg=document.getElementById('wseg'), segink=document.getElementById('segink');
     const listEl=document.getElementById('wlist'), wcards=document.getElementById('wcards'), wmd=document.getElementById('wmd'), wdetail=document.getElementById('wdetail');
-    const nameEl=document.getElementById('wdname'), metaEl=document.getElementById('wdmeta'), subtitleEl=document.getElementById('wdsubtitle'), bulletsEl=document.getElementById('wdbullets'), linkEl=document.getElementById('wdlink'), idxEl=document.getElementById('wdidx'), stackEl=document.getElementById('wdstack');
+    const nameEl=document.getElementById('wdname'), metaEl=document.getElementById('wdmeta'), subtitleEl=document.getElementById('wdsubtitle'), awardsEl=document.getElementById('wdawards'), bulletsEl=document.getElementById('wdbullets'), linkEl=document.getElementById('wdlink'), idxEl=document.getElementById('wdidx'), stackEl=document.getElementById('wdstack');
     const gcount=document.getElementById('gcount'), gfoot=document.getElementById('gfoot'), gph=document.getElementById('gph'), gprev=document.getElementById('gprev'), gnext=document.getElementById('gnext');
     const vswitch=document.getElementById('vswitch'), vink=document.getElementById('vswitchink'), workBody=wmd.parentElement;
     let set='projects', sel=0, img=0, view='list';
     const data=()=>WORK[set], pad=x=>String(x).padStart(2,'0');
 
     const moveInk=()=>{const b=seg.querySelector('.sg.active');if(b){segink.style.left=b.offsetLeft+'px';segink.style.width=b.offsetWidth+'px';}};
-    const chips=st=>st.map(k=>`<span style="--i:url('${iconURL(k)}')"><span class="ic"></span>${k}</span>`).join('');
+    const chips=st=>st.map(it=>{const label=typeof it==='string'?it:it.label,slug=typeof it==='string'?it:it.icon,ic=slug?(slug[0]==='/'?slug:iconURL(slug)):'';return `<span style="--i:url('${ic}')"><span class="ic"></span>${label}</span>`;}).join('');
     const metaLine=e=>[e.role,e.dateLabel,e.location].filter(Boolean).join(' · ');
     const cardSub=e=>e.subtitle || metaLine(e);
-    const renderList=()=>{listEl.innerHTML=data().map((e,i)=>`<button class="witem${i===sel?' active':''}" data-i="${i}"><span class="wbar"></span><span class="wn">${pad(i+1)}</span><span class="wt">${e.title}</span></button>`).join('');};
+    const renderList=()=>{listEl.innerHTML=data().map((e,i)=>`<button class="witem${i===sel?' active':''}" data-i="${i}"><span class="wbar"></span><span class="wn">${pad(i+1)}</span><span class="wtw"><span class="wt">${e.title}</span><span class="wdate">${e.dateLabel}</span></span></button>`).join('');};
     const renderCards=()=>{wcards.innerHTML=data().map((e,i)=>`<button class="wcard" data-i="${i}"><div class="wc-img"><span class="m">image — tbd</span></div><div class="wc-b"><div class="wc-n">${e.title}</div><div class="wc-s">${cardSub(e)}</div></div></button>`).join('');};
     const paintGallery=()=>{const e=data()[sel],n=e.images.length;gcount.textContent=pad(img+1)+' / '+pad(Math.max(n,1));gfoot.textContent=e.footnotes[img]||'image — optional';gph.textContent=n?('image '+pad(img+1)):'image — tbd';};
-    const paint=()=>{const e=data()[sel];idxEl.textContent=pad(sel+1);nameEl.textContent=e.title;metaEl.textContent=metaLine(e);if(e.subtitle){subtitleEl.textContent=e.subtitle;subtitleEl.hidden=false;}else{subtitleEl.hidden=true;}if(e.link){linkEl.textContent=e.link.label+' ↗';linkEl.href=e.link.href;linkEl.hidden=false;}else{linkEl.hidden=true;}bulletsEl.innerHTML=e.bulletsHtml.map((h,i)=>`<li class="rbullet" style="--bi:${i}">${h}</li>`).join('');stackEl.innerHTML=chips(e.stack);img=0;paintGallery();};
+    const paint=()=>{const e=data()[sel];idxEl.textContent=pad(sel+1);nameEl.textContent=e.title;metaEl.textContent=metaLine(e);if(e.subtitle){subtitleEl.textContent=e.subtitle;subtitleEl.hidden=false;}else{subtitleEl.hidden=true;}if(e.awards&&e.awards.length){awardsEl.innerHTML=e.awards.map((a,j)=>`<span class="award" style="--ai:${j}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>${a}</span>`).join('');awardsEl.hidden=false;}else{awardsEl.hidden=true;}if(e.link){linkEl.textContent=e.link.label+' ↗';linkEl.href=e.link.href;linkEl.hidden=false;}else{linkEl.hidden=true;}bulletsEl.innerHTML=e.bulletsHtml.map((h,i)=>`<li class="rbullet" style="--bi:${i}">${h}</li>`).join('');stackEl.innerHTML=chips(e.stack);img=0;paintGallery();};
     const renderDetail=animate=>{paint();if(animate){wdetail.classList.remove('play');void wdetail.offsetWidth;wdetail.classList.add('play');}};
     const select=(i,animate)=>{sel=i;[...listEl.children].forEach((c,j)=>c.classList.toggle('active',j===i));renderDetail(animate);};
     const switchSet=ns=>{if(ns===set)return;set=ns;sel=0;seg.querySelectorAll('.sg').forEach(b=>b.classList.toggle('active',b.dataset.set===ns));moveInk();renderList();renderCards();renderDetail(true);syncHeight();};
