@@ -1,0 +1,164 @@
+import type { ResumeEntry } from '../types';
+
+export const entries: ResumeEntry[] = [
+  {
+    id: 'ualberta',
+    section: 'experience',
+    title: 'University of Alberta Energy Mechatronics Lab',
+    location: 'Edmonton, Alberta',
+    role: 'Python Developer',
+    dateLabel: 'July 2025 - Sept 2025',
+    bullets: [
+      {
+        id: 'scraper',
+        text: 'Developed a web scraper to automatically track citations of **7,000+** papers across 2,000+ journal websites using Selenium, Beautiful Soup with **Python**',
+        tags: ['python', 'scraping'],
+      },
+      {
+        id: 'map',
+        text: 'Created a publication map to visualize citation networks and communicate research impact',
+        tags: ['dataviz'],
+      },
+      {
+        id: 'db',
+        text: 'Designed and deployed a **SQL Server** database to organize **5,000+** experimental fuel cell files',
+        tags: ['sql', 'data'],
+      },
+    ],
+  },
+  {
+    id: 'jindon',
+    section: 'experience',
+    title: 'Jindon International Ltd.',
+    location: 'Waterloo, Ontario',
+    role: 'Full Stack Software Engineer',
+    dateLabel: 'June 2025 - July 2025',
+    bullets: [
+      {
+        id: 'intake',
+        text: "Built search functions and intake forms for Ontario's social assistance management system using **Java**",
+        tags: ['java', 'fullstack'],
+      },
+      {
+        id: 'sql',
+        text: 'Optimized **SQL** queries (**10x** faster) by eliminating redundant table joins and adding indexes',
+        tags: ['sql', 'performance'],
+      },
+      {
+        id: 'tests',
+        text: 'Wrote **JMockit** unit tests and debugged UI issues in Curam components',
+        tags: ['testing', 'java'],
+      },
+    ],
+  },
+  {
+    id: 'weaccel',
+    section: 'experience',
+    title: 'WE Accelerate Azure & AI Stream',
+    location: 'Waterloo, Ontario',
+    role: 'Professional Development Participant',
+    dateLabel: 'June 2025 - Aug 2025',
+    bullets: [
+      {
+        id: 'chatbot',
+        text: 'Designed and presented a healthcare chatbot MVP for hospital symptom triage in a 7-person team',
+        tags: ['ai', 'product'],
+      },
+      {
+        id: 'data',
+        text: 'Led data preprocessing by sourcing datasets from the CDC and created a workflow for model training',
+        tags: ['ml', 'data'],
+      },
+      {
+        id: 'certs',
+        text: 'Earned Azure Fundamentals (**AZ-900**) and Azure AI Fundamentals (**AI-900**) certifications',
+        tags: ['azure', 'certification'],
+      },
+    ],
+  },
+  {
+    id: 'solshare',
+    section: 'projects',
+    title: 'SolShare',
+    subtitle: '1st for Cohere API best use, won Solana best consumer payment experience at Hack the North',
+    dateLabel: 'Sept 2025',
+    link: { label: 'repo', href: 'https://github.com/orgs/HTN-2025/repositories' },
+    bullets: [
+      {
+        id: 'ios',
+        text: 'Developed a bill-splitting **iOS** application that automates receipt parsing and payment processing',
+        tags: ['ios', 'swift'],
+      },
+      {
+        id: 'cohere',
+        text: "Extracted receipt data using Cohere's vision and reasoning models through a **self-critic** workflow",
+        tags: ['ai', 'llm'],
+      },
+      {
+        id: 'backend',
+        text: 'Built the backend using **Firebase Cloud Functions** and **Firestore** and the frontend using **SwiftUI**',
+        tags: ['firebase', 'swiftui'],
+      },
+    ],
+  },
+  {
+    id: 'solana-sdk',
+    section: 'projects',
+    title: 'Solana Swift SDK',
+    subtitle: 'Grant-Funded Development - Solana Foundation',
+    dateLabel: 'Oct 2025 - Nov 2025',
+    link: { label: 'repo', href: 'https://github.com/The-SolShare-Team' },
+    bullets: [
+      {
+        id: 'sdk',
+        text: "Developed Solana's first official native **Swift SDK** enabling **iOS** apps to easily integrate multi-wallet functionality for leading crypto wallet providers: Phantom, Backpack, and Solflare",
+        tags: ['swift', 'sdk'],
+      },
+      {
+        id: 'ship',
+        text: 'Shipping open-source SDK via Swift Package Manager with documentation by early-mid November',
+        tags: ['open-source'],
+      },
+    ],
+  },
+  {
+    id: 'email-llm',
+    section: 'projects',
+    title: 'Email Assistant',
+    subtitle: 'Personal Project',
+    dateLabel: 'Sept 2025',
+    link: { label: 'repo', href: 'https://github.com/WilliamJin123/email-llm' },
+    bullets: [
+      {
+        id: 'lora',
+        text: 'Created an email LoRA by fine-tuning Qwen3-14B using **Unsloth** and **Huggingface**',
+        tags: ['ml', 'llm'],
+      },
+      {
+        id: 'data',
+        text: 'Trained model on 5,000+ synthetic email datasets preprocessed with **Pandas** and **NumPy**',
+        tags: ['ml', 'data'],
+      },
+      {
+        id: 'eval',
+        text: 'Outperformed Qwen3-14B thinking mode in human preference tests (**72%** pref. rate)',
+        tags: ['ml', 'eval'],
+      },
+    ],
+  },
+  {
+    id: 'uwaterloo',
+    section: 'education',
+    title: 'University of Waterloo',
+    location: 'Waterloo, Ontario',
+    role: 'Bachelor of Software Engineering',
+    dateLabel: 'Sept 2024 - May 2029',
+    bullets: [
+      { id: 'gpa', text: 'GPA: 3.90/4.00' },
+      {
+        id: 'courses',
+        text: 'Relevant Coursework: Intro to Data Abstraction and Implementation, Statistics, Foundations of Sequential Programs, Digital Computers',
+      },
+    ],
+  },
+];

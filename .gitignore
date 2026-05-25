@@ -245,4 +245,5 @@ Thumbs.db
 
 # Resume system
 /out/
-/src/resume/data/
+/src/resume/data/profile.ts
+/src/resume/data/index.ts
