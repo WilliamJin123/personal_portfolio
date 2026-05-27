@@ -267,7 +267,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'bench',
-        text: 'Benchmarked it with a resumable harness for **LongBench-v2** and **OOLONG**, scoring **78%** on an 18-question code-QA slice',
+        text: 'Benchmarked it with a resumable harness for **LongBench-v2** and **OOLONG**, scoring **78%** on an 18-question code-QA slice where the source paper reports base models near **24%**',
         tags: ['ai', 'eval'],
       },
     ],
