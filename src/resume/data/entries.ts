@@ -104,6 +104,36 @@ export const entries: ResumeEntry[] = [
     ],
   },
   {
+    id: 'swarm-rag',
+    section: 'projects',
+    title: 'Swarm RAG',
+    subtitle: 'Research Project',
+    dateLabel: 'Dec 2025 - Feb 2026',
+    links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/swarm_rag' }],
+    bullets: [
+      {
+        id: 'aco',
+        text: 'Built an **ACO**-inspired **GraphRAG** retriever where ant agents run vector-seeded walks over the **STaRK Prime** knowledge graph (**129K+** nodes), ranking answers via pheromone trails and tunable heuristics',
+        tags: ['ai', 'rag', 'python'],
+      },
+      {
+        id: 'mapelites',
+        text: "Wrapped it in a **quality-diversity (MAP-Elites)** optimizer that evolves the retriever's hyperparameters and scoring weights via metric-aware and **LLM-guided** mutation",
+        tags: ['ml', 'optimization'],
+      },
+      {
+        id: 'arch',
+        text: 'Designed a pluggable architecture with **vector-store**, **graph-store**, and **embedding-provider** interfaces (Cohere, Gemini, OpenAI adapters) and a **registry** of swappable heuristics and genetic operators',
+        tags: ['architecture', 'python'],
+      },
+      {
+        id: 'bench',
+        text: 'Implemented it GPU-native in **PyTorch** (**30K+** LOC), reaching **Recall@20** on par with dense-retrieval baselines',
+        tags: ['ml', 'pytorch', 'eval'],
+      },
+    ],
+  },
+  {
     id: 'graphrag-agent',
     section: 'projects',
     title: 'GraphRAG Codebase Agent',

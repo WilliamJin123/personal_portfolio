@@ -19,6 +19,10 @@ export const portfolioMedia: Record<string, PortfolioMedia> = {
   weaccel: { stack: ['microsoftazure', 'python'], images: [] },
   // projects
   solshare: { stack: ['swift', 'firebase'], images: [] },
+  'swarm-rag': {
+    stack: ['pytorch', 'numpy', 'openai', { label: 'Gemini', icon: 'googlegemini' }, { label: 'Cohere', icon: '/icons/cohere.svg' }],
+    images: [],
+  },
   'solana-sdk': { stack: ['swift', 'solana'], images: [] },
   'graphrag-agent': {
     stack: ['python', { label: 'FalkorDB' }, { label: 'Agno' }, { label: 'Cerebras' }, { label: 'Cohere' }],
