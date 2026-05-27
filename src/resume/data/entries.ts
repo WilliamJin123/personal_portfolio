@@ -192,7 +192,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'interp',
-        text: 'Investigated what the network learns by curve-fitting each spline activation against a library of known functions and testing whether the spline shapes alone recover a target image',
+        text: 'Hypothesized that learnable **KAN** spline activations would be more interpretable than an MLP-based **CPPN**, built curve-fitting and weight-reset probes to test it, and measured no clear interpretability gain',
         tags: ['ml', 'interpretability'],
       },
     ],
