@@ -29,7 +29,7 @@ export const fixtureLibrary: ResumeLibrary = {
       title: 'SolShare',
       subtitle: 'Won at Hack the North',
       dateLabel: 'Sept 2025',
-      link: { label: 'repo', href: 'https://github.com/x/sol' },
+      links: [{ label: 'repo', href: 'https://github.com/x/sol' }],
       bullets: [{ id: 'a', text: 'Built an **iOS** app' }],
     },
     {

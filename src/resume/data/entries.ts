@@ -108,7 +108,7 @@ export const entries: ResumeEntry[] = [
     subtitle: 'Hack the North',
     awards: ['1st Place: Cohere API Best Use', 'Solana Best Consumer Payment Experience'],
     dateLabel: 'Sept 2025',
-    link: { label: 'repo', href: 'https://github.com/orgs/HTN-2025/repositories' },
+    links: [{ label: 'repo', href: 'https://github.com/orgs/HTN-2025/repositories' }],
     bullets: [
       {
         id: 'ios',
@@ -133,7 +133,7 @@ export const entries: ResumeEntry[] = [
     title: 'Solana Swift SDK',
     grants: ['Solana Foundation Grant'],
     dateLabel: 'Oct 2025 - Nov 2025',
-    link: { label: 'repo', href: 'https://github.com/The-SolShare-Team' },
+    links: [{ label: 'repo', href: 'https://github.com/The-SolShare-Team' }],
     bullets: [
       {
         id: 'sdk',
@@ -148,12 +148,45 @@ export const entries: ResumeEntry[] = [
     ],
   },
   {
+    id: 'graphrag-agent',
+    section: 'projects',
+    title: 'GraphRAG Codebase Agent',
+    subtitle: 'Solana Swift SDK',
+    dateLabel: 'Nov 2025 - Dec 2025',
+    links: [
+      { label: 'graphrag', href: 'https://github.com/The-SolShare-Team/Docs_GraphRAG' },
+      { label: 'implementer', href: 'https://github.com/The-SolShare-Team/demo_app_agent' },
+    ],
+    bullets: [
+      {
+        id: 'graph',
+        text: 'Built a **GraphRAG** assistant over the Solana SDK, indexing **600+** Swift symbols into a **FalkorDB** code graph with typed relationships (inherits, conforms-to, member-of)',
+        tags: ['ai', 'graphrag', 'python'],
+      },
+      {
+        id: 'tools',
+        text: 'Engineered custom **Agno** tools for multi-hop **graph traversal** and vector search with **Cohere** reranking over class and protocol structure',
+        tags: ['ai', 'agents', 'python'],
+      },
+      {
+        id: 'implementer',
+        text: 'Built a multi-agent **Agno** implementer that autonomously writes **SwiftUI** from the repo via GitHub and sandboxed filesystem tools',
+        tags: ['ai', 'agents', 'swift'],
+      },
+      {
+        id: 'models',
+        text: 'Orchestrated cheap open-weight models (**GLM-4.6**, **GPT-OSS-120B**) on **Cerebras** to drive the agents at low cost',
+        tags: ['ai', 'llm', 'infra'],
+      },
+    ],
+  },
+  {
     id: 'email-llm',
     section: 'projects',
-    title: 'Email Assistant',
+    title: 'Email-Style LLM SFT',
     subtitle: 'Personal Project',
     dateLabel: 'Sept 2025',
-    link: { label: 'repo', href: 'https://github.com/WilliamJin123/email-llm' },
+    links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/email-llm' }],
     bullets: [
       {
         id: 'lora',

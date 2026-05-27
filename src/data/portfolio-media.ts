@@ -20,5 +20,9 @@ export const portfolioMedia: Record<string, PortfolioMedia> = {
   // projects
   solshare: { stack: ['swift', 'firebase'], images: [] },
   'solana-sdk': { stack: ['swift', 'solana'], images: [] },
+  'graphrag-agent': {
+    stack: ['python', { label: 'FalkorDB' }, { label: 'Agno' }, { label: 'Cerebras' }, { label: 'Cohere' }],
+    images: [],
+  },
   'email-llm': { stack: ['pytorch', 'huggingface', 'pandas', 'numpy'], images: [] },
 };

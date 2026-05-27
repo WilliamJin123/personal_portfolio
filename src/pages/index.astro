@@ -19,7 +19,7 @@ const toView = (e: (typeof entries)[number]) => {
     dateLabel: e.dateLabel,
     location: e.location ?? '',
     subtitle: e.subtitle ?? '',
-    link: e.link ?? null,
+    links: e.links ?? [],
     bulletsHtml: e.bullets.map((b) => tokensToHtml(tokenize(b.text))),
     awards: e.awards ?? [],
     grants: e.grants ?? [],
@@ -191,7 +191,8 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   .wd-name{font-size:clamp(24px,2.9vw,38px);font-weight:540;letter-spacing:-.025em;line-height:1.06}
   .wd-meta{margin-top:9px;color:var(--mute);text-transform:none;letter-spacing:.04em}
   .wd-subtitle{margin-top:8px;font-size:13px;font-style:italic;color:var(--mute);line-height:1.45}
-  .wd-link{display:inline-block;margin-top:14px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+  .wd-links{margin-top:14px;display:flex;flex-wrap:wrap;gap:18px}
+  .wd-link{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
   .rbul{list-style:none;margin:18px 0 0;padding:0}
   .rbullet{position:relative;font-size:14px;line-height:1.6;color:var(--ink);margin-bottom:13px;padding-left:16px}
   .rbullet::before{content:"–";position:absolute;left:0;color:var(--faint)}
@@ -571,7 +572,7 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
           <div class="wd-meta m" id="wdmeta">—</div>
           <div class="wd-subtitle" id="wdsubtitle" hidden></div>
           <div class="wd-awards" id="wdawards" hidden></div>
-          <a class="wd-link rlink" id="wdlink" target="_blank" rel="noreferrer" style="--bi:0" hidden></a>
+          <div class="wd-links" id="wdlinks" hidden></div>
           <ul class="rbul" id="wdbullets"></ul>
           <div class="wd-stack" id="wdstack"></div>
         </div>
@@ -744,7 +745,7 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
     const WORK=JSON.parse(document.getElementById('work-data').textContent);
     const seg=document.getElementById('wseg'), segink=document.getElementById('segink');
     const listEl=document.getElementById('wlist'), wcards=document.getElementById('wcards'), wmd=document.getElementById('wmd'), wdetail=document.getElementById('wdetail');
-    const nameEl=document.getElementById('wdname'), metaEl=document.getElementById('wdmeta'), subtitleEl=document.getElementById('wdsubtitle'), awardsEl=document.getElementById('wdawards'), bulletsEl=document.getElementById('wdbullets'), linkEl=document.getElementById('wdlink'), idxEl=document.getElementById('wdidx'), stackEl=document.getElementById('wdstack');
+    const nameEl=document.getElementById('wdname'), metaEl=document.getElementById('wdmeta'), subtitleEl=document.getElementById('wdsubtitle'), awardsEl=document.getElementById('wdawards'), bulletsEl=document.getElementById('wdbullets'), linksEl=document.getElementById('wdlinks'), idxEl=document.getElementById('wdidx'), stackEl=document.getElementById('wdstack');
     const gcount=document.getElementById('gcount'), gfoot=document.getElementById('gfoot'), gph=document.getElementById('gph'), gprev=document.getElementById('gprev'), gnext=document.getElementById('gnext');
     const vswitch=document.getElementById('vswitch'), vink=document.getElementById('vswitchink'), workBody=wmd.parentElement;
     let set='projects', sel=0, img=0, view='list';
@@ -759,7 +760,7 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
     const renderList=()=>{listEl.innerHTML=data().map((e,i)=>`<button class="witem${i===sel?' active':''}" data-i="${i}"><span class="wbar"></span><span class="wn">${pad(i+1)}</span><span class="wtw"><span class="wt">${e.title}</span><span class="wdate">${e.dateLabel}</span></span></button>`).join('');};
     const renderCards=()=>{wcards.innerHTML=data().map((e,i)=>`<button class="wcard" data-i="${i}"><div class="wc-img"><span class="m">image — tbd</span></div><div class="wc-b"><div class="wc-n">${e.title}</div><div class="wc-s">${cardSub(e)}</div></div></button>`).join('');};
     const paintGallery=()=>{const e=data()[sel],n=e.images.length;gcount.textContent=pad(img+1)+' / '+pad(Math.max(n,1));gfoot.textContent=e.footnotes[img]||'image — optional';gph.textContent=n?('image '+pad(img+1)):'image — tbd';};
-    const paint=()=>{const e=data()[sel];idxEl.textContent=pad(sel+1);nameEl.textContent=e.title;metaEl.textContent=metaLine(e);if(e.subtitle){subtitleEl.textContent=e.subtitle;subtitleEl.hidden=false;}else{subtitleEl.hidden=true;}const honors=[...(e.awards||[]).map(a=>['award',TROPHY,a]),...(e.grants||[]).map(g=>['grant',DOLLAR,g])];if(honors.length){awardsEl.innerHTML=honors.map(([c,ic,t],j)=>`<span class="${c}" style="--ai:${j}">${ic}${t}</span>`).join('');awardsEl.hidden=false;}else{awardsEl.hidden=true;}if(e.link){linkEl.textContent=e.link.label+' ↗';linkEl.href=e.link.href;linkEl.hidden=false;}else{linkEl.hidden=true;}bulletsEl.innerHTML=e.bulletsHtml.map((h,i)=>`<li class="rbullet" style="--bi:${i}">${h}</li>`).join('');stackEl.innerHTML=chips(e.stack);img=0;paintGallery();};
+    const paint=()=>{const e=data()[sel];idxEl.textContent=pad(sel+1);nameEl.textContent=e.title;metaEl.textContent=metaLine(e);if(e.subtitle){subtitleEl.textContent=e.subtitle;subtitleEl.hidden=false;}else{subtitleEl.hidden=true;}const honors=[...(e.awards||[]).map(a=>['award',TROPHY,a]),...(e.grants||[]).map(g=>['grant',DOLLAR,g])];if(honors.length){awardsEl.innerHTML=honors.map(([c,ic,t],j)=>`<span class="${c}" style="--ai:${j}">${ic}${t}</span>`).join('');awardsEl.hidden=false;}else{awardsEl.hidden=true;}if(e.links&&e.links.length){linksEl.innerHTML=e.links.map((l,j)=>`<a class="wd-link rlink" href="${l.href}" target="_blank" rel="noreferrer" style="--bi:${j}">${l.label} ↗</a>`).join('');linksEl.hidden=false;}else{linksEl.hidden=true;}bulletsEl.innerHTML=e.bulletsHtml.map((h,i)=>`<li class="rbullet" style="--bi:${i}">${h}</li>`).join('');stackEl.innerHTML=chips(e.stack);img=0;paintGallery();};
     const renderDetail=animate=>{paint();if(animate){wdetail.classList.remove('play');void wdetail.offsetWidth;wdetail.classList.add('play');}};
     const select=(i,animate)=>{sel=i;[...listEl.children].forEach((c,j)=>c.classList.toggle('active',j===i));renderDetail(animate);};
     const switchSet=ns=>{if(ns===set)return;set=ns;sel=0;seg.querySelectorAll('.sg').forEach(b=>b.classList.toggle('active',b.dataset.set===ns));moveInk();renderList();renderCards();renderDetail(true);syncHeight();};

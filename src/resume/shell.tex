@@ -175,6 +175,8 @@
 % \grant highlights funding/grants (upright bold green + dollar sign).
 \definecolor{grantgreen}{RGB}{58,125,92}
 \newcommand{\grant}[1]{{\normalfont\textbf{\textcolor{grantgreen}{\faDollarSign~#1}}}\hspace{6pt}}
+% \repolink renders a secondary repo link (github icon + label) in a project subtitle.
+\newcommand{\repolink}[2]{{\normalfont\href{#1}{\footnotesize\faGithub~#2}}\hspace{6pt}}
 
 %%RESUME_BODY%%
 

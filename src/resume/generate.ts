@@ -42,13 +42,16 @@ function subheading(e: ResumeEntry, ids: string[]): string {
 }
 
 function project(e: ResumeEntry, ids: string[]): string {
-  const name = e.link
-    ? `{\\href{${e.link.href}}{\\textcolor{black}{${escapeLatex(e.title)}~\\raisebox{0.1em}{\\scalebox{0.8}{\\faExternalLink*}}}}}`
+  const links = e.links ?? [];
+  const primary = links[0];
+  const name = primary
+    ? `{\\href{${primary.href}}{\\textcolor{black}{${escapeLatex(e.title)}~\\raisebox{0.1em}{\\scalebox{0.8}{\\faExternalLink*}}}}}`
     : `{${escapeLatex(e.title)}}`;
   const subtitle = [
     ...(e.awards ?? []).map((a) => `\\award{${escapeLatex(a)}}`),
     ...(e.grants ?? []).map((g) => `\\grant{${escapeLatex(g)}}`),
     e.subtitle ? escapeLatex(e.subtitle) : '',
+    ...links.slice(1).map((l) => `\\repolink{${l.href}}{${escapeLatex(l.label)}}`),
   ]
     .filter(Boolean)
     .join(' ');

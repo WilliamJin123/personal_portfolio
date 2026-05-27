@@ -22,7 +22,7 @@ export interface ResumeEntry {
   subtitle?: string;     // projects: context line (event / grant / "Personal Project")
   awards?: string[];     // wins/honors — amber trophy badges (UI) + \award (LaTeX)
   grants?: string[];     // funding/grants — green money badges (UI) + \grant (LaTeX)
-  link?: { label: string; href: string };
+  links?: { label: string; href: string }[]; // first = primary (name links to it); extras render as labeled repo links
   bullets: ResumeBullet[];
   include?: boolean;     // default true; in the résumé pool
 }
