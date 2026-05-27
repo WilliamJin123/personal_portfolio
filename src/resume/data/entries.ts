@@ -1,5 +1,7 @@
 import type { ResumeEntry } from '../types';
 
+// Order within each section is reverse-chronological (most recent first); this
+// array order drives both the public viewer and the generated résumé.
 export const entries: ResumeEntry[] = [
   {
     id: 'csc',
@@ -52,31 +54,6 @@ export const entries: ResumeEntry[] = [
     ],
   },
   {
-    id: 'jindon',
-    section: 'experience',
-    title: 'Jindon International Ltd.',
-    location: 'Waterloo, Ontario',
-    role: 'Full Stack Software Engineer',
-    dateLabel: 'June 2025 - July 2025',
-    bullets: [
-      {
-        id: 'intake',
-        text: "Built search functions and intake forms for Ontario's social assistance management system using **Java**",
-        tags: ['java', 'fullstack'],
-      },
-      {
-        id: 'sql',
-        text: 'Optimized **SQL** queries (**10x** faster) by eliminating redundant table joins and adding indexes',
-        tags: ['sql', 'performance'],
-      },
-      {
-        id: 'tests',
-        text: 'Wrote **JMockit** unit tests and debugged UI issues in **Curam** components',
-        tags: ['testing', 'java'],
-      },
-    ],
-  },
-  {
     id: 'weaccel',
     section: 'experience',
     title: 'WE Accelerate Azure & AI Stream',
@@ -102,48 +79,27 @@ export const entries: ResumeEntry[] = [
     ],
   },
   {
-    id: 'solshare',
-    section: 'projects',
-    title: 'SolShare',
-    subtitle: 'Hack the North',
-    awards: ['1st Place: Cohere API Best Use', 'Solana Best Consumer Payment Experience'],
-    dateLabel: 'Sept 2025',
-    links: [{ label: 'repo', href: 'https://github.com/orgs/HTN-2025/repositories' }],
+    id: 'jindon',
+    section: 'experience',
+    title: 'Jindon International Ltd.',
+    location: 'Waterloo, Ontario',
+    role: 'Full Stack Software Engineer',
+    dateLabel: 'June 2025 - July 2025',
     bullets: [
       {
-        id: 'ios',
-        text: 'Developed a bill-splitting **iOS** application that automates receipt parsing and payment processing',
-        tags: ['ios', 'swift'],
+        id: 'intake',
+        text: "Built search functions and intake forms for Ontario's social assistance management system using **Java**",
+        tags: ['java', 'fullstack'],
       },
       {
-        id: 'cohere',
-        text: "Extracted receipt data using Cohere's vision and reasoning models through a **self-critic** workflow",
-        tags: ['ai', 'llm'],
+        id: 'sql',
+        text: 'Optimized **SQL** queries (**10x** faster) by eliminating redundant table joins and adding indexes',
+        tags: ['sql', 'performance'],
       },
       {
-        id: 'backend',
-        text: 'Built the backend using **Firebase Cloud Functions** and **Firestore** and the frontend using **SwiftUI**',
-        tags: ['firebase', 'swiftui'],
-      },
-    ],
-  },
-  {
-    id: 'solana-sdk',
-    section: 'projects',
-    title: 'Solana Swift SDK',
-    grants: ['Solana Foundation Grant'],
-    dateLabel: 'Oct 2025 - Nov 2025',
-    links: [{ label: 'repo', href: 'https://github.com/The-SolShare-Team' }],
-    bullets: [
-      {
-        id: 'sdk',
-        text: "Developed Solana's first official native **Swift SDK** enabling **iOS** apps to easily integrate multi-wallet functionality for leading crypto wallet providers: Phantom, Backpack, and Solflare",
-        tags: ['swift', 'sdk'],
-      },
-      {
-        id: 'ship',
-        text: 'Shipped the open-source SDK via **Swift Package Manager** with full documentation',
-        tags: ['open-source'],
+        id: 'tests',
+        text: 'Wrote **JMockit** unit tests and debugged UI issues in **Curam** components',
+        tags: ['testing', 'java'],
       },
     ],
   },
@@ -177,6 +133,52 @@ export const entries: ResumeEntry[] = [
         id: 'models',
         text: 'Orchestrated cheap open-weight models (**GLM-4.6**, **GPT-OSS-120B**) on **Cerebras** to drive the agents at low cost',
         tags: ['ai', 'llm', 'infra'],
+      },
+    ],
+  },
+  {
+    id: 'solana-sdk',
+    section: 'projects',
+    title: 'Solana Swift SDK',
+    grants: ['Solana Foundation Grant'],
+    dateLabel: 'Oct 2025 - Nov 2025',
+    links: [{ label: 'repo', href: 'https://github.com/The-SolShare-Team' }],
+    bullets: [
+      {
+        id: 'sdk',
+        text: "Developed Solana's first official native **Swift SDK** enabling **iOS** apps to easily integrate multi-wallet functionality for leading crypto wallet providers: Phantom, Backpack, and Solflare",
+        tags: ['swift', 'sdk'],
+      },
+      {
+        id: 'ship',
+        text: 'Shipped the open-source SDK via **Swift Package Manager** with full documentation',
+        tags: ['open-source'],
+      },
+    ],
+  },
+  {
+    id: 'solshare',
+    section: 'projects',
+    title: 'SolShare',
+    subtitle: 'Hack the North',
+    awards: ['1st Place: Cohere API Best Use', 'Solana Best Consumer Payment Experience'],
+    dateLabel: 'Sept 2025',
+    links: [{ label: 'repo', href: 'https://github.com/orgs/HTN-2025/repositories' }],
+    bullets: [
+      {
+        id: 'ios',
+        text: 'Developed a bill-splitting **iOS** application that automates receipt parsing and payment processing',
+        tags: ['ios', 'swift'],
+      },
+      {
+        id: 'cohere',
+        text: "Extracted receipt data using Cohere's vision and reasoning models through a **self-critic** workflow",
+        tags: ['ai', 'llm'],
+      },
+      {
+        id: 'backend',
+        text: 'Built the backend using **Firebase Cloud Functions** and **Firestore** and the frontend using **SwiftUI**',
+        tags: ['firebase', 'swiftui'],
       },
     ],
   },
