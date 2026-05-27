@@ -25,7 +25,13 @@ export const portfolioMedia: Record<string, PortfolioMedia> = {
   },
   'solana-sdk': { stack: ['swift', 'solana'], images: [] },
   'graphrag-agent': {
-    stack: ['python', { label: 'FalkorDB' }, { label: 'Agno' }, { label: 'Cerebras' }, { label: 'Cohere' }],
+    stack: [
+      'python',
+      { label: 'FalkorDB', icon: '/icons/falkordb.svg' },
+      { label: 'Agno', icon: '/icons/agno.svg' },
+      { label: 'Cerebras', icon: '/icons/cerebras.svg' },
+      { label: 'Cohere', icon: '/icons/cohere.svg' },
+    ],
     images: [],
   },
   'email-llm': { stack: ['pytorch', 'huggingface', 'pandas', 'numpy'], images: [] },

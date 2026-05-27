@@ -113,23 +113,23 @@ export const entries: ResumeEntry[] = [
     bullets: [
       {
         id: 'aco',
-        text: 'Built an **ACO**-inspired **GraphRAG** retriever where ant agents run vector-seeded walks over the **STaRK Prime** knowledge graph (**129K+** nodes), ranking answers via pheromone trails and tunable heuristics',
+        text: 'Built an **ACO**-inspired **GraphRAG** retriever: ant agents walk the **STaRK Prime** knowledge graph (**129K+** nodes) with pheromone as a **repulsion** signal (inverting classic ACO) and visit-consensus ranking',
         tags: ['ai', 'rag', 'python'],
       },
       {
         id: 'mapelites',
-        text: "Wrapped it in a **quality-diversity (MAP-Elites)** optimizer that evolves the retriever's hyperparameters and scoring weights via metric-aware and **LLM-guided** mutation",
+        text: 'Evolved its scoring **functions** as **expression trees** (**genetic programming**) under a **quality-diversity (MAP-Elites)** optimizer with self-adaptive and **LLM-guided** mutation',
         tags: ['ml', 'optimization'],
       },
       {
         id: 'arch',
-        text: 'Designed a pluggable architecture with **vector-store**, **graph-store**, and **embedding-provider** interfaces (Cohere, Gemini, OpenAI adapters) and a **registry** of swappable heuristics and genetic operators',
+        text: 'Designed a pluggable architecture: **vector-store**, **graph-store**, and **embedding-provider** interfaces (Cohere, Gemini, OpenAI) plus a **registry** of swappable heuristics and operators',
         tags: ['architecture', 'python'],
       },
       {
-        id: 'bench',
-        text: 'Implemented it GPU-native in **PyTorch** (**30K+** LOC), reaching **Recall@20** on par with dense-retrieval baselines',
-        tags: ['ml', 'pytorch', 'eval'],
+        id: 'systems',
+        text: 'Implemented it **GPU-native** in **PyTorch** (**30K+** LOC), vectorizing the full swarm into batched tensor ops over a **CSR** graph (**16M** edges in **65MB**)',
+        tags: ['systems', 'pytorch', 'gpu'],
       },
     ],
   },
@@ -140,8 +140,8 @@ export const entries: ResumeEntry[] = [
     subtitle: 'Solana Swift SDK',
     dateLabel: 'Nov 2025 - Dec 2025',
     links: [
-      { label: 'graphrag', href: 'https://github.com/The-SolShare-Team/Docs_GraphRAG' },
-      { label: 'implementer', href: 'https://github.com/The-SolShare-Team/demo_app_agent' },
+      { label: 'chatbot', href: 'https://github.com/The-SolShare-Team/Docs_GraphRAG' },
+      { label: 'coding agent', href: 'https://github.com/The-SolShare-Team/demo_app_agent' },
     ],
     bullets: [
       {
