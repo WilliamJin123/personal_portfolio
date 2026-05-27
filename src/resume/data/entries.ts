@@ -113,23 +113,52 @@ export const entries: ResumeEntry[] = [
     bullets: [
       {
         id: 'aco',
-        text: 'Built an **ACO**-inspired **GraphRAG** retriever: ant agents walk the **STaRK Prime** knowledge graph (**129K+** nodes) with pheromone as a **repulsion** signal (inverting classic ACO) and visit-consensus ranking',
+        text: 'Built a **GraphRAG** retriever where swarm agents traverse the **129K-node STaRK Prime** knowledge graph, adapting **ant-colony optimization** with a novel pheromone-repulsion signal',
         tags: ['ai', 'rag', 'python'],
       },
       {
         id: 'mapelites',
-        text: 'Evolved its scoring **functions** as **expression trees** (**genetic programming**) under a **quality-diversity (MAP-Elites)** optimizer with self-adaptive and **LLM-guided** mutation',
+        text: 'Auto-tuned its scoring functions via **genetic programming** under a **quality-diversity (MAP-Elites)** optimizer with **LLM-guided** mutation',
         tags: ['ml', 'optimization'],
       },
       {
         id: 'arch',
-        text: 'Designed a pluggable architecture: **vector-store**, **graph-store**, and **embedding-provider** interfaces (Cohere, Gemini, OpenAI) plus a **registry** of swappable heuristics and operators',
+        text: 'Designed a pluggable architecture with swappable **vector-store**, **graph-store**, and **embedding-provider** adapters (Cohere, Gemini, OpenAI)',
         tags: ['architecture', 'python'],
       },
       {
         id: 'systems',
-        text: 'Implemented it **GPU-native** in **PyTorch** (**30K+** LOC), vectorizing the full swarm into batched tensor ops over a **CSR** graph (**16M** edges in **65MB**)',
+        text: 'Implemented it **GPU-native** in **PyTorch**, stepping the entire swarm in parallel as batched tensor ops over a **CSR** graph (**16M** edges in **65MB**)',
         tags: ['systems', 'pytorch', 'gpu'],
+      },
+    ],
+  },
+  {
+    id: 'stitch',
+    section: 'projects',
+    title: 'Stitch',
+    subtitle: 'UofTHacks 13',
+    awards: ['Best Use of Gemini API'],
+    dateLabel: 'Jan 2026',
+    links: [
+      { label: 'devpost', href: 'https://devpost.com/software/stitch-30p6ly' },
+      { label: 'repo', href: 'https://github.com/Phalanyx/stitch' },
+    ],
+    bullets: [
+      {
+        id: 'agent',
+        text: 'Built an agentic AI video editor where a **Gemini** agent edits a live timeline from natural language through **14** custom video and audio tools',
+        tags: ['ai', 'agents'],
+      },
+      {
+        id: 'veo',
+        text: 'Created a **Veo 3.1** transition tool that extracts the boundary frames of two clips and generates a seamless AI-interpolated cut between them',
+        tags: ['ai', 'video'],
+      },
+      {
+        id: 'ui',
+        text: 'Built a custom **React 19** timeline editor where AI and manual edits share a single undo/redo history',
+        tags: ['frontend', 'react'],
       },
     ],
   },
@@ -151,7 +180,7 @@ export const entries: ResumeEntry[] = [
       },
       {
         id: 'tools',
-        text: 'Engineered custom **Agno** tools for multi-hop **graph traversal** and vector search with **Cohere** reranking over class and protocol structure',
+        text: 'Engineered custom **Agno** tools for multi-hop **graph traversal** and vector search with **Cohere** reranking',
         tags: ['ai', 'agents', 'python'],
       },
       {
@@ -176,12 +205,12 @@ export const entries: ResumeEntry[] = [
     bullets: [
       {
         id: 'sdk',
-        text: "Developed Solana's first official native **Swift SDK** enabling **iOS** apps to easily integrate multi-wallet functionality for leading crypto wallet providers: Phantom, Backpack, and Solflare",
+        text: "Developed Solana's first official native **Swift SDK** enabling **iOS** apps to integrate multi-wallet functionality for leading wallet providers: Phantom, Backpack, and Solflare",
         tags: ['swift', 'sdk'],
       },
       {
         id: 'crypto',
-        text: 'Built the wallet connect and signing flow as an **x25519 + XSalsa20-Poly1305** encrypted deeplink handshake (**TweetNacl**), deriving a per-session shared secret to encrypt every request payload',
+        text: 'Built the wallet connect and signing flow as an **x25519 + XSalsa20-Poly1305** encrypted deeplink handshake (**TweetNacl**) with per-session shared secrets',
         tags: ['swift', 'crypto'],
       },
       {
@@ -203,7 +232,10 @@ export const entries: ResumeEntry[] = [
     subtitle: 'Hack the North',
     awards: ['1st Place: Cohere API Best Use', 'Solana Best Consumer Payment Experience'],
     dateLabel: 'Sept 2025',
-    links: [{ label: 'repo', href: 'https://github.com/orgs/HTN-2025/repositories' }],
+    links: [
+      { label: 'devpost', href: 'https://devpost.com/software/solshare-cmxous' },
+      { label: 'repo', href: 'https://github.com/orgs/HTN-2025/repositories' },
+    ],
     bullets: [
       {
         id: 'ios',
