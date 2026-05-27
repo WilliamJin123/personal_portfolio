@@ -63,6 +63,10 @@ export const portfolioMedia: Record<string, PortfolioMedia> = {
     ],
     images: [],
   },
+  'kan-cppn': {
+    stack: ['pytorch', 'numpy', 'scipy', 'pytest'],
+    images: [],
+  },
   'swarm-rag': {
     stack: ['pytorch', 'numpy', 'openai', { label: 'Gemini', icon: 'googlegemini' }, { label: 'Cohere', icon: '/icons/cohere.svg' }],
     images: [],

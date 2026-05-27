@@ -168,6 +168,36 @@ const authored: ResumeEntry[] = [
     ],
   },
   {
+    id: 'kan-cppn',
+    section: 'projects',
+    title: 'KAN-CPPN',
+    subtitle: 'Personal Project',
+    dateLabel: 'Feb 2026',
+    links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/KAN_picbreedr' }],
+    bullets: [
+      {
+        id: 'kan',
+        text: 'Implemented from scratch a vectorized B-spline **Kolmogorov-Arnold Network** layer in **PyTorch** (de Boor recursion, spline degrees 1-4, autograd-safe), verified against **SciPy** as a partition of unity',
+        tags: ['ml', 'pytorch'],
+      },
+      {
+        id: 'cppn',
+        text: 'Used the KAN as the substrate for a **CPPN** that synthesizes images from pixel coordinates, reproducing a target genome to **9e-4** MSE over a 2,000-step run',
+        tags: ['ml', 'generative'],
+      },
+      {
+        id: 'optim',
+        text: 'Built a unified harness comparing three optimizers on the same network: **SGD**, **particle-swarm** optimization over spline coefficients, and a **natural-evolution-strategy** loop with antithetic sampling plus SGD refinement',
+        tags: ['ml', 'optimization'],
+      },
+      {
+        id: 'interp',
+        text: 'Investigated what the network learns by curve-fitting each spline activation against a library of known functions and testing whether the spline shapes alone recover a target image',
+        tags: ['ml', 'interpretability'],
+      },
+    ],
+  },
+  {
     id: 'volleyclip',
     section: 'projects',
     title: 'VolleyClip',
