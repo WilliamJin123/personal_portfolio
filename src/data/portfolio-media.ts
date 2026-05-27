@@ -13,14 +13,38 @@ export interface PortfolioMedia {
 
 export const portfolioMedia: Record<string, PortfolioMedia> = {
   // experience
-  csc: { stack: ['python', 'typescript', 'microsoftazure', 'openai'], images: [] },
+  csc: { stack: ['python', 'typescript', 'microsoftazure', 'openai', 'docker'], images: [] },
   ualberta: { stack: ['python', 'selenium', 'microsoftsqlserver'], images: [] },
   jindon: { stack: ['openjdk', 'oracle', { label: 'Cúram', icon: 'ibm' }], images: [] },
   weaccel: { stack: ['microsoftazure', 'python'], images: [] },
   // projects
   solshare: { stack: ['swift', 'firebase'], images: [] },
   stitch: {
-    stack: ['nextdotjs', 'react', 'typescript', { label: 'Gemini', icon: 'googlegemini' }, 'supabase'],
+    stack: [
+      { label: 'Next.js', icon: 'nextdotjs' },
+      'react',
+      'typescript',
+      { label: 'Gemini', icon: 'googlegemini' },
+      { label: 'Twelve Labs', icon: '/icons/twelvelabs.png' },
+      { label: 'ElevenLabs', icon: 'elevenlabs' },
+      'supabase',
+    ],
+    images: [],
+  },
+  volleyclip: {
+    stack: [
+      { label: 'Next.js', icon: 'nextdotjs' },
+      'typescript',
+      'tailwindcss',
+      'python',
+      'fastapi',
+      { label: 'Twelve Labs', icon: '/icons/twelvelabs.png' },
+      'ffmpeg',
+      { label: 'Cloudflare R2', icon: 'cloudflare' },
+      'supabase',
+      'docker',
+      'vercel',
+    ],
     images: [],
   },
   'swarm-rag': {
@@ -35,6 +59,7 @@ export const portfolioMedia: Record<string, PortfolioMedia> = {
       { label: 'Agno', icon: '/icons/agno.svg' },
       { label: 'Cerebras', icon: '/icons/cerebras.svg' },
       { label: 'Cohere', icon: '/icons/cohere.svg' },
+      'docker',
     ],
     images: [],
   },

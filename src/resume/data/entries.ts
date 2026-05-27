@@ -134,6 +134,39 @@ export const entries: ResumeEntry[] = [
     ],
   },
   {
+    id: 'volleyclip',
+    section: 'projects',
+    title: 'VolleyClip',
+    subtitle: 'Personal Project',
+    dateLabel: 'Jan 2026 - Feb 2026',
+    links: [
+      { label: 'live demo', href: 'https://volleyball-clipper.vercel.app' },
+      { label: 'repo', href: 'https://github.com/WilliamJin123/volleyball-clipper' },
+    ],
+    bullets: [
+      {
+        id: 'app',
+        text: 'Built **VolleyClip**, a full-stack app (**Next.js** + **FastAPI**) that turns a volleyball VOD into per-play clips of a chosen player from a natural-language query',
+        tags: ['fullstack', 'ai'],
+      },
+      {
+        id: 'ai',
+        text: 'Used the **Twelve Labs** video-AI API (Marengo, Pegasus) with schema-constrained prompts to extract exact start/end timestamps for the queried plays',
+        tags: ['ai', 'video'],
+      },
+      {
+        id: 'ffmpeg',
+        text: 'Engineered an **FFmpeg** pipeline that stream-copies clips straight from **Cloudflare R2** presigned URLs for near-instant lossless cuts, auto-generating thumbnails',
+        tags: ['video', 'backend'],
+      },
+      {
+        id: 'infra',
+        text: 'Deployed the frontend on **Vercel** and the **Docker**-containerized backend on **Google Cloud Run**, backed by **Supabase** Postgres, auth, and row-level security',
+        tags: ['infra', 'devops'],
+      },
+    ],
+  },
+  {
     id: 'stitch',
     section: 'projects',
     title: 'Stitch',
@@ -151,9 +184,19 @@ export const entries: ResumeEntry[] = [
         tags: ['ai', 'agents'],
       },
       {
-        id: 'veo',
-        text: 'Created a **Veo 3.1** transition tool that extracts the boundary frames of two clips and generates a seamless AI-interpolated cut between them',
+        id: 'search',
+        text: 'Integrated **Twelve Labs** semantic search so the agent locates the exact clip segment matching a natural-language query and drops it on the timeline',
         tags: ['ai', 'video'],
+      },
+      {
+        id: 'veo',
+        text: 'Created a **Veo 3.1** transition tool that frame-interpolates between the boundary frames of two adjacent clips for a seamless cut',
+        tags: ['ai', 'video'],
+      },
+      {
+        id: 'tts',
+        text: 'Generated AI voiceover with **ElevenLabs** TTS, fitting each clip to a target duration via **FFmpeg** time-stretching',
+        tags: ['ai', 'audio'],
       },
       {
         id: 'ui',

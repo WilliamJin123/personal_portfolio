@@ -178,7 +178,7 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   .witem.active .wbar{height:62%}
 
   .wgallery{display:flex;flex-direction:column;gap:10px}
-  .gframe{position:relative;aspect-ratio:6/5;border:1px dashed var(--rule);border-radius:8px;background:repeating-linear-gradient(135deg,transparent 0 22px,rgba(0,0,0,.02) 22px 44px),var(--paper2);display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .gframe{position:relative;aspect-ratio:1/1;border:1px dashed var(--rule);border-radius:8px;background:repeating-linear-gradient(135deg,transparent 0 22px,rgba(0,0,0,.02) 22px 44px),var(--paper2);display:flex;align-items:center;justify-content:center;overflow:hidden}
   .gframe .gph{color:var(--faint)}
   .gnavs{position:absolute;top:12px;right:12px;display:flex;gap:6px}
   .gnav{width:30px;height:30px;border:1px solid var(--rule);border-radius:7px;background:var(--paper);color:var(--ink);font-size:15px;line-height:1;cursor:pointer;transition:border-color .25s,background .25s}
@@ -190,8 +190,10 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   .wd-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
   .wd-idx{color:var(--amber);flex-shrink:0}
   .wd-name{font-size:clamp(24px,2.9vw,38px);font-weight:540;letter-spacing:-.025em;line-height:1.06}
-  .wd-meta{margin-top:9px;color:var(--mute);text-transform:none;letter-spacing:.04em}
-  .wd-subtitle{margin-top:8px;font-size:13px;font-style:italic;color:var(--mute);line-height:1.45}
+  .wd-line{margin-top:9px;display:flex;flex-wrap:wrap;align-items:center;gap:11px}
+  .wd-meta{color:var(--mute);text-transform:none;letter-spacing:.04em}
+  .wd-subtitle{font-size:13px;font-style:italic;color:var(--mute);line-height:1.45}
+  .wd-subtitle::before{content:"";display:inline-block;width:2px;height:11px;margin-right:11px;background:var(--amber);border-radius:1px;vertical-align:-1px;opacity:.8}
   .wd-links{margin-top:14px;display:flex;flex-wrap:wrap;gap:18px}
   .wd-link{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
   .rbul{list-style:none;margin:18px 0 0;padding:0}
@@ -576,8 +578,10 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
             <h3 class="wd-name" id="wdname">—</h3>
             <div class="wd-idx m" id="wdidx">01</div>
           </div>
-          <div class="wd-meta m" id="wdmeta">—</div>
-          <div class="wd-subtitle" id="wdsubtitle" hidden></div>
+          <div class="wd-line">
+            <span class="wd-meta m" id="wdmeta">—</span>
+            <span class="wd-subtitle" id="wdsubtitle" hidden></span>
+          </div>
           <div class="wd-awards" id="wdawards" hidden></div>
           <div class="wd-links" id="wdlinks" hidden></div>
           <ul class="rbul" id="wdbullets"></ul>
