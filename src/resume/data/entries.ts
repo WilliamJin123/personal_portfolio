@@ -229,7 +229,7 @@ export const entries: ResumeEntry[] = [
     id: 'solshare',
     section: 'projects',
     title: 'SolShare',
-    subtitle: 'Hack the North',
+    subtitle: 'Hack the North 2025',
     awards: ['1st Place: Cohere API Best Use', 'Solana Best Consumer Payment Experience'],
     dateLabel: 'Sept 2025',
     links: [
