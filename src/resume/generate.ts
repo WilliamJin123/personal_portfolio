@@ -51,7 +51,11 @@ function project(e: ResumeEntry, ids: string[]): string {
     ...(e.awards ?? []).map((a) => `\\award{${escapeLatex(a)}}`),
     ...(e.grants ?? []).map((g) => `\\grant{${escapeLatex(g)}}`),
     e.subtitle ? escapeLatex(e.subtitle) : '',
-    ...links.slice(1).map((l) => `\\repolink{${l.href}}{${escapeLatex(l.label)}}`),
+    ...links.slice(1).map((l) =>
+      /github\.com/i.test(l.href)
+        ? `\\repolink{${l.href}}{${escapeLatex(l.label)}}`
+        : `\\weblink{${l.href}}{${escapeLatex(l.label)}}`,
+    ),
   ]
     .filter(Boolean)
     .join(' ');

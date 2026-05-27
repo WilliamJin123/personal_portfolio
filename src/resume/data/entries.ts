@@ -245,7 +245,10 @@ const authored: ResumeEntry[] = [
     title: 'RLM++',
     subtitle: 'Personal Project',
     dateLabel: 'Jan 2026',
-    links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/RLM_plus_plus' }],
+    links: [
+      { label: 'repo', href: 'https://github.com/WilliamJin123/RLM_plus_plus' },
+      { label: 'paper', href: 'https://arxiv.org/pdf/2512.24601' },
+    ],
     bullets: [
       {
         id: 'agent',
