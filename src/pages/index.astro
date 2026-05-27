@@ -214,7 +214,10 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   @keyframes rRise{from{opacity:0;transform:translateY(13px);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
   @keyframes rBold{0%{transform:scale(.88);color:var(--mute)}45%{color:var(--amber)}60%{transform:scale(1.08)}100%{transform:scale(1);color:var(--ink)}}
   @keyframes rUl{from{background-size:0 1.6px}to{background-size:100% 1.6px}}
-  .wdetail.play .rbullet{animation:rRise .62s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--bi)*.1s)}
+  .wdetail.play .wd-head{animation:rRise .62s cubic-bezier(.2,.7,.2,1) backwards}
+  .wdetail.play .wd-meta{animation:rRise .62s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:.07s}
+  .wdetail.play .wd-subtitle{animation:rRise .62s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:.14s}
+  .wdetail.play .rbullet{animation:rRise .62s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.2s + var(--bi)*.1s)}
   .wdetail.play .rbold{animation:rBold .6s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--bi)*.1s + .14s)}
   .wdetail.play .rlink{animation:rUl .55s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--bi)*.1s + .22s)}
 
