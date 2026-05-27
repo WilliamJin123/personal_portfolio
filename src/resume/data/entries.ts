@@ -1,8 +1,12 @@
 import type { ResumeEntry } from '../types';
+import { byDateDesc } from './order';
 
-// Order within each section is reverse-chronological (most recent first); this
-// array order drives both the public viewer and the generated résumé.
-export const entries: ResumeEntry[] = [
+// Entries may be authored in any order. They are sorted reverse-chronologically
+// (by the end of each dateLabel) at export, and that order drives both the
+// public viewer and the generated résumé. The sort is stable, so entries that
+// end in the same month keep their authored order here (place the one you want
+// listed first earlier in the array).
+const authored: ResumeEntry[] = [
   {
     id: 'csc',
     section: 'experience',
@@ -100,6 +104,36 @@ export const entries: ResumeEntry[] = [
         id: 'tests',
         text: 'Wrote **JMockit** unit tests and debugged UI issues in **Curam** components',
         tags: ['testing', 'java'],
+      },
+    ],
+  },
+  {
+    id: 'tract',
+    section: 'projects',
+    title: 'tract',
+    subtitle: 'Personal Project',
+    dateLabel: 'Feb 2026 - Mar 2026',
+    links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/tract' }],
+    bullets: [
+      {
+        id: 'dag',
+        text: 'Built **tract**, a from-scratch git-style version-control engine for LLM context: a content-addressed **SHA-256** commit **DAG** with branching, three-way merge, and rebase, in **Python**',
+        tags: ['systems', 'python'],
+      },
+      {
+        id: 'agent',
+        text: 'Drove the engine from an async agent loop exposing **28** LLM tools, with token-budget enforcement and auto-compression, on the **Anthropic SDK** and an OpenAI-compatible client',
+        tags: ['ai', 'agents', 'python'],
+      },
+      {
+        id: 'semantic',
+        text: 'Added LLM-mediated semantic merges and context compression, mapping model output to typed **Pydantic** results with fail-open validation',
+        tags: ['ai', 'llm'],
+      },
+      {
+        id: 'storage',
+        text: 'Persisted the object store in **SQLite** (**SQLAlchemy**, auto-migrating schema), backed by a property-based and end-to-end test suite',
+        tags: ['backend', 'database'],
       },
     ],
   },
@@ -202,6 +236,36 @@ export const entries: ResumeEntry[] = [
         id: 'ui',
         text: 'Built a custom **React 19** timeline editor where AI and manual edits share a single undo/redo history',
         tags: ['frontend', 'react'],
+      },
+    ],
+  },
+  {
+    id: 'rlm-plus-plus',
+    section: 'projects',
+    title: 'RLM++',
+    subtitle: 'Personal Project',
+    dateLabel: 'Jan 2026',
+    links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/RLM_plus_plus' }],
+    bullets: [
+      {
+        id: 'agent',
+        text: "Built a long-context QA agent (**Python**, **Agno**) after MIT's Recursive Language Models, indexing documents into a hierarchical **SQLite** summary tree and offloading raw-text reads to sub-agents to stay within the context window",
+        tags: ['ai', 'agents', 'python'],
+      },
+      {
+        id: 'rotation',
+        text: 'Engineered a thread-safe round-robin rotation across **14** free-tier LLM endpoints (Gemini, Cerebras, Groq, OpenRouter) with automatic failover, parallelizing summarization of multi-million-token documents under rate limits',
+        tags: ['systems', 'llm'],
+      },
+      {
+        id: 'validator',
+        text: 'Added a self-healing validator that detects corrupted summaries (provider errors, reasoning-tag leakage, orphaned nodes) and regenerates them in parallel, making ingestion resumable and fault-tolerant',
+        tags: ['systems', 'python'],
+      },
+      {
+        id: 'bench',
+        text: 'Benchmarked it with a resumable harness for **LongBench-v2** and **OOLONG**, scoring **78%** on an 18-question code-QA slice',
+        tags: ['ai', 'eval'],
       },
     ],
   },
@@ -338,3 +402,5 @@ export const entries: ResumeEntry[] = [
     ],
   },
 ];
+
+export const entries = authored.sort(byDateDesc);

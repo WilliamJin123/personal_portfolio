@@ -47,6 +47,22 @@ export const portfolioMedia: Record<string, PortfolioMedia> = {
     ],
     images: [],
   },
+  tract: {
+    stack: ['python', { label: 'Anthropic', icon: 'anthropic' }, 'pydantic', 'sqlalchemy', 'sqlite', 'pytest'],
+    images: [],
+  },
+  'rlm-plus-plus': {
+    stack: [
+      'python',
+      { label: 'Agno', icon: '/icons/agno.svg' },
+      { label: 'Gemini', icon: 'googlegemini' },
+      { label: 'Cerebras', icon: '/icons/cerebras.svg' },
+      { label: 'OpenRouter', icon: 'openrouter' },
+      { label: 'Anthropic', icon: 'anthropic' },
+      'sqlite',
+    ],
+    images: [],
+  },
   'swarm-rag': {
     stack: ['pytorch', 'numpy', 'openai', { label: 'Gemini', icon: 'googlegemini' }, { label: 'Cohere', icon: '/icons/cohere.svg' }],
     images: [],
