@@ -180,6 +180,16 @@ export const entries: ResumeEntry[] = [
         tags: ['swift', 'sdk'],
       },
       {
+        id: 'crypto',
+        text: 'Built the wallet connect and signing flow as an **x25519 + XSalsa20-Poly1305** encrypted deeplink handshake (**TweetNacl**), deriving a per-session shared secret to encrypt every request payload',
+        tags: ['swift', 'crypto'],
+      },
+      {
+        id: 'arch',
+        text: "Architected a protocol-oriented wallet layer so new wallets plug in via conformance, polyfilling Phantom's deprecated sign-and-send over the **RPC** client",
+        tags: ['swift', 'architecture'],
+      },
+      {
         id: 'ship',
         text: 'Shipped the open-source SDK via **Swift Package Manager** with full documentation',
         tags: ['open-source'],

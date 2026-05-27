@@ -208,18 +208,18 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   .award{color:var(--amber);background:rgba(var(--amber-rgb),.08);border:1px solid rgba(var(--amber-rgb),.42);--glow:var(--amber-rgb)}
   .grant{color:var(--grant);background:rgba(var(--grant-rgb),.08);border:1px solid rgba(var(--grant-rgb),.42);--glow:var(--grant-rgb)}
   .award svg,.grant svg{width:13px;height:13px;flex-shrink:0}
-  @keyframes rBadge{0%{opacity:0;transform:scale(.6) translateY(8px);box-shadow:0 0 0 0 rgba(var(--glow),.45)}55%{transform:scale(1.12)}70%{box-shadow:0 0 0 7px rgba(var(--glow),0)}100%{opacity:1;transform:scale(1) translateY(0);box-shadow:0 0 0 0 rgba(var(--glow),0)}}
-  .wdetail.play .award,.wdetail.play .grant{animation:rBadge .62s cubic-bezier(.2,.8,.3,1) backwards;animation-delay:calc(.16s + var(--ai)*.12s)}
+  @keyframes rBadge{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .wdetail.play .award,.wdetail.play .grant{animation:rBadge .4s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.12s + var(--ai)*.07s)}
 
-  @keyframes rRise{from{opacity:0;transform:translateY(13px);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
-  @keyframes rBold{0%{transform:scale(.88);color:var(--mute)}45%{color:var(--amber)}60%{transform:scale(1.08)}100%{transform:scale(1);color:var(--ink)}}
+  @keyframes rRise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  @keyframes rBold{0%{color:var(--mute);transform:scale(.97)}55%{transform:scale(1.035)}100%{color:var(--ink);transform:scale(1)}}
   @keyframes rUl{from{background-size:0 1.6px}to{background-size:100% 1.6px}}
-  .wdetail.play .wd-head{animation:rRise .62s cubic-bezier(.2,.7,.2,1) backwards}
-  .wdetail.play .wd-meta{animation:rRise .62s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:.07s}
-  .wdetail.play .wd-subtitle{animation:rRise .62s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:.14s}
-  .wdetail.play .rbullet{animation:rRise .62s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.2s + var(--bi)*.1s)}
-  .wdetail.play .rbold{animation:rBold .6s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--bi)*.1s + .14s)}
-  .wdetail.play .rlink{animation:rUl .55s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--bi)*.1s + .22s)}
+  .wdetail.play .wd-head{animation:rRise .42s cubic-bezier(.2,.7,.2,1) backwards}
+  .wdetail.play .wd-meta{animation:rRise .42s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:.05s}
+  .wdetail.play .wd-subtitle{animation:rRise .42s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:.1s}
+  .wdetail.play .rbullet{animation:rRise .42s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.14s + var(--bi)*.07s)}
+  .wdetail.play .rbold{animation:rBold .45s ease backwards;animation-delay:calc(.6s + var(--bi)*.07s)}
+  .wdetail.play .rlink{animation:rUl .4s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.24s + var(--bi)*.07s)}
 
   .wcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:clamp(14px,1.6vw,22px)}
   .wcard{text-align:left;background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:0;cursor:pointer;overflow:hidden;transition:border-color .25s,transform .25s}
