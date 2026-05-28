@@ -165,6 +165,8 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   .vswitch-ink{position:absolute;top:3px;bottom:3px;left:3px;width:0;background:var(--amber);border-radius:7px;z-index:0;transition:left .42s cubic-bezier(.7,0,.15,1),width .42s cubic-bezier(.7,0,.15,1)}
 
   .wmd{display:grid;grid-template-columns:0.56fr 1.5fr 1.6fr;gap:clamp(16px,2.2vw,36px);align-items:start}
+  /* lock columns to their fr shares — keeps the gallery (and the square image) the same size on every project */
+  .wmd>*{min-width:0}
   @property --ft{syntax:'<length>';inherits:false;initial-value:0px}
   @property --fb{syntax:'<length>';inherits:false;initial-value:0px}
   .wlist{display:flex;flex-direction:column;border-top:1px solid var(--rule);max-height:clamp(300px,46vh,440px);overflow-y:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ft),#000 calc(100% - var(--fb)),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ft),#000 calc(100% - var(--fb)),transparent 100%);transition:--ft .25s linear,--fb .25s linear}
@@ -324,7 +326,6 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
     .seg .sg{font-size:clamp(19px,5.6vw,26px)}
     .vbtn{margin-left:0}
     .wmd{grid-template-columns:1fr;gap:18px}
-    .wmd>*{min-width:0}
     .wlist{flex-direction:row;gap:8px;max-height:none;overflow-x:auto;overflow-y:hidden;border-top:0;padding:0 0 3px;-webkit-mask-image:linear-gradient(to right,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%)}
     .witem{flex:0 0 auto;border:1px solid var(--rule);border-radius:3px;padding:8px 13px;align-items:center;gap:8px}
     .witem .wtw{flex-direction:row;align-items:baseline;gap:0}
