@@ -165,7 +165,10 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   .vswitch-ink{position:absolute;top:3px;bottom:3px;left:3px;width:0;background:var(--amber);border-radius:7px;z-index:0;transition:left .42s cubic-bezier(.7,0,.15,1),width .42s cubic-bezier(.7,0,.15,1)}
 
   .wmd{display:grid;grid-template-columns:0.56fr 1.5fr 1.6fr;gap:clamp(16px,2.2vw,36px);align-items:start}
-  .wlist{display:flex;flex-direction:column;border-top:1px solid var(--rule)}
+  @property --ft{syntax:'<length>';inherits:false;initial-value:0px}
+  @property --fb{syntax:'<length>';inherits:false;initial-value:0px}
+  .wlist{display:flex;flex-direction:column;border-top:1px solid var(--rule);max-height:clamp(300px,46vh,440px);overflow-y:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ft),#000 calc(100% - var(--fb)),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ft),#000 calc(100% - var(--fb)),transparent 100%);transition:--ft .25s linear,--fb .25s linear}
+  .wlist::-webkit-scrollbar{display:none}
   .witem{position:relative;text-align:left;background:none;border:0;border-bottom:1px dashed var(--rule);padding:14px 12px 14px 16px;cursor:pointer;display:flex;align-items:baseline;gap:12px;color:var(--mute);transition:color .3s,transform .3s}
   .witem .wn{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--faint);transition:color .3s}
   .witem .wt{font-size:15px;font-weight:480;letter-spacing:-.01em}
@@ -202,8 +205,9 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   .rbold{display:inline-block;font-weight:680;color:var(--ink)}
   .rlink{color:var(--ink);text-decoration:none;background:linear-gradient(var(--amber),var(--amber)) left bottom/100% 1.6px no-repeat;padding-bottom:1px}
   .rlink:hover{color:var(--amber)}
-  .wd-stack{margin-top:20px;display:flex;flex-wrap:wrap;gap:9px}
-  .wd-stack span{font-family:var(--mono);font-size:12px;border:1px solid var(--rule);border-radius:999px;padding:6px 12px;color:var(--ink);background:var(--paper);display:flex;align-items:center;gap:8px;white-space:nowrap}
+  .wd-stack{margin-top:20px;display:flex;flex-wrap:nowrap;gap:9px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+  .wd-stack::-webkit-scrollbar{display:none}
+  .wd-stack span{flex-shrink:0;font-family:var(--mono);font-size:12px;border:1px solid var(--rule);border-radius:999px;padding:6px 12px;color:var(--ink);background:var(--paper);display:flex;align-items:center;gap:8px;white-space:nowrap}
   .wd-stack span .ic{width:14px;height:14px;flex-shrink:0;background:var(--ink);-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat}
   .wd-awards{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px}
   .award,.grant{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;letter-spacing:.03em;border-radius:999px;padding:6px 12px 6px 11px;white-space:nowrap}
@@ -238,9 +242,9 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
   footer{padding:48px 0 78px;display:flex;flex-direction:column;align-items:center;gap:16px}
   .cta-line{font-size:13px}
   .pill{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--ink);border-radius:999px;padding:6px}
-  .pill a{font-family:var(--mono);font-size:12px;letter-spacing:.07em;text-transform:uppercase;padding:11px 20px;border-radius:999px;text-decoration:none;color:var(--ink);transition:background .25s,color .25s}
+  .pill a{font-family:var(--mono);font-size:clamp(10px,2.7vw,12px);letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;padding:clamp(8px,2.4vw,11px) clamp(12px,3.8vw,20px);border-radius:999px;text-decoration:none;color:var(--ink);transition:background .25s,color .25s}
   .pill a:hover{background:var(--paper2)}
-  .pill a.mega{background:var(--amber);color:#fff;font-size:13px;padding:14px 26px}
+  .pill a.mega{background:var(--amber);color:#fff;font-size:clamp(11px,2.9vw,13px);padding:clamp(10px,2.8vw,14px) clamp(15px,4.6vw,26px)}
   .pill a.mega:hover{background:var(--ink);color:#fff}
 
   /* flair — instrument readout (live telemetry, bottom-left) */
@@ -305,19 +309,31 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
     .drum-win{height:auto;overflow:visible;perspective:none}
     .drum-win::before,.drum-win::after{display:none}
     .drum{position:static;transform:none!important;transform-style:flat;display:flex;flex-direction:column;gap:20px}
-    .slide{position:static;height:auto;margin:0;transform:none!important;opacity:1!important;flex-direction:column;align-items:flex-start;gap:11px}
+    .slide{position:static;height:auto;margin:0;transform:none!important;opacity:1!important;flex-direction:column;align-items:flex-start;gap:11px;min-width:0}
     .slide .cat{flex-direction:row;align-items:baseline;gap:10px;width:auto;border-left:0;border-top:2px solid var(--amber);padding:9px 0 0}
-    .chips{flex-wrap:wrap}
+    .chips{flex-wrap:nowrap;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+    .chips::-webkit-scrollbar{display:none}
+    .chips span{flex-shrink:0}
 
     /* footer — let the contact pill wrap */
-    .pill{flex-wrap:wrap;justify-content:center}
+    .pill{flex-wrap:nowrap;justify-content:center}
 
-    /* selected work — single column, list above gallery above detail */
+    /* selected work — compact horizontal pill selector; full-width image + detail below */
     .work-bar{gap:14px}
     .seg{gap:16px}
     .seg .sg{font-size:clamp(19px,5.6vw,26px)}
     .vbtn{margin-left:0}
-    .wmd{grid-template-columns:1fr;gap:24px}
+    .wmd{grid-template-columns:1fr;gap:18px}
+    .wmd>*{min-width:0}
+    .wlist{flex-direction:row;gap:8px;max-height:none;overflow-x:auto;overflow-y:hidden;border-top:0;padding:0 0 3px;-webkit-mask-image:linear-gradient(to right,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%)}
+    .witem{flex:0 0 auto;border:1px solid var(--rule);border-radius:3px;padding:8px 13px;align-items:center;gap:8px}
+    .witem .wtw{flex-direction:row;align-items:baseline;gap:0}
+    .witem .wt{font-size:12.5px;white-space:nowrap}
+    .witem .wdate{display:none}
+    .witem .wbar{display:none}
+    .witem:hover{transform:none}
+    .witem.active{color:var(--ink);border-color:var(--amber);background:var(--paper2)}
+    .witem.active .wn{color:var(--amber)}
     .wd-desc{max-height:none;overflow:visible}
 
     /* drop the fixed telemetry HUD on small screens */
@@ -761,6 +777,15 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
     const vswitch=document.getElementById('vswitch'), vink=document.getElementById('vswitchink'), workBody=wmd.parentElement;
     let set='projects', sel=0, img=0, view='list';
     const data=()=>WORK[set], pad=x=>String(x).padStart(2,'0');
+    // scrollable list with soft fade edges (height capped via CSS clamp on desktop, none on mobile)
+    const FADE=38, narrowMo=matchMedia('(max-width:760px)');
+    const applyFade=()=>{
+      const top=listEl.scrollTop, max=listEl.scrollHeight-listEl.clientHeight;
+      listEl.style.setProperty('--ft',(max>2&&top>2)?FADE+'px':'0px');
+      listEl.style.setProperty('--fb',(max>2&&top<max-2)?FADE+'px':'0px');
+    };
+    listEl.addEventListener('scroll',applyFade,{passive:true});
+    narrowMo.addEventListener('change',applyFade);
 
     const moveInk=()=>{const b=seg.querySelector('.sg.active');if(b){segink.style.left=b.offsetLeft+'px';segink.style.width=b.offsetWidth+'px';}};
     const chips=st=>st.map(it=>{const label=typeof it==='string'?it:it.label,slug=typeof it==='string'?it:it.icon,ic=slug?(slug[0]==='/'?slug:iconURL(slug)):'';return `<span style="--i:url('${ic}')"><span class="ic"></span>${label}</span>`;}).join('');
@@ -768,7 +793,7 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
     const DOLLAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>';
     const metaLine=e=>[e.role,e.dateLabel,e.location].filter(Boolean).join(' · ');
     const cardSub=e=>e.subtitle || metaLine(e);
-    const renderList=()=>{listEl.innerHTML=data().map((e,i)=>`<button class="witem${i===sel?' active':''}" data-i="${i}"><span class="wbar"></span><span class="wn">${pad(i+1)}</span><span class="wtw"><span class="wt">${e.title}</span><span class="wdate">${e.dateLabel}</span></span></button>`).join('');};
+    const renderList=()=>{listEl.innerHTML=data().map((e,i)=>`<button class="witem${i===sel?' active':''}" data-i="${i}"><span class="wbar"></span><span class="wn">${pad(i+1)}</span><span class="wtw"><span class="wt">${e.title}</span><span class="wdate">${e.dateLabel}</span></span></button>`).join('');applyFade();};
     const renderCards=()=>{wcards.innerHTML=data().map((e,i)=>`<button class="wcard" data-i="${i}"><div class="wc-img"><span class="m">image — tbd</span></div><div class="wc-b"><div class="wc-n">${e.title}</div><div class="wc-s">${cardSub(e)}</div></div></button>`).join('');};
     const paintGallery=()=>{const e=data()[sel],n=e.images.length;gcount.textContent=pad(img+1)+' / '+pad(Math.max(n,1));gfoot.textContent=e.footnotes[img]||'image — optional';gph.textContent=n?('image '+pad(img+1)):'image — tbd';};
     const paint=()=>{const e=data()[sel];idxEl.textContent=pad(sel+1);nameEl.textContent=e.title;metaEl.textContent=metaLine(e);if(e.subtitle){subtitleEl.textContent=e.subtitle;subtitleEl.hidden=false;}else{subtitleEl.hidden=true;}const honors=[...(e.awards||[]).map(a=>['award',TROPHY,a]),...(e.grants||[]).map(g=>['grant',DOLLAR,g])];if(honors.length){awardsEl.innerHTML=honors.map(([c,ic,t],j)=>`<span class="${c}" style="--ai:${j}">${ic}${t}</span>`).join('');awardsEl.hidden=false;}else{awardsEl.hidden=true;}if(e.links&&e.links.length){linksEl.innerHTML=e.links.map((l,j)=>`<a class="wd-link rlink" href="${l.href}" target="_blank" rel="noreferrer" style="--bi:${j}">${l.label} ↗</a>`).join('');linksEl.hidden=false;}else{linksEl.hidden=true;}bulletsEl.innerHTML=e.bulletsHtml.map((h,i)=>`<li class="rbullet" style="--bi:${i}">${h}</li>`).join('');stackEl.innerHTML=chips(e.stack);img=0;paintGallery();};
@@ -795,12 +820,14 @@ const workJson = JSON.stringify(workData).replace(/</g, '\\u003c');
     vswitch.querySelectorAll('.vopt').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view==='card')));
 
     renderList();renderCards();paint();moveInk();moveVInk();
-    addEventListener('resize',()=>{moveInk();moveVInk();syncHeight();});
-    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{moveInk();moveVInk();syncHeight();});
-    requestAnimationFrame(()=>requestAnimationFrame(syncHeight));
+    addEventListener('resize',()=>{moveInk();moveVInk();applyFade();syncHeight();});
+    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{moveInk();moveVInk();applyFade();syncHeight();});
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{applyFade();syncHeight();}));
 
     let workSeen=false;
     new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting&&!workSeen){workSeen=true;renderDetail(true);}});},{threshold:.25}).observe(document.getElementById('work'));
+    // mobile: the detail sits below the image, so replay its staggered entrance when it scrolls into view
+    new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting&&narrowMo.matches&&!reduce){wdetail.classList.remove('play');void wdetail.offsetWidth;wdetail.classList.add('play');}});},{threshold:.3}).observe(wdetail);
   })();
 
   // flair — instrument readout
