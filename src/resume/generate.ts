@@ -7,7 +7,7 @@ import type {
   SkillGroup,
 } from './types';
 import { tokenize } from './tokenize';
-import { tokensToLatex, escapeLatex } from './latex';
+import { tokensToLatex, escapeLatex, escapeLatexUrl } from './latex';
 
 const BODY_MARKER = '%%RESUME_BODY%%';
 
@@ -45,7 +45,7 @@ function project(e: ResumeEntry, ids: string[]): string {
   const links = e.links ?? [];
   const primary = links[0];
   const name = primary
-    ? `{\\href{${primary.href}}{\\textcolor{black}{${escapeLatex(e.title)}~\\raisebox{0.1em}{\\scalebox{0.8}{\\faExternalLink*}}}}}`
+    ? `{\\href{${escapeLatexUrl(primary.href)}}{\\textcolor{black}{${escapeLatex(e.title)}~\\raisebox{0.1em}{\\scalebox{0.8}{\\faExternalLink*}}}}}`
     : `{${escapeLatex(e.title)}}`;
   const subtitle = [
     ...(e.awards ?? []).map((a) => `\\award{${escapeLatex(a)}}`),
@@ -53,8 +53,8 @@ function project(e: ResumeEntry, ids: string[]): string {
     e.subtitle ? escapeLatex(e.subtitle) : '',
     ...links.slice(1).map((l) =>
       /github\.com/i.test(l.href)
-        ? `\\repolink{${l.href}}{${escapeLatex(l.label)}}`
-        : `\\weblink{${l.href}}{${escapeLatex(l.label)}}`,
+        ? `\\repolink{${escapeLatexUrl(l.href)}}{${escapeLatex(l.label)}}`
+        : `\\weblink{${escapeLatexUrl(l.href)}}{${escapeLatex(l.label)}}`,
     ),
   ]
     .filter(Boolean)
@@ -94,8 +94,8 @@ function header(p: Profile): string {
         : '';
   const contacts = [
     p.phone,
-    p.email ? `\\href{mailto:${p.email}}{${escapeLatex(p.email)}}` : undefined,
-    ...p.links.map((l) => `${iconCmd(l.icon)}\\href{${l.href}}{${escapeLatex(l.label)}}`),
+    p.email ? `\\href{mailto:${escapeLatexUrl(p.email)}}{${escapeLatex(p.email)}}` : undefined,
+    ...p.links.map((l) => `${iconCmd(l.icon)}\\href{${escapeLatexUrl(l.href)}}{${escapeLatex(l.label)}}`),
   ]
     .filter((x): x is string => Boolean(x))
     .join(' | \n    ');
