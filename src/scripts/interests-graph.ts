@@ -1,70 +1,172 @@
 // Hairline concept diagrams for "I'm interested in" — three distinct 3D figures,
 // one per bullet, each a literal little mechanism that animates to show what the
-// concept *does*. The root slowly turntable-spins (+ cursor tilt) and the page
-// cross-dissolves (scale + opacity) between figures; hovering a bullet snaps to
-// its figure, leaving resumes the auto-cycle.
+// concept *does*. Each figure has its own motion inside a shared pivot that
+// carries cursor parallax. The page cross-dissolves (scale + opacity) between
+// figures; hovering a bullet snaps to its figure.
 //
-//   01 Agentic Applications -> a model core ringed by a feedback loop; a token
-//      travels the loop and fires a pulse out to each tool as it passes.
+//   01 Agentic Applications -> an "AI model" sparkle ringed by camera-facing tool
+//      icons (gear / search / code) on a feedback loop; a token circles the loop
+//      and fires a pulse out to each tool as it passes.
 //   02 Full Stack          -> a UI window, a logic grid, and a data drum stacked
-//      on a spine; a packet drops down through the layers and rises back up.
-//   03 Applied ML          -> a loss surface with a marker that steps downhill
-//      (gradient descent) toward the minimum, trailing its path, then resets.
+//      on a spine; a cube packet drops down through the layers and rises back up.
+//   03 Applied ML          -> a feed-forward net with depth; weights rest faint
+//      and an activation wave sweeps left-to-right, firing nodes + weights amber.
 //
 // Reduced-motion renders one static pose; paused when off-screen or backgrounded.
 
 import {
   Scene, PerspectiveCamera, WebGLRenderer,
   BufferGeometry, Float32BufferAttribute, BufferAttribute,
-  LineSegments, Line, LineBasicMaterial,
+  LineSegments, LineBasicMaterial, ShaderMaterial,
   Points, PointsMaterial,
-  OctahedronGeometry, EdgesGeometry,
-  Group, Color, Material,
+  Group, Color,
 } from 'three';
 
 const INK = new Color(0x141820);
 const AMBER = new Color(0xbd741b);
 
-const X_TILT = 0.5;      // aerial tilt so the horizontal figures read, not edge-on
-const SPIN = 0.16;       // turntable rad/s
+const AERIAL = 0.62;     // tilt for the horizontal figures (agentic / stack)
+const NET_TILT = 0.12;   // the net reads near face-on
+const SPIN = 0.16;       // turntable rad/s (stack)
 const DWELL = 4.5;       // s a figure is held before auto-advancing
 const FADE = 1.0;        // s cross-dissolve
 
-const EDGE_OP = 0.4;     // primary hairline
-const FAINT_OP = 0.2;    // spokes / spine / trail
+const EDGE_OP = 0.62;    // primary hairline
+const FAINT_OP = 0.22;   // spine
 const ACCENT_OP = 0.95;  // amber moving element
-const CORE_OP = 0.6;     // structural accent (core)
-
-interface Figure {
-  group: Group;
-  mats: { mat: Material; base: number }[];
-  update: (t: number) => void;
-}
+const CORE_OP = 0.86;    // amber sparkle
 
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
 
-const lineSeg = (segs: number[], mat: Material): LineSegments => {
+interface Figure {
+  group: Group;                              // outer (tilt) group — visibility / scale
+  setFade: (k: number) => void;              // fade the figure's materials
+  update: (t: number, cam: PerspectiveCamera) => void;
+}
+
+const lineSeg = (segs: number[], mat: LineBasicMaterial): LineSegments => {
   const g = new BufferGeometry();
   g.setAttribute('position', new Float32BufferAttribute(new Float32Array(segs), 3));
   return new LineSegments(g, mat);
 };
 
-// 01 — Agentic: octahedron model core, a horizontal feedback-loop ring, three
-// tool glyphs on the ring, faint spokes. A token circles the loop; as it passes
-// each tool a pulse darts core -> tool and back.
-function agenticFigure(): Figure {
+// A flat 2D glyph ([u,v, u,v] pairs) as a LineSegments in the XY plane (normal
+// +Z) so it can be billboarded to face the camera.
+const glyphXY = (g2: number[], mat: LineBasicMaterial): LineSegments => {
+  const segs: number[] = [];
+  for (let i = 0; i < g2.length; i += 4) segs.push(g2[i], g2[i + 1], 0, g2[i + 2], g2[i + 3], 0);
+  return lineSeg(segs, mat);
+};
+
+const gearGlyph = (R: number): number[] => {
+  const s: number[] = [];
+  const tot = 16; // 8 teeth
+  let first: [number, number] | null = null;
+  let prev: [number, number] | null = null;
+  for (let k = 0; k < tot; k++) {
+    const a = (k / tot) * Math.PI * 2;
+    const r = k % 2 === 0 ? R : R * 0.74;
+    const p: [number, number] = [Math.cos(a) * r, Math.sin(a) * r];
+    if (prev) s.push(prev[0], prev[1], p[0], p[1]);
+    else first = p;
+    prev = p;
+  }
+  if (prev && first) s.push(prev[0], prev[1], first[0], first[1]);
+  const hr = R * 0.42;
+  const hn = 12;
+  for (let k = 0; k < hn; k++) {
+    const a0 = (k / hn) * Math.PI * 2;
+    const a1 = ((k + 1) / hn) * Math.PI * 2;
+    s.push(Math.cos(a0) * hr, Math.sin(a0) * hr, Math.cos(a1) * hr, Math.sin(a1) * hr);
+  }
+  return s;
+};
+
+const searchGlyph = (R: number): number[] => {
+  const s: number[] = [];
+  const lr = R * 0.6;
+  const cx = -R * 0.18;
+  const cy = R * 0.18;
+  const n = 18;
+  for (let k = 0; k < n; k++) {
+    const a0 = (k / n) * Math.PI * 2;
+    const a1 = ((k + 1) / n) * Math.PI * 2;
+    s.push(cx + Math.cos(a0) * lr, cy + Math.sin(a0) * lr, cx + Math.cos(a1) * lr, cy + Math.sin(a1) * lr);
+  }
+  const ha = -Math.PI / 4;
+  s.push(
+    cx + Math.cos(ha) * lr, cy + Math.sin(ha) * lr,
+    cx + Math.cos(ha) * (lr + R * 0.7), cy + Math.sin(ha) * (lr + R * 0.7),
+  );
+  return s;
+};
+
+const codeGlyph = (w: number): number[] => {
+  const h = w * 0.8;
+  return [
+    -w, 0, -w * 0.42, h, -w, 0, -w * 0.42, -h, // <
+    w, 0, w * 0.42, h, w, 0, w * 0.42, -h, //     >
+    -w * 0.16, -h * 0.95, w * 0.16, h * 0.95, //  /
+  ];
+};
+
+// Single 4-point "AI sparkle" outline as 2D [u,v] pairs.
+const star2d = (rO: number, rI: number): number[] => {
+  const pts: [number, number][] = [];
+  for (let k = 0; k < 8; k++) {
+    const a = (k / 8) * Math.PI * 2;
+    const r = k % 2 === 0 ? rO : rI;
+    pts.push([Math.cos(a) * r, Math.sin(a) * r]);
+  }
+  const s: number[] = [];
+  for (let k = 0; k < 8; k++) {
+    const p = pts[k];
+    const q = pts[(k + 1) % 8];
+    s.push(p[0], p[1], q[0], q[1]);
+  }
+  return s;
+};
+
+// Two 4-point stars crossed in perpendicular planes — a sparkle with 3D depth.
+const sparkle3d = (rO: number, rI: number): number[] => {
+  const s2 = star2d(rO, rI);
+  const segs: number[] = [];
+  for (let i = 0; i < s2.length; i += 4) segs.push(s2[i], s2[i + 1], 0, s2[i + 2], s2[i + 3], 0);
+  for (let i = 0; i < s2.length; i += 4) segs.push(s2[i], 0, s2[i + 1], s2[i + 2], 0, s2[i + 3]);
+  return segs;
+};
+
+const cubeSegs = (c: number): number[] => {
+  const v = [
+    [-c, -c, -c], [c, -c, -c], [c, c, -c], [-c, c, -c],
+    [-c, -c, c], [c, -c, c], [c, c, c], [-c, c, c],
+  ];
+  const E = [[0, 1], [1, 2], [2, 3], [3, 0], [4, 5], [5, 6], [6, 7], [7, 4], [0, 4], [1, 5], [2, 6], [3, 7]];
+  const s: number[] = [];
+  for (const [a, b] of E) s.push(v[a][0], v[a][1], v[a][2], v[b][0], v[b][1], v[b][2]);
+  return s;
+};
+
+const figureGroups = (tilt: number): { group: Group; spin: Group } => {
   const group = new Group();
+  group.rotation.x = tilt;
+  const spin = new Group();
+  group.add(spin);
+  return { group, spin };
+};
+
+// 01 — Agentic: a billboarded sparkle core + billboarded tool icons on a tilted
+// feedback ring. A token circles the loop and pulses out to each tool.
+function agenticFigure(): Figure {
+  const { group, spin } = figureGroups(AERIAL);
   const inkLine = new LineBasicMaterial({ color: INK, transparent: true, opacity: EDGE_OP });
-  const faintLine = new LineBasicMaterial({ color: INK, transparent: true, opacity: FAINT_OP });
-  const coreInk = new LineBasicMaterial({ color: INK, transparent: true, opacity: CORE_OP });
-  const amberPts = new PointsMaterial({ color: AMBER, size: 0.13, sizeAttenuation: true, transparent: true, opacity: ACCENT_OP });
+  const amberLine = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: CORE_OP });
+  const amberPts = new PointsMaterial({ color: AMBER, size: 0.14, sizeAttenuation: true, transparent: true, opacity: ACCENT_OP });
 
-  // model core
-  const core = new LineSegments(new EdgesGeometry(new OctahedronGeometry(0.34)), coreInk);
-  group.add(core);
+  const core = lineSeg(sparkle3d(0.42, 0.13), amberLine); // crossed 3D sparkle
+  spin.add(core);
 
-  // feedback loop ring in the XZ plane
-  const R = 1.7;
+  const R = 1.5;
   const segN = 64;
   const ring: number[] = [];
   for (let i = 0; i < segN; i++) {
@@ -72,105 +174,101 @@ function agenticFigure(): Figure {
     const a1 = ((i + 1) / segN) * Math.PI * 2;
     ring.push(Math.cos(a0) * R, 0, Math.sin(a0) * R, Math.cos(a1) * R, 0, Math.sin(a1) * R);
   }
-  group.add(lineSeg(ring, inkLine));
+  spin.add(lineSeg(ring, inkLine));
 
-  // tool glyphs (small squares on the ring) + faint spokes from the core
-  const tools = 3;
-  const toolAng: number[] = [];
+  const glyphs = [gearGlyph(0.27), searchGlyph(0.28), codeGlyph(0.3)];
+  const tools: LineSegments[] = [];
   const toolPos: [number, number][] = [];
-  const glyphs: number[] = [];
-  const spokes: number[] = [];
-  const sq = 0.17;
-  for (let i = 0; i < tools; i++) {
-    const a = (i / tools) * Math.PI * 2 + Math.PI / 6;
+  const toolAng: number[] = [];
+  for (let i = 0; i < 3; i++) {
+    const a = Math.PI / 2 + (i / 3) * Math.PI * 2;
     toolAng.push(a);
     const cx = Math.cos(a) * R;
     const cz = Math.sin(a) * R;
     toolPos.push([cx, cz]);
-    const c = [[cx - sq, cz - sq], [cx + sq, cz - sq], [cx + sq, cz + sq], [cx - sq, cz + sq]];
-    for (let k = 0; k < 4; k++) {
-      const p = c[k];
-      const q = c[(k + 1) % 4];
-      glyphs.push(p[0], 0, p[1], q[0], 0, q[1]);
-    }
-    spokes.push(0, 0, 0, cx, 0, cz);
+    const m = glyphXY(glyphs[i], inkLine);
+    m.position.set(cx, 0, cz);
+    spin.add(m);
+    tools.push(m);
   }
-  group.add(lineSeg(glyphs, inkLine));
-  group.add(lineSeg(spokes, faintLine));
 
-  // movers: index 0 = loop token, 1..3 = tool pulses
-  const moverArr = new Float32Array((1 + tools) * 3);
+  const moverArr = new Float32Array(4 * 3);
   const moverGeom = new BufferGeometry();
   moverGeom.setAttribute('position', new Float32BufferAttribute(moverArr, 3));
-  group.add(new Points(moverGeom, amberPts));
+  spin.add(new Points(moverGeom, amberPts));
 
-  const win = 0.9; // angular half-window over which a pulse fires
-  const update = (t: number): void => {
-    const aTok = (t * 0.7) % (Math.PI * 2);
-    moverArr[0] = Math.cos(aTok) * R;
-    moverArr[1] = 0;
-    moverArr[2] = Math.sin(aTok) * R;
-    for (let i = 0; i < tools; i++) {
-      let d = Math.abs(aTok - toolAng[i]) % (Math.PI * 2);
-      if (d > Math.PI) d = Math.PI * 2 - d;
-      const s = Math.max(0, 1 - d / win); // peaks to 1 as the token reaches the tool
-      const o = (1 + i) * 3;
-      moverArr[o] = toolPos[i][0] * s;
-      moverArr[o + 1] = 0;
-      moverArr[o + 2] = toolPos[i][1] * s;
-    }
-    (moverGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
-    core.rotation.y = -t * 0.5;
-    core.rotation.x = t * 0.3;
-  };
-
+  const win = 0.9;
   return {
     group,
-    mats: [
-      { mat: inkLine, base: EDGE_OP },
-      { mat: faintLine, base: FAINT_OP },
-      { mat: coreInk, base: CORE_OP },
-      { mat: amberPts, base: ACCENT_OP },
-    ],
-    update,
+    setFade: (k) => {
+      inkLine.opacity = EDGE_OP * k;
+      amberLine.opacity = CORE_OP * k;
+      amberPts.opacity = ACCENT_OP * k;
+    },
+    update: (t, cam) => {
+      spin.rotation.y = 0.18 * Math.sin(t * 0.5); // gentle sway
+      core.rotation.y = -t * 0.8; // crossed sparkle shimmers in 3D
+      for (const m of tools) m.lookAt(cam.position);
+      const aTok = (t * 0.65) % (Math.PI * 2);
+      moverArr[0] = Math.cos(aTok) * R;
+      moverArr[1] = 0;
+      moverArr[2] = Math.sin(aTok) * R;
+      for (let i = 0; i < 3; i++) {
+        let d = Math.abs(aTok - toolAng[i]) % (Math.PI * 2);
+        if (d > Math.PI) d = Math.PI * 2 - d;
+        const s = Math.max(0, 1 - d / win);
+        const o = (1 + i) * 3;
+        moverArr[o] = toolPos[i][0] * s;
+        moverArr[o + 1] = s < 0.04 ? 999 : 0; // hide idle pulses off-screen
+        moverArr[o + 2] = toolPos[i][1] * s;
+      }
+      (moverGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
+    },
   };
 }
 
-// 02 — Full Stack: a UI window (top), a logic grid (middle), a data drum
-// (bottom), stacked on a central spine. A packet drops top -> bottom then rises.
+// 02 — Full Stack: a UI window (top), a logic grid (middle), a database drum
+// (bottom) on a spine. A cube packet drops top -> bottom then rises.
 function stackFigure(): Figure {
-  const group = new Group();
+  const { group, spin } = figureGroups(AERIAL);
   const inkLine = new LineBasicMaterial({ color: INK, transparent: true, opacity: EDGE_OP });
   const faintLine = new LineBasicMaterial({ color: INK, transparent: true, opacity: FAINT_OP });
-  const amberPts = new PointsMaterial({ color: AMBER, size: 0.15, sizeAttenuation: true, transparent: true, opacity: ACCENT_OP });
+  const amberLine = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: ACCENT_OP });
 
   const W = 0.95;
   const D = 0.7;
-  const yTop = 1.0;
+  const yTop = 1.05;
   const yMid = 0.0;
   const yBot = -1.0;
 
   const seg: number[] = [];
   const faint: number[] = [];
 
-  const rect = (y: number): void => {
+  const rect = (y: number, arr: number[]): void => {
     const c = [[-W, -D], [W, -D], [W, D], [-W, D]];
     for (let k = 0; k < 4; k++) {
       const p = c[k];
       const q = c[(k + 1) % 4];
-      seg.push(p[0], y, p[1], q[0], y, q[1]);
+      arr.push(p[0], y, p[1], q[0], y, q[1]);
     }
   };
 
-  // top — UI window: frame + title bar + content lines
-  rect(yTop);
-  seg.push(-W, yTop, -D + 0.22, W, yTop, -D + 0.22);
+  rect(yTop, seg);
+  seg.push(-W, yTop, -D + 0.26, W, yTop, -D + 0.26);
+  for (let i = 0; i < 2; i++) {
+    const bx = -W + 0.16 + i * 0.17;
+    const bz = -D + 0.13;
+    const r = 0.045;
+    seg.push(bx - r, yTop, bz - r, bx + r, yTop, bz - r);
+    seg.push(bx + r, yTop, bz - r, bx + r, yTop, bz + r);
+    seg.push(bx + r, yTop, bz + r, bx - r, yTop, bz + r);
+    seg.push(bx - r, yTop, bz + r, bx - r, yTop, bz - r);
+  }
   for (let i = 0; i < 3; i++) {
-    const z = -D + 0.44 + i * 0.22;
-    seg.push(-W + 0.16, yTop, z, W - 0.5, yTop, z);
+    const z = -D + 0.5 + i * 0.22;
+    seg.push(-W + 0.16, yTop, z, W - 0.4, yTop, z);
   }
 
-  // middle — logic grid
   const gx = 4;
   const gz = 3;
   for (let i = 0; i <= gx; i++) {
@@ -182,188 +280,228 @@ function stackFigure(): Figure {
     seg.push(-W, yMid, z, W, yMid, z);
   }
 
-  // bottom — data drum (cylinder): top + bottom rings, faint mid band, verticals
-  const dr = 0.62;
-  const dh = 0.34;
-  const drumTop = yBot + dh;
-  const drumBot = yBot - dh;
-  const ring = (y: number, arr: number[]): void => {
-    const n = 40;
+  const dr = 0.6;
+  const drumTop = yBot + 0.42;
+  const drumBot = yBot - 0.42;
+  const ellipse = (y: number, arr: number[]): void => {
+    const n = 44;
     for (let i = 0; i < n; i++) {
       const a0 = (i / n) * Math.PI * 2;
       const a1 = ((i + 1) / n) * Math.PI * 2;
       arr.push(Math.cos(a0) * dr, y, Math.sin(a0) * dr, Math.cos(a1) * dr, y, Math.sin(a1) * dr);
     }
   };
-  ring(drumTop, seg);
-  ring(drumBot, seg);
-  ring(yBot, faint);
-  for (let i = 0; i < 4; i++) {
-    const a = (i / 4) * Math.PI * 2;
+  ellipse(drumTop, seg);
+  ellipse(drumTop - 0.12, seg);
+  ellipse(drumTop - 0.24, seg);
+  ellipse(drumBot, seg);
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
     seg.push(Math.cos(a) * dr, drumTop, Math.sin(a) * dr, Math.cos(a) * dr, drumBot, Math.sin(a) * dr);
   }
 
-  // central spine
-  faint.push(0, yTop, 0, 0, drumBot, 0);
+  faint.push(0, yTop, 0, 0, drumBot, 0); // spine
 
-  group.add(lineSeg(seg, inkLine));
-  group.add(lineSeg(faint, faintLine));
+  spin.add(lineSeg(seg, inkLine));
+  spin.add(lineSeg(faint, faintLine));
 
-  const pkArr = new Float32Array(3);
-  const pkGeom = new BufferGeometry();
-  pkGeom.setAttribute('position', new Float32BufferAttribute(pkArr, 3));
-  group.add(new Points(pkGeom, amberPts));
-
-  const update = (t: number): void => {
-    const P = 2.6;
-    const ph = (t % P) / P;
-    const tri = ph < 0.5 ? ph * 2 : 2 - ph * 2; // 0 -> 1 -> 0
-    pkArr[0] = 0;
-    pkArr[1] = lerp(yTop, drumBot + 0.06, tri);
-    pkArr[2] = 0;
-    (pkGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
-  };
+  const packet = lineSeg(cubeSegs(0.1), amberLine);
+  spin.add(packet);
 
   return {
     group,
-    mats: [
-      { mat: inkLine, base: EDGE_OP },
-      { mat: faintLine, base: FAINT_OP },
-      { mat: amberPts, base: ACCENT_OP },
-    ],
-    update,
+    setFade: (k) => {
+      inkLine.opacity = EDGE_OP * k;
+      faintLine.opacity = FAINT_OP * k;
+      amberLine.opacity = ACCENT_OP * k;
+    },
+    update: (t) => {
+      spin.rotation.y = t * SPIN;
+      const P = 2.6;
+      const ph = (t % P) / P;
+      const tri = ph < 0.5 ? ph * 2 : 2 - ph * 2; // 0 -> 1 -> 0
+      packet.position.set(0, lerp(yTop, drumBot + 0.08, tri), 0);
+      packet.rotation.y = t * 0.9;
+    },
   };
 }
 
-// 03 — Applied ML: a hairline loss surface (an anisotropic bowl) with a marker
-// that takes gradient-descent steps toward the minimum, trailing its path, then
-// resets to a new start.
-function lossFigure(): Figure {
-  const group = new Group();
-  const surfMat = new LineBasicMaterial({ color: INK, transparent: true, opacity: EDGE_OP * 0.8 });
-  const trailMat = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: FAINT_OP + 0.12 });
-  const markMat = new PointsMaterial({ color: AMBER, size: 0.17, sizeAttenuation: true, transparent: true, opacity: ACCENT_OP });
+// 03 — Applied ML: a feed-forward net staggered in depth (so the sway reveals
+// 3D). Round nodes + faint resting weights; an activation wavefront sweeps left
+// to right, firing nodes and the weights between them amber (the forward pass).
+function netFigure(): Figure {
+  const { group, spin } = figureGroups(NET_TILT);
+  const counts = [4, 5, 3, 2];
+  const xs = [-1.7, -0.57, 0.57, 1.7];
+  const gap = 0.62;
 
-  const A = 0.26;
-  const B = 0.42;
-  const EXT = 1.5;
-  const G = 15;
-  const yShift = -0.55;
-  const f = (x: number, z: number): number => A * x * x + B * z * z + yShift;
-  const xw = (i: number): number => -EXT + (2 * EXT) * (i / (G - 1));
-
-  const surf: number[] = [];
-  for (let j = 0; j < G; j++) {
-    const z = xw(j);
-    for (let i = 0; i < G - 1; i++) {
-      const x0 = xw(i);
-      const x1 = xw(i + 1);
-      surf.push(x0, f(x0, z), z, x1, f(x1, z), z);
+  const layers: number[][] = [];
+  const npos: number[] = [];
+  const nx: number[] = [];
+  let idx = 0;
+  for (let l = 0; l < 4; l++) {
+    const arr: number[] = [];
+    const c = counts[l];
+    for (let k = 0; k < c; k++) {
+      const y = (k - (c - 1) / 2) * gap;
+      const z = 0.6 * Math.sin(k * 1.6 + l * 1.1); // spread nodes through depth
+      npos.push(xs[l], y, z);
+      nx.push(xs[l]);
+      arr.push(idx++);
     }
+    layers.push(arr);
   }
-  for (let i = 0; i < G; i++) {
-    const x = xw(i);
-    for (let j = 0; j < G - 1; j++) {
-      const z0 = xw(j);
-      const z1 = xw(j + 1);
-      surf.push(x, f(x, z0), z0, x, f(x, z1), z1);
-    }
+  const nNodes = idx;
+
+  const pairs: number[] = [];
+  for (let l = 0; l < 3; l++) {
+    for (const a of layers[l]) for (const b of layers[l + 1]) pairs.push(a, b);
   }
-  group.add(lineSeg(surf, surfMat));
+  const nEdges = pairs.length / 2;
 
-  // trail (a growing polyline through the stepped points)
-  const MAXP = 40;
-  const trailArr = new Float32Array(MAXP * 3);
-  const trailGeom = new BufferGeometry();
-  trailGeom.setAttribute('position', new Float32BufferAttribute(trailArr, 3));
-  trailGeom.setDrawRange(0, 0);
-  group.add(new Line(trailGeom, trailMat));
-
-  const markArr = new Float32Array(3);
-  const markGeom = new BufferGeometry();
-  markGeom.setAttribute('position', new Float32BufferAttribute(markArr, 3));
-  group.add(new Points(markGeom, markMat));
-
-  // gradient-descent state
-  let cx = 0;
-  let cz = 0;   // current step target
-  let mx = 0;
-  let mz = 0;   // marker visual position (lerped toward target)
-  let nPts = 0;
-  let steps = 0;
-  let stepAccum = 0;
-  let holding = false;
-  let holdT = 0;
-  let lastT = 0;
-  const LR = 0.32;
-  const STEP_DT = 0.34;
-  const MAXSTEP = 22;
-
-  const pushTrail = (): void => {
-    if (nPts >= MAXP) return;
-    const o = nPts * 3;
-    trailArr[o] = cx;
-    trailArr[o + 1] = f(cx, cz);
-    trailArr[o + 2] = cz;
-    nPts++;
-    trailGeom.setDrawRange(0, nPts);
-    (trailGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
-  };
-  const reset = (): void => {
-    const a = Math.random() * Math.PI * 2;
-    const r = 1.05 + Math.random() * 0.4;
-    cx = Math.cos(a) * r;
-    cz = Math.sin(a) * r;
-    mx = cx;
-    mz = cz;
-    nPts = 0;
-    steps = 0;
-    stepAccum = 0;
-    holding = false;
-    holdT = 0;
-    pushTrail();
-  };
-  reset();
-
-  const update = (t: number): void => {
-    const dt = Math.max(0, Math.min(0.05, t - lastT));
-    lastT = t;
-
-    if (holding) {
-      holdT += dt;
-      if (holdT > 1.2) reset();
-    } else {
-      stepAccum += dt;
-      while (stepAccum >= STEP_DT) {
-        stepAccum -= STEP_DT;
-        cx -= LR * 2 * A * cx;
-        cz -= LR * 2 * B * cz;
-        steps++;
-        pushTrail();
-        if (steps >= MAXSTEP || cx * cx + cz * cz < 0.0025) {
-          holding = true;
-          holdT = 0;
-          break;
-        }
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const nodeAct = new Float32Array(nNodes);
+  const nodeGeom = new BufferGeometry();
+  nodeGeom.setAttribute('position', new Float32BufferAttribute(new Float32Array(npos), 3));
+  nodeGeom.setAttribute('aAct', new Float32BufferAttribute(nodeAct, 1));
+  const nodeMat = new ShaderMaterial({
+    uniforms: { uInk: { value: INK }, uAmber: { value: AMBER }, uFade: { value: 1 }, uDpr: { value: dpr } },
+    vertexShader: `
+      attribute float aAct;
+      varying float vAct;
+      uniform float uDpr;
+      void main() {
+        vAct = aAct;
+        gl_PointSize = mix(7.0, 17.0, aAct) * uDpr; // grows when firing
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
-    }
+    `,
+    fragmentShader: `
+      varying float vAct;
+      uniform vec3 uInk; uniform vec3 uAmber; uniform float uFade;
+      void main() {
+        vec2 d = gl_PointCoord - 0.5;
+        if (dot(d, d) > 0.25) discard; // round dot
+        vec3 c = mix(uInk, uAmber, vAct);
+        float a = mix(0.72, 1.0, vAct) * uFade;
+        gl_FragColor = vec4(c, a);
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+  });
+  spin.add(new Points(nodeGeom, nodeMat));
 
-    mx += (cx - mx) * 0.25;
-    mz += (cz - mz) * 0.25;
-    markArr[0] = mx;
-    markArr[1] = f(mx, mz) + 0.05;
-    markArr[2] = mz;
-    (markGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
-  };
+  const edgePos = new Float32Array(nEdges * 6);
+  const edgeMid: number[] = [];
+  const edgeHalf: number[] = [];
+  for (let e = 0; e < nEdges; e++) {
+    const a = pairs[e * 2];
+    const b = pairs[e * 2 + 1];
+    for (let c = 0; c < 3; c++) {
+      edgePos[e * 6 + c] = npos[a * 3 + c];
+      edgePos[e * 6 + 3 + c] = npos[b * 3 + c];
+    }
+    const xa = npos[a * 3];
+    const xb = npos[b * 3];
+    edgeMid.push((xa + xb) / 2);
+    edgeHalf.push(Math.abs(xb - xa) / 2);
+  }
+  const edgeAct = new Float32Array(nEdges * 2);
+  const edgeGeom = new BufferGeometry();
+  edgeGeom.setAttribute('position', new Float32BufferAttribute(edgePos, 3));
+  edgeGeom.setAttribute('aAct', new Float32BufferAttribute(edgeAct, 1));
+  const edgeMat = new ShaderMaterial({
+    uniforms: { uInk: { value: INK }, uAmber: { value: AMBER }, uFade: { value: 1 } },
+    vertexShader: `
+      attribute float aAct;
+      varying float vAct;
+      void main() { vAct = aAct; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+    `,
+    fragmentShader: `
+      uniform vec3 uInk; uniform vec3 uAmber; uniform float uFade; varying float vAct;
+      void main() {
+        vec3 c = mix(uInk, uAmber, vAct);
+        float a = mix(0.3, 0.92, vAct) * uFade;
+        gl_FragColor = vec4(c, a);
+      }
+    `,
+    transparent: true,
+  });
+  spin.add(new LineSegments(edgeGeom, edgeMat));
+
+  // travelling activation pulses — a dot rides each weight as the wavefront
+  // crosses it, so the forward pass reads as dots flowing left -> right.
+  const pulsePos = new Float32Array(nEdges * 3);
+  const pulseOn = new Float32Array(nEdges);
+  const pulseGeom = new BufferGeometry();
+  pulseGeom.setAttribute('position', new Float32BufferAttribute(pulsePos, 3));
+  pulseGeom.setAttribute('aOn', new Float32BufferAttribute(pulseOn, 1));
+  const pulseMat = new ShaderMaterial({
+    uniforms: { uAmber: { value: AMBER }, uFade: { value: 1 }, uDpr: { value: dpr } },
+    vertexShader: `
+      attribute float aOn;
+      varying float vOn;
+      uniform float uDpr;
+      void main() {
+        vOn = aOn;
+        gl_PointSize = aOn * 13.0 * uDpr;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying float vOn;
+      uniform vec3 uAmber; uniform float uFade;
+      void main() {
+        if (vOn < 0.02) discard;
+        vec2 d = gl_PointCoord - 0.5;
+        if (dot(d, d) > 0.25) discard;
+        gl_FragColor = vec4(uAmber, vOn * uFade);
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+  });
+  spin.add(new Points(pulseGeom, pulseMat));
+
+  const Wn = 0.55;
 
   return {
     group,
-    mats: [
-      { mat: surfMat, base: EDGE_OP * 0.8 },
-      { mat: trailMat, base: FAINT_OP + 0.12 },
-      { mat: markMat, base: ACCENT_OP },
-    ],
-    update,
+    setFade: (k) => {
+      nodeMat.uniforms.uFade.value = k;
+      edgeMat.uniforms.uFade.value = k;
+      pulseMat.uniforms.uFade.value = k;
+    },
+    update: (t) => {
+      spin.rotation.y = 0.42 * Math.sin(t * 0.42); // sway reveals the depth
+      const T = 3.4;
+      const p = (t % T) / T;
+      const wf = p < 0.85 ? lerp(xs[0] - 0.5, xs[3] + 0.5, p / 0.85) : xs[3] + 0.5;
+      for (let n = 0; n < nNodes; n++) {
+        nodeAct[n] = Math.max(0, 1 - Math.abs(wf - nx[n]) / Wn);
+      }
+      (nodeGeom.getAttribute('aAct') as BufferAttribute).needsUpdate = true;
+      for (let e = 0; e < nEdges; e++) {
+        // light an edge while the wavefront crosses the gap it spans
+        const a = Math.max(0, 1 - Math.abs(wf - edgeMid[e]) / (edgeHalf[e] + 0.12));
+        edgeAct[e * 2] = a;
+        edgeAct[e * 2 + 1] = a;
+        // a pulse dot rides the weight from source to target as wf crosses it
+        const na = pairs[e * 2];
+        const nb = pairs[e * 2 + 1];
+        const frac = (wf - nx[na]) / (nx[nb] - nx[na]);
+        if (frac > 0 && frac < 1) {
+          pulseOn[e] = Math.sin(frac * Math.PI);
+          for (let c = 0; c < 3; c++) pulsePos[e * 3 + c] = lerp(npos[na * 3 + c], npos[nb * 3 + c], frac);
+        } else {
+          pulseOn[e] = 0;
+        }
+      }
+      (edgeGeom.getAttribute('aAct') as BufferAttribute).needsUpdate = true;
+      (pulseGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
+      (pulseGeom.getAttribute('aOn') as BufferAttribute).needsUpdate = true;
+    },
   };
 }
 
@@ -377,19 +515,14 @@ export function initInterestsGraph(canvas: HTMLCanvasElement): void {
   const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
-  const root = new Group();
-  root.rotation.x = X_TILT;
-  scene.add(root);
+  const pivot = new Group();
+  scene.add(pivot);
 
-  const figures: Figure[] = [agenticFigure(), stackFigure(), lossFigure()];
+  const figures: Figure[] = [agenticFigure(), stackFigure(), netFigure()];
   for (const fig of figures) {
     fig.group.visible = false;
-    root.add(fig.group);
+    pivot.add(fig.group);
   }
-
-  const setOpacity = (fig: Figure, k: number): void => {
-    for (const { mat, base } of fig.mats) mat.opacity = base * k;
-  };
 
   const resize = (): void => {
     const w = canvas.clientWidth || 320;
@@ -402,7 +535,6 @@ export function initInterestsGraph(canvas: HTMLCanvasElement): void {
   resize();
   window.addEventListener('resize', resize);
 
-  // Lagged cursor parallax — the figure tilts/turns toward the cursor.
   let curOffY = 0;
   let curOffX = 0;
   let tgtOffY = 0;
@@ -412,13 +544,12 @@ export function initInterestsGraph(canvas: HTMLCanvasElement): void {
     (e) => {
       const nx = (e.clientX / window.innerWidth - 0.5) * 2;
       const ny = (e.clientY / window.innerHeight - 0.5) * 2;
-      tgtOffY = nx * 0.5;
-      tgtOffX = ny * 0.25;
+      tgtOffY = nx * 0.4;
+      tgtOffX = ny * 0.18;
     },
     { passive: true },
   );
 
-  // Bullet hover focuses a figure (0/1/2). -1 = no focus, auto-cycle.
   let hover = -1;
   document.querySelectorAll<HTMLElement>('.int-item').forEach((el, i) => {
     el.addEventListener('pointerenter', () => { hover = i; });
@@ -433,14 +564,12 @@ export function initInterestsGraph(canvas: HTMLCanvasElement): void {
   let running = true;
   document.addEventListener('visibilitychange', () => { running = !document.hidden; });
 
-  // Cross-dissolve state machine over whole figures.
   let from = 0;
   let to = 0;
-  let mix = 1;       // 0..1 progress from -> to (1 == settled)
+  let mix = 1;
   let autoIdx = 0;
   let dwellT = 0;
 
-  let baseY = 0;
   let prev = 0;
   let t = 0;
 
@@ -451,20 +580,20 @@ export function initInterestsGraph(canvas: HTMLCanvasElement): void {
       const fig = figures[to];
       fig.group.visible = true;
       fig.group.scale.setScalar(1);
-      setOpacity(fig, 1);
-      fig.update(t);
+      fig.setFade(1);
+      fig.update(t, camera);
     } else {
       const e = mix * mix * (3 - 2 * mix); // smoothstep
       const a = figures[from];
       const b = figures[to];
       a.group.visible = true;
       a.group.scale.setScalar(lerp(1, 0.62, e));
-      setOpacity(a, 1 - e);
-      a.update(t);
+      a.setFade(1 - e);
+      a.update(t, camera);
       b.group.visible = true;
       b.group.scale.setScalar(lerp(0.62, 1, e));
-      setOpacity(b, e);
-      b.update(t);
+      b.setFade(e);
+      b.update(t, camera);
     }
 
     renderer.render(scene, camera);
@@ -475,7 +604,7 @@ export function initInterestsGraph(canvas: HTMLCanvasElement): void {
     prev = now;
 
     if (reduceMo.matches) {
-      render(); // single static pose
+      render();
       return;
     }
     if (running && visible) {
@@ -498,11 +627,10 @@ export function initInterestsGraph(canvas: HTMLCanvasElement): void {
         }
       }
 
-      baseY += dt * SPIN;
       curOffY += (tgtOffY - curOffY) * 0.07;
       curOffX += (tgtOffX - curOffX) * 0.07;
-      root.rotation.y = baseY + curOffY;
-      root.rotation.x = X_TILT + curOffX;
+      pivot.rotation.y = curOffY;
+      pivot.rotation.x = curOffX;
 
       render();
     }
