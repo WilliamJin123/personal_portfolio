@@ -226,8 +226,9 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
   .tl-row{position:relative;display:grid;grid-template-columns:62px 1fr}
   .tl-row::before{content:"";position:absolute;left:46px;top:0;bottom:0;width:1px;background:var(--rule)}
   .tl-row:last-child::before{bottom:auto;height:26px}
-  .tl-mark{grid-column:1;grid-row:1;position:relative;padding-top:16px;text-align:right;padding-right:24px}
+  .tl-mark{grid-column:1;grid-row:1;position:relative;display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding:16px 24px 0 0}
   .tl-mon{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+  .tl-kind{font-family:var(--mono);font-size:8px;letter-spacing:.11em;text-transform:uppercase;color:var(--amber);opacity:.85}
   .tl-dot{position:absolute;left:41.5px;top:18px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:1.6px solid var(--faint);box-sizing:border-box;z-index:1;transition:border-color .3s,background .3s,transform .3s}
   .tl-row.is-role .tl-dot{border-radius:2px}
   .tl-row:hover .tl-dot{border-color:var(--amber)}
@@ -235,9 +236,10 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
   .tl-head{grid-column:2;grid-row:1;text-align:left;background:none;border:0;border-bottom:1px dashed var(--rule);padding:14px 2px 14px 0;cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;color:var(--mute);transition:color .3s}
   .tl-head:hover,.tl-row.open .tl-head{color:var(--ink)}
   .tl-title{font-size:clamp(16px,1.8vw,19px);font-weight:530;letter-spacing:-.015em}
-  .tl-badge{font-size:11px;line-height:1}
-  .tl-badge.award{color:var(--amber)}
-  .tl-badge.grant{color:var(--grant)}
+  .tl-badge{width:19px;height:19px;padding:0;gap:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;align-self:center;box-sizing:border-box}
+  .tl-badge svg{width:11px;height:11px}
+  .tl-badge.award{color:var(--amber);background:rgba(var(--amber-rgb),.08);border:1px solid rgba(var(--amber-rgb),.42)}
+  .tl-badge.grant{color:var(--grant);background:rgba(var(--grant-rgb),.08);border:1px solid rgba(var(--grant-rgb),.42)}
   .tl-hmeta{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
   .tl-chev{margin-left:auto;align-self:center;flex-shrink:0;width:7px;height:7px;border-right:1.5px solid var(--faint);border-bottom:1.5px solid var(--faint);transform:rotate(45deg);transition:transform .36s cubic-bezier(.6,0,.2,1),border-color .3s}
   .tl-row.open .tl-chev{transform:rotate(-135deg);border-color:var(--amber)}
@@ -646,13 +648,12 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
     const ALL=[...WORK.projects.map(e=>({e,kind:'project'})),...WORK.work.map(e=>({e,kind:'role'}))].sort((a,b)=>{const ka=a.e.when?a.e.when.year*12+a.e.when.monthIndex:-1e9,kb=b.e.when?b.e.when.year*12+b.e.when.monthIndex:-1e9;return kb-ka;});
     const detailHTML=e=>{const a=awardsHTML(e),lk=linksHTML(e);return `<div class="tld-in">${a?`<div class="wd-awards">${a}</div>`:''}<ul class="rbul">${bulletsHTML(e)}</ul><div class="wd-stack">${chips(e.stack)}</div>${lk?`<div class="wd-links">${lk}</div>`:''}</div>`;};
     const renderTl=()=>{
-      let curYear=null,curMon=null,html='';
-      ALL.forEach((it,i)=>{const e=it.e,w=e.when,year=w?w.year:null,monKey=w?w.year+'-'+w.monthIndex:'x'+i,mon=w?w.monthLabel:'—';
-        if(year!==curYear){html+=`<div class="tl-yr">${year!=null?year:''}</div>`;curYear=year;curMon=null;}
-        const showMon=monKey!==curMon;curMon=monKey;
-        const honor=(e.awards&&e.awards.length)?'<span class="tl-badge award" title="award">★</span>':((e.grants&&e.grants.length)?'<span class="tl-badge grant" title="grant">◆</span>':'');
+      let curYear=null,html='';
+      ALL.forEach((it,i)=>{const e=it.e,w=e.when,year=w?w.year:null,mon=w?w.monthLabel:'—';
+        if(year!==curYear){html+=`<div class="tl-yr">${year!=null?year:''}</div>`;curYear=year;}
+        const honor=(e.awards&&e.awards.length)?`<span class="tl-badge award" title="Award">${TROPHY}</span>`:((e.grants&&e.grants.length)?`<span class="tl-badge grant" title="Grant">${DOLLAR}</span>`:'');
         const meta=it.kind==='role'?[e.role,e.dateLabel].filter(Boolean).join(' · '):[e.subtitle,e.dateLabel].filter(Boolean).join(' · ');
-        html+=`<div class="tl-row${i===0?' open':''}${it.kind==='role'?' is-role':''}" data-i="${i}"><div class="tl-mark"><i class="tl-dot"></i>${showMon?`<span class="tl-mon">${mon}</span>`:''}</div><button class="tl-head" aria-expanded="${i===0}"><span class="tl-title">${e.title}</span>${honor}<span class="tl-hmeta">${meta}</span><span class="tl-chev"></span></button><div class="tl-detail">${detailHTML(e)}</div></div>`;
+        html+=`<div class="tl-row${i===0?' open':''}${it.kind==='role'?' is-role':''}" data-i="${i}"><div class="tl-mark"><i class="tl-dot"></i><span class="tl-mon">${mon}</span>${it.kind==='role'?'<span class="tl-kind">work</span>':''}</div><button class="tl-head" aria-expanded="${i===0}"><span class="tl-title">${e.title}</span>${honor}<span class="tl-hmeta">${meta}</span><span class="tl-chev"></span></button><div class="tl-detail">${detailHTML(e)}</div></div>`;
       });
       wtlEl.innerHTML=html;
     };
