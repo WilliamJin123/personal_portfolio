@@ -277,7 +277,7 @@ const authored: ResumeEntry[] = [
     dateLabel: 'Jan 2026',
     links: [
       { label: 'repo', href: 'https://github.com/WilliamJin123/RLM_plus_plus' },
-      { label: 'paper', href: 'https://arxiv.org/pdf/2512.24601' },
+      { label: 'ref. paper', href: 'https://arxiv.org/pdf/2512.24601' },
     ],
     bullets: [
       {

@@ -8,6 +8,7 @@
 import { entries } from '../resume/data/entries';
 import { tokenize } from '../resume/tokenize';
 import { tokensToHtml } from '../resume/html';
+import { parseEndDate } from '../resume/data/order';
 import { portfolioMedia } from '../data/portfolio-media';
 
 const toView = (e: (typeof entries)[number]) => {
@@ -26,12 +27,16 @@ const toView = (e: (typeof entries)[number]) => {
     stack: m.stack ?? [],
     images: m.images ?? [],
     footnotes: m.footnotes ?? [],
+    when: parseEndDate(e.dateLabel), // { year, monthIndex, monthLabel } | null — drives the timeline grouping
   };
 };
 
+// `hidden` (in portfolio-media) trims an entry from the public browser only; it
+// stays in the résumé library/pool.
+const shown = (e: (typeof entries)[number]) => portfolioMedia[e.id]?.hidden !== true;
 const workData = {
-  projects: entries.filter((e) => e.section === 'projects').map(toView),
-  work: entries.filter((e) => e.section === 'experience').map(toView),
+  projects: entries.filter((e) => e.section === 'projects' && shown(e)).map(toView),
+  work: entries.filter((e) => e.section === 'experience' && shown(e)).map(toView),
 };
 // Escape every opening angle bracket so the serialized JSON can't terminate
 // the script element it is injected into. (split/join, not a regex literal, so
@@ -152,7 +157,7 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
   .wmd>*{min-width:0}
   @property --ft{syntax:'<length>';inherits:false;initial-value:0px}
   @property --fb{syntax:'<length>';inherits:false;initial-value:0px}
-  .wlist{display:flex;flex-direction:column;border-top:1px solid var(--rule);max-height:clamp(300px,46vh,440px);overflow-y:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ft),#000 calc(100% - var(--fb)),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ft),#000 calc(100% - var(--fb)),transparent 100%);transition:--ft .25s linear,--fb .25s linear}
+  .wlist{display:flex;flex-direction:column;border-top:1px solid var(--rule);max-height:clamp(300px,46vh,440px);overflow-y:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ft),#000 calc(100% - var(--fb)),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ft),#000 calc(100% - var(--fb)),transparent 100%);transition:--ft .25s linear,--fb .25s linear,opacity .26s ease,filter .26s ease,transform .26s ease}
   .wlist::-webkit-scrollbar{display:none}
   .witem{position:relative;text-align:left;background:none;border:0;border-bottom:1px dashed var(--rule);padding:14px 12px 14px 16px;cursor:pointer;display:flex;align-items:baseline;gap:12px;color:var(--mute);transition:color .3s,transform .3s}
   .witem .wn{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--faint);transition:color .3s}
@@ -212,17 +217,50 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
   .wdetail.play .rbold{animation:rBold .45s ease backwards;animation-delay:calc(.6s + var(--bi)*.07s)}
   .wdetail.play .rlink{animation:rUl .4s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.24s + var(--bi)*.07s)}
 
-  .wcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(228px,1fr));gap:clamp(14px,1.6vw,22px)}
-  .wcard{text-align:left;background:var(--paper);border:1px solid var(--rule);border-radius:10px;padding:0;cursor:pointer;overflow:hidden;transition:border-color .25s,transform .25s}
-  .wcard:hover{border-color:var(--amber);transform:translateY(-3px)}
-  .wcard .wc-img{aspect-ratio:16/10;border-bottom:1px dashed var(--rule);background:repeating-linear-gradient(135deg,transparent 0 18px,rgba(0,0,0,.02) 18px 36px),var(--paper2);display:flex;align-items:center;justify-content:center}
-  .wcard .wc-img .m{color:var(--faint)}
-  .wcard .wc-b{padding:15px 16px 17px}
-  .wcard .wc-n{font-size:16px;font-weight:520;letter-spacing:-.01em;color:var(--ink)}
-  .wcard .wc-s{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);margin-top:6px}
+  /* timeline view — a centered, dated spine; the section's focus. Each entry
+     expands its detail in place (one open at a time). The master-detail List
+     (.wmd) is the secondary toggle; the view switch cross-fades the two. */
+  .wtl{max-width:760px;margin:0 auto}
+  .tl-yr{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--faint);padding-left:62px;margin:22px 0 6px}
+  .tl-yr:first-child{margin-top:0}
+  .tl-row{position:relative;display:grid;grid-template-columns:62px 1fr}
+  .tl-row::before{content:"";position:absolute;left:46px;top:0;bottom:0;width:1px;background:var(--rule)}
+  .tl-row:last-child::before{bottom:auto;height:26px}
+  .tl-mark{grid-column:1;grid-row:1;position:relative;padding-top:16px;text-align:right;padding-right:24px}
+  .tl-mon{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+  .tl-dot{position:absolute;left:41.5px;top:18px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:1.6px solid var(--faint);box-sizing:border-box;z-index:1;transition:border-color .3s,background .3s,transform .3s}
+  .tl-row.is-role .tl-dot{border-radius:2px}
+  .tl-row:hover .tl-dot{border-color:var(--amber)}
+  .tl-row.open .tl-dot{border-color:var(--amber);background:var(--amber);transform:scale(1.15)}
+  .tl-head{grid-column:2;grid-row:1;text-align:left;background:none;border:0;border-bottom:1px dashed var(--rule);padding:14px 2px 14px 0;cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;color:var(--mute);transition:color .3s}
+  .tl-head:hover,.tl-row.open .tl-head{color:var(--ink)}
+  .tl-title{font-size:clamp(16px,1.8vw,19px);font-weight:530;letter-spacing:-.015em}
+  .tl-badge{font-size:11px;line-height:1}
+  .tl-badge.award{color:var(--amber)}
+  .tl-badge.grant{color:var(--grant)}
+  .tl-hmeta{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  .tl-chev{margin-left:auto;align-self:center;flex-shrink:0;width:7px;height:7px;border-right:1.5px solid var(--faint);border-bottom:1.5px solid var(--faint);transform:rotate(45deg);transition:transform .36s cubic-bezier(.6,0,.2,1),border-color .3s}
+  .tl-row.open .tl-chev{transform:rotate(-135deg);border-color:var(--amber)}
+  .tl-detail{grid-column:2;grid-row:2;display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .36s cubic-bezier(.6,0,.2,1),opacity .3s ease}
+  .tl-row.open .tl-detail{grid-template-rows:1fr;opacity:1}
+  .tld-in{overflow:hidden;min-height:0;padding-bottom:18px}
+  .tl-detail .rbul{margin-top:11px}
+  .tl-detail .wd-stack{margin-top:16px}
+  /* open animation — stagger the detail in as a row expands (reuses the List keyframes) */
+  .tl-row.open .award,.tl-row.open .grant{animation:rBadge .4s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.1s + var(--ai)*.07s)}
+  .tl-row.open .rbullet{animation:rRise .42s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.1s + var(--bi)*.06s)}
+  .tl-row.open .rbold{animation:rBold .45s ease backwards;animation-delay:calc(.55s + var(--bi)*.06s)}
+  .tl-row.open .rlink{animation:rUl .4s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.2s + var(--bi)*.06s)}
+  /* scroll reveal — each row rises in as it scrolls into view (esp. the long mobile stream) */
+  .wtl.reveal .tl-row,.wtl.reveal .tl-yr{opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .55s cubic-bezier(.2,.7,.2,1)}
+  .wtl.reveal .tl-row.seen,.wtl.reveal .tl-yr.seen{opacity:1;transform:none}
+  @media (prefers-reduced-motion:reduce){
+    .wtl.reveal .tl-row,.wtl.reveal .tl-yr{opacity:1;transform:none;transition:none}
+    .tl-row.open .award,.tl-row.open .grant,.tl-row.open .rbullet,.tl-row.open .rbold,.tl-row.open .rlink{animation:none}
+  }
   [hidden]{display:none!important}
-  .wmd,.wcards{transition:opacity .26s ease,filter .26s ease,transform .26s ease}
-  .wmd.vout,.wcards.vout{opacity:0;filter:blur(8px);transform:scale(.98)}
+  .wmd,.wtl{transition:opacity .26s ease,filter .26s ease,transform .26s ease}
+  .wmd.vout,.wtl.vout{opacity:0;filter:blur(8px);transform:scale(.98)}
 
   footer{padding:48px 0 78px;display:flex;flex-direction:column;align-items:center;gap:16px}
   .cta-line{font-size:13px}
@@ -314,6 +352,13 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
     .witem.active{color:var(--ink);border-color:var(--amber);background:var(--paper2)}
     .witem.active .wn{color:var(--amber)}
     .wd-desc{max-height:none;overflow:visible}
+    /* timeline — tighten the date gutter on small screens */
+    .tl-row{grid-template-columns:50px 1fr}
+    .tl-row::before{left:39px}
+    .tl-dot{left:34.5px}
+    .tl-mark{padding-right:18px}
+    .tl-yr{padding-left:50px}
+    .tl-title{font-size:16px}
 
     /* drop the fixed telemetry HUD on small screens */
     .hud{display:none}
@@ -428,14 +473,15 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
           <i class="seg-ink" id="segink"></i>
         </div>
         <div class="vswitch" id="vswitch">
-          <button class="vopt active" data-view="list"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 4.5h10M3 8h10M3 11.5h10"/></svg>List</button>
-          <button class="vopt" data-view="card"><svg viewBox="0 0 16 16" fill="currentColor"><rect x="2.4" y="2.4" width="4.6" height="4.6" rx="1"/><rect x="9" y="2.4" width="4.6" height="4.6" rx="1"/><rect x="2.4" y="9" width="4.6" height="4.6" rx="1"/><rect x="9" y="9" width="4.6" height="4.6" rx="1"/></svg>Card</button>
+          <button class="vopt active" data-view="timeline"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 2.5v11"/><circle cx="4" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="11" r="1.4" fill="currentColor" stroke="none"/><path d="M7.5 5h6M7.5 11h5"/></svg>Timeline</button>
+          <button class="vopt" data-view="list"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 4.5h10M3 8h10M3 11.5h10"/></svg>List</button>
           <i class="vswitch-ink" id="vswitchink"></i>
         </div>
       </div>
     </div>
     <div class="work-body">
-      <div class="wmd" id="wmd">
+      <div class="wtl" id="wtl"></div>
+      <div class="wmd" id="wmd" hidden>
         <div class="wlist" id="wlist"></div>
         <div class="wgallery">
           <div class="gframe">
@@ -460,7 +506,6 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
           <div class="wd-stack" id="wdstack"></div>
         </div>
       </div>
-      <div class="wcards" id="wcards" hidden></div>
     </div>
   </section>
 </div>
@@ -549,8 +594,6 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
     addEventListener('pointerout',e=>{const t=e.target.closest&&e.target.closest(sel);const r=e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest(sel);if(t&&!r)cur.classList.remove('lock');});
   }
 
-  // reduced-motion preference (still referenced by the work-section scroll replay)
-  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function frame(now){
     if(anim){const k=Math.min(1,(now-t0)/dur);const e=1-Math.pow(1-k,3);pos=from+(to-from)*e;
@@ -562,25 +605,22 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
   requestAnimationFrame(frame);
   setInterval(()=>{if(!drumMobile && !anim && !paused){active=(active+1)%N;setActive();from=pos;to=pos+1;t0=performance.now();anim=true;}},2900);
 
-  // selected work — projects / experience master-detail (List-5, placeholders)
+  // selected work — a centered, expand-in-place timeline (the focus, unified
+  // chronological stream of all entries) with a secondary master-detail List view.
   (function(){
     const ICONS={react:'react',typescript:'typescript',firebase:'firebase',swift:'swift',python:'python',pytorch:'pytorch',java:'openjdk',postgresql:'postgresql',docker:'docker',node:'nodedotjs',huggingface:'huggingface'};
     const iconURL=k=>`https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/${ICONS[k]||k}.svg`;
     const WORK=JSON.parse(document.getElementById('work-data').textContent);
     const seg=document.getElementById('wseg'), segink=document.getElementById('segink');
-    const listEl=document.getElementById('wlist'), wcards=document.getElementById('wcards'), wmd=document.getElementById('wmd'), wdetail=document.getElementById('wdetail');
+    const listEl=document.getElementById('wlist'), wtlEl=document.getElementById('wtl'), wmd=document.getElementById('wmd'), wdetail=document.getElementById('wdetail');
     const nameEl=document.getElementById('wdname'), metaEl=document.getElementById('wdmeta'), subtitleEl=document.getElementById('wdsubtitle'), awardsEl=document.getElementById('wdawards'), bulletsEl=document.getElementById('wdbullets'), linksEl=document.getElementById('wdlinks'), idxEl=document.getElementById('wdidx'), stackEl=document.getElementById('wdstack');
     const gcount=document.getElementById('gcount'), gfoot=document.getElementById('gfoot'), gph=document.getElementById('gph'), gprev=document.getElementById('gprev'), gnext=document.getElementById('gnext');
-    const vswitch=document.getElementById('vswitch'), vink=document.getElementById('vswitchink'), workBody=wmd.parentElement;
-    let set='projects', sel=0, img=0, view='list';
+    const vswitch=document.getElementById('vswitch'), vink=document.getElementById('vswitchink');
+    let set='projects', sel=0, img=0, view='timeline';
     const data=()=>WORK[set], pad=x=>String(x).padStart(2,'0');
-    // scrollable list with soft fade edges (height capped via CSS clamp on desktop, none on mobile)
+    // List view's scrollable selector with soft fade edges (capped height on desktop)
     const FADE=38, narrowMo=matchMedia('(max-width:760px)');
-    const applyFade=()=>{
-      const top=listEl.scrollTop, max=listEl.scrollHeight-listEl.clientHeight;
-      listEl.style.setProperty('--ft',(max>2&&top>2)?FADE+'px':'0px');
-      listEl.style.setProperty('--fb',(max>2&&top<max-2)?FADE+'px':'0px');
-    };
+    const applyFade=()=>{const top=listEl.scrollTop,max=listEl.scrollHeight-listEl.clientHeight;listEl.style.setProperty('--ft',(max>2&&top>2)?FADE+'px':'0px');listEl.style.setProperty('--fb',(max>2&&top<max-2)?FADE+'px':'0px');};
     listEl.addEventListener('scroll',applyFade,{passive:true});
     narrowMo.addEventListener('change',applyFade);
 
@@ -589,42 +629,66 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
     const TROPHY='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>';
     const DOLLAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>';
     const metaLine=e=>[e.role,e.dateLabel,e.location].filter(Boolean).join(' · ');
-    const cardSub=e=>e.subtitle || metaLine(e);
+    // detail fragments shared by the List panel and the timeline rows
+    const awardsHTML=e=>{const h=[...(e.awards||[]).map(a=>['award',TROPHY,a]),...(e.grants||[]).map(g=>['grant',DOLLAR,g])];return h.length?h.map(([c,ic,t],j)=>`<span class="${c}" style="--ai:${j}">${ic}${t}</span>`).join(''):'';};
+    const linksHTML=e=>(e.links&&e.links.length)?e.links.map((l,j)=>`<a class="wd-link rlink" href="${l.href}" target="_blank" rel="noreferrer" style="--bi:${j}">${l.label} ↗</a>`).join(''):'';
+    const bulletsHTML=e=>e.bulletsHtml.map((h,i)=>`<li class="rbullet" style="--bi:${i}">${h}</li>`).join('');
+
+    /* List view — master-detail (secondary toggle) */
     const renderList=()=>{listEl.innerHTML=data().map((e,i)=>`<button class="witem${i===sel?' active':''}" data-i="${i}"><span class="wbar"></span><span class="wn">${pad(i+1)}</span><span class="wtw"><span class="wt">${e.title}</span><span class="wdate">${e.dateLabel}</span></span></button>`).join('');applyFade();};
-    const renderCards=()=>{wcards.innerHTML=data().map((e,i)=>`<button class="wcard" data-i="${i}"><div class="wc-img"><span class="m">image — tbd</span></div><div class="wc-b"><div class="wc-n">${e.title}</div><div class="wc-s">${cardSub(e)}</div></div></button>`).join('');};
     const paintGallery=()=>{const e=data()[sel],n=e.images.length;gcount.textContent=pad(img+1)+' / '+pad(Math.max(n,1));gfoot.textContent=e.footnotes[img]||'image — optional';gph.textContent=n?('image '+pad(img+1)):'image — tbd';};
-    const paint=()=>{const e=data()[sel];idxEl.textContent=pad(sel+1);nameEl.textContent=e.title;metaEl.textContent=metaLine(e);if(e.subtitle){subtitleEl.textContent=e.subtitle;subtitleEl.hidden=false;}else{subtitleEl.hidden=true;}const honors=[...(e.awards||[]).map(a=>['award',TROPHY,a]),...(e.grants||[]).map(g=>['grant',DOLLAR,g])];if(honors.length){awardsEl.innerHTML=honors.map(([c,ic,t],j)=>`<span class="${c}" style="--ai:${j}">${ic}${t}</span>`).join('');awardsEl.hidden=false;}else{awardsEl.hidden=true;}if(e.links&&e.links.length){linksEl.innerHTML=e.links.map((l,j)=>`<a class="wd-link rlink" href="${l.href}" target="_blank" rel="noreferrer" style="--bi:${j}">${l.label} ↗</a>`).join('');linksEl.hidden=false;}else{linksEl.hidden=true;}bulletsEl.innerHTML=e.bulletsHtml.map((h,i)=>`<li class="rbullet" style="--bi:${i}">${h}</li>`).join('');stackEl.innerHTML=chips(e.stack);img=0;paintGallery();};
+    const paint=()=>{const e=data()[sel];idxEl.textContent=pad(sel+1);nameEl.textContent=e.title;metaEl.textContent=metaLine(e);if(e.subtitle){subtitleEl.textContent=e.subtitle;subtitleEl.hidden=false;}else{subtitleEl.hidden=true;}const a=awardsHTML(e);awardsEl.innerHTML=a;awardsEl.hidden=!a;const lk=linksHTML(e);linksEl.innerHTML=lk;linksEl.hidden=!lk;bulletsEl.innerHTML=bulletsHTML(e);stackEl.innerHTML=chips(e.stack);img=0;paintGallery();};
     const renderDetail=animate=>{paint();if(animate){wdetail.classList.remove('play');void wdetail.offsetWidth;wdetail.classList.add('play');}};
-    const select=(i,animate)=>{sel=i;[...listEl.children].forEach((c,j)=>c.classList.toggle('active',j===i));renderDetail(animate);};
-    const switchSet=ns=>{if(ns===set)return;set=ns;sel=0;seg.querySelectorAll('.sg').forEach(b=>b.classList.toggle('active',b.dataset.set===ns));moveInk();renderList();renderCards();renderDetail(true);syncHeight();};
+    const select=(i,animate)=>{sel=i;listEl.querySelectorAll('.witem').forEach(c=>c.classList.toggle('active',+c.dataset.i===i));renderDetail(animate);};
+    const switchSet=ns=>{if(ns===set)return;set=ns;sel=0;seg.querySelectorAll('.sg').forEach(b=>b.classList.toggle('active',b.dataset.set===ns));moveInk();renderList();renderDetail(true);};
+
+    /* Timeline view — one centered, unified chronological stream; expand-in-place (the focus) */
+    const ALL=[...WORK.projects.map(e=>({e,kind:'project'})),...WORK.work.map(e=>({e,kind:'role'}))].sort((a,b)=>{const ka=a.e.when?a.e.when.year*12+a.e.when.monthIndex:-1e9,kb=b.e.when?b.e.when.year*12+b.e.when.monthIndex:-1e9;return kb-ka;});
+    const detailHTML=e=>{const a=awardsHTML(e),lk=linksHTML(e);return `<div class="tld-in">${a?`<div class="wd-awards">${a}</div>`:''}<ul class="rbul">${bulletsHTML(e)}</ul><div class="wd-stack">${chips(e.stack)}</div>${lk?`<div class="wd-links">${lk}</div>`:''}</div>`;};
+    const renderTl=()=>{
+      let curYear=null,curMon=null,html='';
+      ALL.forEach((it,i)=>{const e=it.e,w=e.when,year=w?w.year:null,monKey=w?w.year+'-'+w.monthIndex:'x'+i,mon=w?w.monthLabel:'—';
+        if(year!==curYear){html+=`<div class="tl-yr">${year!=null?year:''}</div>`;curYear=year;curMon=null;}
+        const showMon=monKey!==curMon;curMon=monKey;
+        const honor=(e.awards&&e.awards.length)?'<span class="tl-badge award" title="award">★</span>':((e.grants&&e.grants.length)?'<span class="tl-badge grant" title="grant">◆</span>':'');
+        const meta=it.kind==='role'?[e.role,e.dateLabel].filter(Boolean).join(' · '):[e.subtitle,e.dateLabel].filter(Boolean).join(' · ');
+        html+=`<div class="tl-row${i===0?' open':''}${it.kind==='role'?' is-role':''}" data-i="${i}"><div class="tl-mark"><i class="tl-dot"></i>${showMon?`<span class="tl-mon">${mon}</span>`:''}</div><button class="tl-head" aria-expanded="${i===0}"><span class="tl-title">${e.title}</span>${honor}<span class="tl-hmeta">${meta}</span><span class="tl-chev"></span></button><div class="tl-detail">${detailHTML(e)}</div></div>`;
+      });
+      wtlEl.innerHTML=html;
+    };
+    // each row toggles independently — multiple can be open at once (first open by default)
+    const openRow=row=>{const on=!row.classList.contains('open');row.classList.toggle('open',on);const h=row.querySelector('.tl-head');if(h)h.setAttribute('aria-expanded',on);};
+
     const moveVInk=()=>{const b=vswitch.querySelector('.vopt.active');if(b){vink.style.left=b.offsetLeft+'px';vink.style.width=b.offsetWidth+'px';}};
-    // lock the section to the taller (list) view so switching to cards doesn't collapse the bottom
-    const syncHeight=()=>{if(view==='list'){workBody.style.minHeight='';workBody.style.minHeight=Math.ceil(wmd.offsetHeight)+'px';}};
-    const setView=card=>{
-      const next=card?'card':'list'; if(next===view)return;
-      const out=view==='card'?wcards:wmd, inc=card?wcards:wmd;
-      vswitch.querySelectorAll('.vopt').forEach(b=>b.classList.toggle('active',(b.dataset.view==='card')===card)); moveVInk();
+    const setView=tl=>{
+      const next=tl?'timeline':'list'; if(next===view)return;
+      const out=tl?wmd:wtlEl, inc=tl?wtlEl:wmd;
+      vswitch.querySelectorAll('.vopt').forEach(b=>b.classList.toggle('active',(b.dataset.view==='timeline')===tl)); moveVInk();
+      seg.hidden=tl; view=next; // the projects/work segment is a List-only control
       out.classList.add('vout');
-      setTimeout(()=>{out.hidden=true;out.classList.remove('vout');inc.classList.add('vout');inc.hidden=false;syncHeight();requestAnimationFrame(()=>requestAnimationFrame(()=>inc.classList.remove('vout')));},240);
-      view=next;
+      setTimeout(()=>{out.hidden=true;out.classList.remove('vout');inc.classList.add('vout');inc.hidden=false;if(!tl){renderDetail(true);applyFade();}requestAnimationFrame(()=>requestAnimationFrame(()=>inc.classList.remove('vout')));},240);
     };
 
     seg.querySelectorAll('.sg').forEach(b=>b.addEventListener('click',()=>switchSet(b.dataset.set)));
     listEl.addEventListener('click',e=>{const b=e.target.closest('.witem');if(b)select(+b.dataset.i,true);});
-    wcards.addEventListener('click',e=>{const b=e.target.closest('.wcard');if(b){select(+b.dataset.i,false);setView(false);}});
+    wtlEl.addEventListener('click',e=>{const b=e.target.closest('.tl-head');if(b)openRow(b.parentElement);});
     gprev.addEventListener('click',()=>{const e=data()[sel];if(!e.images.length)return;img=(img-1+e.images.length)%e.images.length;paintGallery();});
     gnext.addEventListener('click',()=>{const e=data()[sel];if(!e.images.length)return;img=(img+1)%e.images.length;paintGallery();});
-    vswitch.querySelectorAll('.vopt').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view==='card')));
+    vswitch.querySelectorAll('.vopt').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view==='timeline')));
 
-    renderList();renderCards();paint();moveInk();moveVInk();
-    addEventListener('resize',()=>{moveInk();moveVInk();applyFade();syncHeight();});
-    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{moveInk();moveVInk();applyFade();syncHeight();});
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{applyFade();syncHeight();}));
+    renderList();renderTl();paint();moveInk();moveVInk();
+    seg.hidden=(view==='timeline');
+    // scroll-reveal each timeline row/year as it enters view (.reveal added by JS so no-JS still shows content)
+    wtlEl.classList.add('reveal');
+    const tlIO=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){en.target.classList.add('seen');tlIO.unobserve(en.target);}});},{threshold:.18,rootMargin:'0px 0px -6% 0px'});
+    wtlEl.querySelectorAll('.tl-row,.tl-yr').forEach(el=>tlIO.observe(el));
+    addEventListener('resize',()=>{moveInk();moveVInk();applyFade();});
+    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{moveInk();moveVInk();applyFade();});
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{applyFade();}));
 
+    // populate + animate the List detail panel the first time the section is seen
     let workSeen=false;
-    new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting&&!workSeen){workSeen=true;renderDetail(true);}});},{threshold:.25}).observe(document.getElementById('work'));
-    // mobile: the detail sits below the image, so replay its staggered entrance when it scrolls into view
-    new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting&&narrowMo.matches&&!reduce){wdetail.classList.remove('play');void wdetail.offsetWidth;wdetail.classList.add('play');}});},{threshold:.3}).observe(wdetail);
+    new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting&&!workSeen){workSeen=true;if(view==='list')renderDetail(true);}});},{threshold:.25}).observe(document.getElementById('work'));
   })();
 
   // flair — instrument readout

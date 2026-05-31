@@ -9,6 +9,9 @@ export interface PortfolioMedia {
   stack?: (string | { label: string; icon?: string })[];
   images?: string[];
   footnotes?: string[];
+  // Site-only curation: omit this entry from the public "selected work" browser.
+  // The entry still lives in the résumé library/pool — this only trims the site.
+  hidden?: boolean;
 }
 
 export const portfolioMedia: Record<string, PortfolioMedia> = {
@@ -83,5 +86,5 @@ export const portfolioMedia: Record<string, PortfolioMedia> = {
     ],
     images: [],
   },
-  'email-llm': { stack: ['pytorch', 'huggingface', 'pandas', 'numpy'], images: [] },
+  'email-llm': { stack: ['pytorch', 'huggingface', 'pandas', 'numpy'], images: [], hidden: true },
 };
