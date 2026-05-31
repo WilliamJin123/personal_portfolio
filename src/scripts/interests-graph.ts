@@ -9,7 +9,7 @@
 //      and fires a pulse out to each tool as it passes.
 //   02 Full Stack          -> a UI window, a logic grid, and a data drum stacked
 //      on a spine; a cube packet drops down through the layers and rises back up.
-//   03 Applied ML          -> a feed-forward net with depth; weights rest faint
+//   03 Machine Learning    -> a feed-forward net with depth; weights rest faint
 //      and an activation wave sweeps left-to-right, firing nodes + weights amber.
 //
 // Reduced-motion renders one static pose; paused when off-screen or backgrounded.
@@ -26,7 +26,7 @@ const INK = new Color(0x141820);
 const AMBER = new Color(0xbd741b);
 
 const AERIAL = 0.62;     // tilt for the horizontal figures (agentic / stack)
-const NET_TILT = 0.12;   // the net reads near face-on
+const NET_TILT = 0.14;   // near face-on so the layered structure reads clearly
 const SPIN = 0.16;       // turntable rad/s (stack)
 const DWELL = 4.5;       // s a figure is held before auto-advancing
 const FADE = 1.0;        // s cross-dissolve
@@ -155,15 +155,17 @@ const figureGroups = (tilt: number): { group: Group; spin: Group } => {
   return { group, spin };
 };
 
-// 01 — Agentic: a billboarded sparkle core + billboarded tool icons on a tilted
-// feedback ring. A token circles the loop and pulses out to each tool.
+// 01 — Agentic: a model sparkle (crossed 3D) at the center of a single feedback
+// loop ring carrying three camera-facing tool icons (gear / search / code). A
+// token circles the loop and pulses out to each tool as it passes; the whole
+// thing turntable-spins.
 function agenticFigure(): Figure {
   const { group, spin } = figureGroups(AERIAL);
   const inkLine = new LineBasicMaterial({ color: INK, transparent: true, opacity: EDGE_OP });
   const amberLine = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: CORE_OP });
   const amberPts = new PointsMaterial({ color: AMBER, size: 0.14, sizeAttenuation: true, transparent: true, opacity: ACCENT_OP });
 
-  const core = lineSeg(sparkle3d(0.42, 0.13), amberLine); // crossed 3D sparkle
+  const core = lineSeg(sparkle3d(0.5, 0.15), amberLine);
   spin.add(core);
 
   const R = 1.5;
@@ -206,9 +208,9 @@ function agenticFigure(): Figure {
       amberPts.opacity = ACCENT_OP * k;
     },
     update: (t, cam) => {
-      spin.rotation.y = 0.18 * Math.sin(t * 0.5); // gentle sway
+      spin.rotation.y = t * SPIN;
       core.rotation.y = -t * 0.8; // crossed sparkle shimmers in 3D
-      for (const m of tools) m.lookAt(cam.position);
+      for (const m of tools) m.lookAt(cam.position); // billboard so icons stay readable
       const aTok = (t * 0.65) % (Math.PI * 2);
       moverArr[0] = Math.cos(aTok) * R;
       moverArr[1] = 0;
@@ -326,27 +328,30 @@ function stackFigure(): Figure {
   };
 }
 
-// 03 — Applied ML: a feed-forward net staggered in depth (so the sway reveals
+// 03 — Machine Learning: a feed-forward net staggered in depth (so the sway reveals
 // 3D). Round nodes + faint resting weights; an activation wavefront sweeps left
 // to right, firing nodes and the weights between them amber (the forward pass).
 function netFigure(): Figure {
   const { group, spin } = figureGroups(NET_TILT);
-  const counts = [4, 5, 3, 2];
-  const xs = [-1.7, -0.57, 0.57, 1.7];
+  const counts = [3, 5, 5, 3]; // symmetric -> clean, well-shaped silhouette
+  const xs = [-1.5, -0.5, 0.5, 1.5];
+  const zs = [0.3, 0.1, -0.1, -0.3]; // each layer at its own base depth (receding)
   const gap = 0.62;
+  const zSpread = 0.78; // fan each layer's nodes through depth so it's a 3D lattice, not a flat sheet
 
   const layers: number[][] = [];
   const npos: number[] = [];
-  const nx: number[] = [];
+  const nodeLayer: number[] = [];
   let idx = 0;
   for (let l = 0; l < 4; l++) {
     const arr: number[] = [];
     const c = counts[l];
+    const dir = l % 2 === 0 ? 1 : -1; // alternate fan direction -> edges weave through depth
     for (let k = 0; k < c; k++) {
-      const y = (k - (c - 1) / 2) * gap;
-      const z = 0.6 * Math.sin(k * 1.6 + l * 1.1); // spread nodes through depth
-      npos.push(xs[l], y, z);
-      nx.push(xs[l]);
+      const y = (k - (c - 1) / 2) * gap; // single centered column per layer (same silhouette)
+      const zk = c > 1 ? dir * (k / (c - 1) - 0.5) * zSpread : 0; // ordered depth fan within the layer
+      npos.push(xs[l], y, zs[l] + zk);
+      nodeLayer.push(l);
       arr.push(idx++);
     }
     layers.push(arr);
@@ -354,8 +359,9 @@ function netFigure(): Figure {
   const nNodes = idx;
 
   const pairs: number[] = [];
+  const edgeSrcLayer: number[] = [];
   for (let l = 0; l < 3; l++) {
-    for (const a of layers[l]) for (const b of layers[l + 1]) pairs.push(a, b);
+    for (const a of layers[l]) for (const b of layers[l + 1]) { pairs.push(a, b); edgeSrcLayer.push(l); }
   }
   const nEdges = pairs.length / 2;
 
@@ -392,9 +398,13 @@ function netFigure(): Figure {
   });
   spin.add(new Points(nodeGeom, nodeMat));
 
+  // Each edge carries two per-vertex attributes: aEnd (0 at the source node, 1
+  // at the target) so the fragment shader knows where along the wire it is, and
+  // aSeg (the network position of the edge's source layer) so a moving "head"
+  // can be turned into a bright pulse that travels source -> target.
   const edgePos = new Float32Array(nEdges * 6);
-  const edgeMid: number[] = [];
-  const edgeHalf: number[] = [];
+  const edgeEnd = new Float32Array(nEdges * 2);
+  const edgeSeg = new Float32Array(nEdges * 2);
   for (let e = 0; e < nEdges; e++) {
     const a = pairs[e * 2];
     const b = pairs[e * 2 + 1];
@@ -402,105 +412,70 @@ function netFigure(): Figure {
       edgePos[e * 6 + c] = npos[a * 3 + c];
       edgePos[e * 6 + 3 + c] = npos[b * 3 + c];
     }
-    const xa = npos[a * 3];
-    const xb = npos[b * 3];
-    edgeMid.push((xa + xb) / 2);
-    edgeHalf.push(Math.abs(xb - xa) / 2);
+    edgeEnd[e * 2] = 0;
+    edgeEnd[e * 2 + 1] = 1;
+    const seg = edgeSrcLayer[e] / 3; // 0, 1/3, 2/3 — gaps fire in sequence
+    edgeSeg[e * 2] = seg;
+    edgeSeg[e * 2 + 1] = seg;
   }
-  const edgeAct = new Float32Array(nEdges * 2);
   const edgeGeom = new BufferGeometry();
   edgeGeom.setAttribute('position', new Float32BufferAttribute(edgePos, 3));
-  edgeGeom.setAttribute('aAct', new Float32BufferAttribute(edgeAct, 1));
+  edgeGeom.setAttribute('aEnd', new Float32BufferAttribute(edgeEnd, 1));
+  edgeGeom.setAttribute('aSeg', new Float32BufferAttribute(edgeSeg, 1));
   const edgeMat = new ShaderMaterial({
-    uniforms: { uInk: { value: INK }, uAmber: { value: AMBER }, uFade: { value: 1 } },
+    uniforms: {
+      uInk: { value: INK }, uAmber: { value: AMBER }, uFade: { value: 1 },
+      uHead: { value: 0 }, uHead2: { value: 0.5 },
+    },
     vertexShader: `
-      attribute float aAct;
-      varying float vAct;
-      void main() { vAct = aAct; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+      attribute float aEnd;
+      attribute float aSeg;
+      varying float vEnd;
+      varying float vSeg;
+      void main() { vEnd = aEnd; vSeg = aSeg; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
     `,
     fragmentShader: `
-      uniform vec3 uInk; uniform vec3 uAmber; uniform float uFade; varying float vAct;
+      uniform vec3 uInk; uniform vec3 uAmber; uniform float uFade; uniform float uHead; uniform float uHead2;
+      varying float vEnd; varying float vSeg;
+      float pulseAt(float head) {
+        float local = (head - vSeg) * 3.0;             // head's progress within this edge's gap (each gap = 1/3)
+        if (local < 0.0 || local > 1.0) return 0.0;     // head not crossing this gap right now
+        return smoothstep(0.22, 0.0, abs(vEnd - local)); // bright dot riding the wire from source -> target
+      }
       void main() {
-        vec3 c = mix(uInk, uAmber, vAct);
-        float a = mix(0.3, 0.92, vAct) * uFade;
+        float p = max(pulseAt(uHead), pulseAt(uHead2));
+        vec3 c = mix(uInk, uAmber, p);
+        float a = mix(0.30, 0.96, p) * uFade;           // faint resting weight -> bright as the signal passes
         gl_FragColor = vec4(c, a);
-      }
-    `,
-    transparent: true,
-  });
-  spin.add(new LineSegments(edgeGeom, edgeMat));
-
-  // travelling activation pulses — a dot rides each weight as the wavefront
-  // crosses it, so the forward pass reads as dots flowing left -> right.
-  const pulsePos = new Float32Array(nEdges * 3);
-  const pulseOn = new Float32Array(nEdges);
-  const pulseGeom = new BufferGeometry();
-  pulseGeom.setAttribute('position', new Float32BufferAttribute(pulsePos, 3));
-  pulseGeom.setAttribute('aOn', new Float32BufferAttribute(pulseOn, 1));
-  const pulseMat = new ShaderMaterial({
-    uniforms: { uAmber: { value: AMBER }, uFade: { value: 1 }, uDpr: { value: dpr } },
-    vertexShader: `
-      attribute float aOn;
-      varying float vOn;
-      uniform float uDpr;
-      void main() {
-        vOn = aOn;
-        gl_PointSize = aOn * 13.0 * uDpr;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      varying float vOn;
-      uniform vec3 uAmber; uniform float uFade;
-      void main() {
-        if (vOn < 0.02) discard;
-        vec2 d = gl_PointCoord - 0.5;
-        if (dot(d, d) > 0.25) discard;
-        gl_FragColor = vec4(uAmber, vOn * uFade);
       }
     `,
     transparent: true,
     depthWrite: false,
   });
-  spin.add(new Points(pulseGeom, pulseMat));
-
-  const Wn = 0.55;
+  spin.add(new LineSegments(edgeGeom, edgeMat));
 
   return {
     group,
     setFade: (k) => {
       nodeMat.uniforms.uFade.value = k;
       edgeMat.uniforms.uFade.value = k;
-      pulseMat.uniforms.uFade.value = k;
     },
     update: (t) => {
-      spin.rotation.y = 0.42 * Math.sin(t * 0.42); // sway reveals the depth
-      const T = 3.4;
-      const p = (t % T) / T;
-      const wf = p < 0.85 ? lerp(xs[0] - 0.5, xs[3] + 0.5, p / 0.85) : xs[3] + 0.5;
+      spin.rotation.y = 0.35 * Math.sin(t * 0.4); // gentle sway reveals z-depth; layers stay readable
+      // Two activation "heads" sweep the network 0 -> 1 (layer 0 -> layer 3) and
+      // wrap, offset by half a cycle so a forward pass is always visibly flowing.
+      const CYCLE = 2.4;
+      const h1 = (t / CYCLE) % 1;
+      const h2 = (h1 + 0.5) % 1;
+      edgeMat.uniforms.uHead.value = h1;
+      edgeMat.uniforms.uHead2.value = h2;
+      const WW = 0.16; // a node fires while a head is within this of its layer
       for (let n = 0; n < nNodes; n++) {
-        nodeAct[n] = Math.max(0, 1 - Math.abs(wf - nx[n]) / Wn);
+        const coord = nodeLayer[n] / 3;
+        const d = Math.min(Math.abs(coord - h1), Math.abs(coord - h2));
+        nodeAct[n] = Math.max(0, 1 - d / WW);
       }
       (nodeGeom.getAttribute('aAct') as BufferAttribute).needsUpdate = true;
-      for (let e = 0; e < nEdges; e++) {
-        // light an edge while the wavefront crosses the gap it spans
-        const a = Math.max(0, 1 - Math.abs(wf - edgeMid[e]) / (edgeHalf[e] + 0.12));
-        edgeAct[e * 2] = a;
-        edgeAct[e * 2 + 1] = a;
-        // a pulse dot rides the weight from source to target as wf crosses it
-        const na = pairs[e * 2];
-        const nb = pairs[e * 2 + 1];
-        const frac = (wf - nx[na]) / (nx[nb] - nx[na]);
-        if (frac > 0 && frac < 1) {
-          pulseOn[e] = Math.sin(frac * Math.PI);
-          for (let c = 0; c < 3; c++) pulsePos[e * 3 + c] = lerp(npos[na * 3 + c], npos[nb * 3 + c], frac);
-        } else {
-          pulseOn[e] = 0;
-        }
-      }
-      (edgeGeom.getAttribute('aAct') as BufferAttribute).needsUpdate = true;
-      (pulseGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
-      (pulseGeom.getAttribute('aOn') as BufferAttribute).needsUpdate = true;
     },
   };
 }
