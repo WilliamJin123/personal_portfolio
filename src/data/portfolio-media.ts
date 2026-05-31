@@ -86,5 +86,5 @@ export const portfolioMedia: Record<string, PortfolioMedia> = {
     ],
     images: [],
   },
-  'email-llm': { stack: ['pytorch', 'huggingface', 'pandas', 'numpy'], images: [], hidden: true },
+  'email-llm': { stack: [{ label: 'Unsloth', icon: '/icons/unsloth.svg' }, 'pytorch', 'huggingface', 'pandas', 'numpy'], images: [], hidden: true },
 };

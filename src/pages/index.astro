@@ -474,7 +474,7 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
           <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/scikitlearn.svg')"><span class="ic"></span>scikit-learn</span>
           <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/scipy.svg')"><span class="ic"></span>SciPy</span>
           <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/huggingface.svg')"><span class="ic"></span>Hugging Face</span>
-          <span>Unsloth</span>
+          <span style="--i:url('/icons/unsloth.svg')"><span class="ic"></span>Unsloth</span>
         </div></div>
         <div class="slide"><div class="cat"><span class="ci">05</span><span class="cn">LLMs / Agents</span></div><div class="chips">
           <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/openai.svg')"><span class="ic"></span>OpenAI</span>
@@ -677,13 +677,15 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
   // vertical wheel over the drum steps through categories; horizontal intent falls
   // through to the chip rows. Bound to the drum window, so it only captures while
   // the cursor is over the carousel (page scroll is untouched elsewhere).
-  let wheelAcc=0;
+  let wheelLock=0;
   drumwin.addEventListener('wheel',e=>{
     if(drumMobile || Math.abs(e.deltaX)>Math.abs(e.deltaY)) return;
     e.preventDefault();
-    wheelAcc+=e.deltaY;
-    if(wheelAcc>38){wheelAcc=0;goTo((active-1+N)%N);}
-    else if(wheelAcc<-38){wheelAcc=0;goTo((active+1)%N);}
+    const now=performance.now();
+    if(now<wheelLock){wheelLock=now+150;return;} // inside a flick/momentum burst — swallow & hold the lock
+    if(Math.abs(e.deltaY)<4) return;             // ignore jitter
+    goTo(((active+(e.deltaY>0?-1:1))+N)%N);       // exactly one category step per gesture
+    wheelLock=now+150;
   },{passive:false});
 
   // selected work — a centered, expand-in-place timeline (the focus, unified
