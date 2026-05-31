@@ -138,7 +138,7 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
   .slide .cat .cn::after{content:"";position:absolute;left:0;bottom:-5px;height:2px;width:14px;background:var(--amber);border-radius:1px;animation:catPulse 3.6s ease-in-out infinite}
   @keyframes catPulse{0%,100%{opacity:.3;width:13px}50%{opacity:.92;width:23px}}
   @media (prefers-reduced-motion:reduce){.slide .cat .cn::after{animation:none;opacity:.6}}
-  .chips{display:flex;flex-wrap:nowrap;gap:10px;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;user-select:none;-webkit-mask-image:linear-gradient(to right,transparent 0,#000 var(--cl,0px),#000 calc(100% - var(--cr,0px)),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 var(--cl,0px),#000 calc(100% - var(--cr,0px)),transparent 100%)}
+  .chips{display:flex;flex-wrap:nowrap;gap:10px;min-width:0;padding:6px 0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;user-select:none;-webkit-mask-image:linear-gradient(to right,transparent 0,#000 var(--cl,0px),#000 calc(100% - var(--cr,0px)),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 var(--cl,0px),#000 calc(100% - var(--cr,0px)),transparent 100%)}
   .chips::-webkit-scrollbar{display:none}
   .chips span{font-family:var(--mono);font-size:13.5px;border:1px solid var(--rule);border-radius:999px;padding:8px 15px;color:var(--ink);background:var(--paper);display:flex;align-items:center;gap:9px;white-space:nowrap;transition:border-color .2s,background .2s,transform .2s}
   .chips span .ic{width:16px;height:16px;flex-shrink:0;background:var(--ink);-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat;transition:background .2s}
@@ -608,7 +608,7 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
   // stack drum — highlight tracks the TARGET (direct), spin takes shortest path
   const cells=[...document.getElementById('drum').children];
   const N=cells.length, STEP=27, R=150;
-  let pos=0, from=0, to=0, t0=0, dur=900, anim=false, paused=false, active=0;
+  let pos=0, from=0, to=0, t0=0, dur=900, anim=false, paused=false, active=0, holdUntil=0;
   const drumwin=document.getElementById('drumwin');
   drumwin.addEventListener('mouseenter',()=>paused=true);
   drumwin.addEventListener('mouseleave',()=>paused=false);
@@ -624,7 +624,7 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
     const cur=((Math.round(pos)%N)+N)%N;
     let delta=((idx-cur)%N+N)%N; if(delta>N/2) delta-=N;   // shortest rotational path
     if(delta!==0){from=pos; to=Math.round(pos)+delta; t0=performance.now(); anim=true;} // integer target — a mid-animation click can't leave pos fractional
-    active=idx; setActive();                                // highlight jumps straight to target
+    active=idx; setActive(); holdUntil=performance.now()+5000; // pause auto-cycle for a buffer after any manual nav
   }
   lgBtns.forEach(b=>b.addEventListener('click',()=>goTo(+b.dataset.c)));
   setActive();
@@ -656,7 +656,7 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  setInterval(()=>{if(!drumMobile && !anim && !paused){active=(active+1)%N;setActive();from=pos;to=Math.round(pos)+1;t0=performance.now();anim=true;}},2900);
+  setInterval(()=>{if(!drumMobile && !anim && !paused && performance.now()>holdUntil){active=(active+1)%N;setActive();from=pos;to=Math.round(pos)+1;t0=performance.now();anim=true;}},2900);
 
   // stack chips — per-row horizontal scroll: fade edges appear only where content is hidden; drag-to-scroll on mouse
   const chipRows=[...document.querySelectorAll('.slide .chips')];
@@ -682,8 +682,8 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
     if(drumMobile || Math.abs(e.deltaX)>Math.abs(e.deltaY)) return;
     e.preventDefault();
     wheelAcc+=e.deltaY;
-    if(wheelAcc>38){wheelAcc=0;goTo((active+1)%N);}
-    else if(wheelAcc<-38){wheelAcc=0;goTo((active-1+N)%N);}
+    if(wheelAcc>38){wheelAcc=0;goTo((active-1+N)%N);}
+    else if(wheelAcc<-38){wheelAcc=0;goTo((active+1)%N);}
   },{passive:false});
 
   // selected work — a centered, expand-in-place timeline (the focus, unified
