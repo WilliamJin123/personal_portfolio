@@ -1,10 +1,8 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
-import mdx from '@astrojs/mdx';
-import react from '@astrojs/react';
 
 // https://astro.build/config
+// Static site — a single self-contained landing page (src/pages/index.astro).
 export default defineConfig({
   output: 'static',
-  integrations: [react(), mdx()]
 });
