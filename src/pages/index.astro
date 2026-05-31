@@ -126,12 +126,20 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
   .drum-win::before{top:50%;margin-top:-35px}
   .drum-win::after{top:50%;margin-top:35px}
   .drum-win:hover::before,.drum-win:hover::after{background:var(--amber)}
-  .drum{position:absolute;inset:0;transform-style:preserve-3d}
+  /* push the cylinder back by its radius (R=150 in the drum script) so the front
+     slide lands flat at z=0 — without this it sits at +R and the perspective
+     magnifies it, shoving the left-anchored category label off the edge */
+  .drum{position:absolute;inset:0;transform-style:preserve-3d;transform:translateZ(-150px)}
   .slide{position:absolute;left:0;right:0;height:70px;top:50%;margin-top:-35px;transform-origin:center center;backface-visibility:hidden;display:flex;align-items:center;gap:40px}
-  .slide .cat{display:flex;flex-direction:column;gap:5px;width:140px;flex-shrink:0;border-left:2px solid var(--amber);padding-left:16px}
-  .slide .cat .ci{font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--amber)}
-  .slide .cat .cn{font-family:var(--mono);font-size:16px;letter-spacing:.02em;color:var(--ink);text-transform:uppercase}
-  .chips{display:flex;flex-wrap:nowrap;gap:10px}
+  .slide .cat{display:flex;flex-direction:column;gap:6px;width:140px;flex-shrink:0;border-left:1px solid var(--rule);padding-left:16px}
+  .slide .cat .ci{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;color:var(--faint)}
+  .slide .cat .cn{position:relative;font-family:var(--mono);font-size:16px;letter-spacing:.02em;color:#42474f;text-transform:uppercase}
+  /* subtle amber accent — a short underline that periodically breathes */
+  .slide .cat .cn::after{content:"";position:absolute;left:0;bottom:-5px;height:2px;width:14px;background:var(--amber);border-radius:1px;animation:catPulse 3.6s ease-in-out infinite}
+  @keyframes catPulse{0%,100%{opacity:.3;width:13px}50%{opacity:.92;width:23px}}
+  @media (prefers-reduced-motion:reduce){.slide .cat .cn::after{animation:none;opacity:.6}}
+  .chips{display:flex;flex-wrap:nowrap;gap:10px;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;user-select:none;-webkit-mask-image:linear-gradient(to right,transparent 0,#000 var(--cl,0px),#000 calc(100% - var(--cr,0px)),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 var(--cl,0px),#000 calc(100% - var(--cr,0px)),transparent 100%)}
+  .chips::-webkit-scrollbar{display:none}
   .chips span{font-family:var(--mono);font-size:13.5px;border:1px solid var(--rule);border-radius:999px;padding:8px 15px;color:var(--ink);background:var(--paper);display:flex;align-items:center;gap:9px;white-space:nowrap;transition:border-color .2s,background .2s,transform .2s}
   .chips span .ic{width:16px;height:16px;flex-shrink:0;background:var(--ink);-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat;transition:background .2s}
   .chips span:hover{border-color:var(--amber);background:var(--paper2);transform:translateY(-2px)}
@@ -417,40 +425,83 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
     <div class="stack-head">
       <span class="m">// stack</span>
       <div class="legend" id="legend">
-        <button class="lg" data-c="0">01 Frontend</button>
-        <button class="lg" data-c="1">02 Backend</button>
-        <button class="lg" data-c="2">03 ML / AI</button>
-        <button class="lg" data-c="3">04 Tools</button>
+        <button class="lg" data-c="0">01 Languages</button>
+        <button class="lg" data-c="1">02 Frontend</button>
+        <button class="lg" data-c="2">03 Backend</button>
+        <button class="lg" data-c="3">04 ML / Data</button>
+        <button class="lg" data-c="4">05 LLMs / Agents</button>
+        <button class="lg" data-c="5">06 Cloud</button>
+        <button class="lg" data-c="6">07 Dev Tools</button>
       </div>
       <span class="m hint">hover to pause</span>
     </div>
     <div class="drum-win" id="drumwin">
       <div class="drum" id="drum">
-        <div class="slide"><div class="cat"><span class="ci">01</span><span class="cn">Frontend</span></div><div class="chips">
+        <div class="slide"><div class="cat"><span class="ci">01</span><span class="cn">Languages</span></div><div class="chips">
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/python.svg')"><span class="ic"></span>Python</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/typescript.svg')"><span class="ic"></span>TypeScript</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/javascript.svg')"><span class="ic"></span>JavaScript</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/openjdk.svg')"><span class="ic"></span>Java</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/swift.svg')"><span class="ic"></span>Swift</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/cplusplus.svg')"><span class="ic"></span>C++</span>
+          <span style="--i:url('/icons/sql.svg')"><span class="ic"></span>SQL</span>
+        </div></div>
+        <div class="slide"><div class="cat"><span class="ci">02</span><span class="cn">Frontend</span></div><div class="chips">
           <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/react.svg')"><span class="ic"></span>React</span>
           <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/nextdotjs.svg')"><span class="ic"></span>Next.js</span>
-          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/typescript.svg')"><span class="ic"></span>TypeScript</span>
           <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/tailwindcss.svg')"><span class="ic"></span>Tailwind</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/swift.svg')"><span class="ic"></span>SwiftUI</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/astro.svg')"><span class="ic"></span>Astro</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/threedotjs.svg')"><span class="ic"></span>Three.js</span>
           <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/greensock.svg')"><span class="ic"></span>GSAP</span>
         </div></div>
-        <div class="slide"><div class="cat"><span class="ci">02</span><span class="cn">Backend</span></div><div class="chips">
+        <div class="slide"><div class="cat"><span class="ci">03</span><span class="cn">Backend</span></div><div class="chips">
           <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/nodedotjs.svg')"><span class="ic"></span>Node</span>
-          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/postgresql.svg')"><span class="ic"></span>Postgres</span>
-          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/rust.svg')"><span class="ic"></span>Rust</span>
-          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/redis.svg')"><span class="ic"></span>Redis</span>
-          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/trpc.svg')"><span class="ic"></span>tRPC</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/express.svg')"><span class="ic"></span>Express</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/fastapi.svg')"><span class="ic"></span>FastAPI</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/prisma.svg')"><span class="ic"></span>Prisma</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/postgresql.svg')"><span class="ic"></span>PostgreSQL</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/mysql.svg')"><span class="ic"></span>MySQL</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/sqlite.svg')"><span class="ic"></span>SQLite</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/mongodb.svg')"><span class="ic"></span>MongoDB</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/supabase.svg')"><span class="ic"></span>Supabase</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/firebase.svg')"><span class="ic"></span>Firebase</span>
         </div></div>
-        <div class="slide"><div class="cat"><span class="ci">03</span><span class="cn">ML / AI</span></div><div class="chips">
-          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/python.svg')"><span class="ic"></span>Python</span>
+        <div class="slide"><div class="cat"><span class="ci">04</span><span class="cn">ML / Data</span></div><div class="chips">
           <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/pytorch.svg')"><span class="ic"></span>PyTorch</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/numpy.svg')"><span class="ic"></span>NumPy</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/pandas.svg')"><span class="ic"></span>Pandas</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/scikitlearn.svg')"><span class="ic"></span>scikit-learn</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/scipy.svg')"><span class="ic"></span>SciPy</span>
           <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/huggingface.svg')"><span class="ic"></span>Hugging Face</span>
-          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/openai.svg')"><span class="ic"></span>OpenAI</span>
+          <span>Unsloth</span>
         </div></div>
-        <div class="slide"><div class="cat"><span class="ci">04</span><span class="cn">Tools</span></div><div class="chips">
-          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/git.svg')"><span class="ic"></span>Git</span>
-          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/docker.svg')"><span class="ic"></span>Docker</span>
-          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/figma.svg')"><span class="ic"></span>Figma</span>
+        <div class="slide"><div class="cat"><span class="ci">05</span><span class="cn">LLMs / Agents</span></div><div class="chips">
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/openai.svg')"><span class="ic"></span>OpenAI</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/anthropic.svg')"><span class="ic"></span>Anthropic</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/googlegemini.svg')"><span class="ic"></span>Gemini</span>
+          <span style="--i:url('/icons/cohere.svg')"><span class="ic"></span>Cohere</span>
+          <span style="--i:url('/icons/cerebras.svg')"><span class="ic"></span>Cerebras</span>
+          <span style="--i:url('/icons/agno.svg')"><span class="ic"></span>Agno</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/langchain.svg')"><span class="ic"></span>LangChain</span>
+          <span style="--i:url('/icons/langsmith.svg')"><span class="ic"></span>LangSmith</span>
+          <span style="--i:url('/icons/smolagents.svg')"><span class="ic"></span>smolagents</span>
+        </div></div>
+        <div class="slide"><div class="cat"><span class="ci">06</span><span class="cn">Cloud</span></div><div class="chips">
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/amazonwebservices.svg')"><span class="ic"></span>AWS</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/microsoftazure.svg')"><span class="ic"></span>Azure</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/googlecloud.svg')"><span class="ic"></span>GCP</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/cloudflare.svg')"><span class="ic"></span>Cloudflare</span>
           <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/vercel.svg')"><span class="ic"></span>Vercel</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/docker.svg')"><span class="ic"></span>Docker</span>
+        </div></div>
+        <div class="slide"><div class="cat"><span class="ci">07</span><span class="cn">Dev Tools</span></div><div class="chips">
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/git.svg')"><span class="ic"></span>Git</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/linux.svg')"><span class="ic"></span>Linux</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/jupyter.svg')"><span class="ic"></span>Jupyter</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/selenium.svg')"><span class="ic"></span>Selenium</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/ffmpeg.svg')"><span class="ic"></span>FFmpeg</span>
+          <span style="--i:url('https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/opentelemetry.svg')"><span class="ic"></span>OpenTelemetry</span>
         </div></div>
       </div>
     </div>
@@ -572,7 +623,7 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
   function goTo(idx){
     const cur=((Math.round(pos)%N)+N)%N;
     let delta=((idx-cur)%N+N)%N; if(delta>N/2) delta-=N;   // shortest rotational path
-    if(delta!==0){from=pos; to=pos+delta; t0=performance.now(); anim=true;}
+    if(delta!==0){from=pos; to=Math.round(pos)+delta; t0=performance.now(); anim=true;} // integer target — a mid-animation click can't leave pos fractional
     active=idx; setActive();                                // highlight jumps straight to target
   }
   lgBtns.forEach(b=>b.addEventListener('click',()=>goTo(+b.dataset.c)));
@@ -605,7 +656,35 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  setInterval(()=>{if(!drumMobile && !anim && !paused){active=(active+1)%N;setActive();from=pos;to=pos+1;t0=performance.now();anim=true;}},2900);
+  setInterval(()=>{if(!drumMobile && !anim && !paused){active=(active+1)%N;setActive();from=pos;to=Math.round(pos)+1;t0=performance.now();anim=true;}},2900);
+
+  // stack chips — per-row horizontal scroll: fade edges appear only where content is hidden; drag-to-scroll on mouse
+  const chipRows=[...document.querySelectorAll('.slide .chips')];
+  const chipFade=row=>{const max=row.scrollWidth-row.clientWidth;row.style.setProperty('--cl',row.scrollLeft>2?'24px':'0px');row.style.setProperty('--cr',(max>2&&row.scrollLeft<max-2)?'34px':'0px');};
+  chipRows.forEach(row=>{
+    row.addEventListener('scroll',()=>chipFade(row),{passive:true});
+    if(matchMedia('(pointer:fine)').matches){let dn=false,sx=0,sl=0;
+      row.addEventListener('pointerdown',e=>{dn=true;sx=e.clientX;sl=row.scrollLeft;});
+      addEventListener('pointermove',e=>{if(dn){row.scrollLeft=sl-(e.clientX-sx);}});
+      addEventListener('pointerup',()=>{dn=false;});
+    }
+  });
+  const refreshChipFades=()=>chipRows.forEach(chipFade);
+  refreshChipFades();
+  addEventListener('resize',refreshChipFades);
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(refreshChipFades);
+
+  // vertical wheel over the drum steps through categories; horizontal intent falls
+  // through to the chip rows. Bound to the drum window, so it only captures while
+  // the cursor is over the carousel (page scroll is untouched elsewhere).
+  let wheelAcc=0;
+  drumwin.addEventListener('wheel',e=>{
+    if(drumMobile || Math.abs(e.deltaX)>Math.abs(e.deltaY)) return;
+    e.preventDefault();
+    wheelAcc+=e.deltaY;
+    if(wheelAcc>38){wheelAcc=0;goTo((active+1)%N);}
+    else if(wheelAcc<-38){wheelAcc=0;goTo((active-1+N)%N);}
+  },{passive:false});
 
   // selected work — a centered, expand-in-place timeline (the focus, unified
   // chronological stream of all entries) with a secondary master-detail List view.
