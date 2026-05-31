@@ -1,0 +1,32 @@
+name: Deploy to Cloudflare Pages
+
+# Auto-deploy the static Astro site to the `williamjin` Cloudflare Pages project
+# on every push to main. Requires one repo secret: CLOUDFLARE_API_TOKEN
+# (Cloudflare dashboard → My Profile → API Tokens → use the "Cloudflare Pages —
+# Edit" template, scoped to your account). The account id below is not secret.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: 60b6a9265681110479d8abc8efb4657a
+          command: pages deploy dist --project-name=williamjin --branch=main
