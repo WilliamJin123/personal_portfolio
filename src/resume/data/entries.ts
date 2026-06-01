@@ -147,23 +147,28 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'aco',
-        text: 'Built a **GraphRAG** retriever where a swarm of agents traverse the **129K-node STaRK Prime** knowledge graph via **ant-colony optimization**, converging on the subgraphs most relevant to each query',
+        text: 'Built a **GraphRAG** retriever in which an **ant-colony** swarm of agents traverses the **129K-node STaRK Prime** knowledge graph, composing per-step **movement, pheromone-deposit, and ranking** heuristics to converge on the subgraph most relevant to each query',
         tags: ['ai', 'rag', 'python'],
       },
       {
+        id: 'symbolic',
+        text: "Made the swarm's heuristics themselves the search target: each genome encodes its scoring rules as either a **weighted sum** of primitive graph signals or a free-form **expression tree** discovered by **symbolic regression**, so the optimizer discovers traversal logic rather than hand-tuning weights",
+        tags: ['ml', 'optimization', 'symbolic-regression'],
+      },
+      {
         id: 'mapelites',
-        text: "Designed a **registry** of composable **genetic operators** (crossover, mutation, selection, initialization — incl. **LLM-guided** strategies) that an **evolutionary** optimizer searches over to auto-tune the swarm's scoring and heuristic functions",
-        tags: ['ml', 'optimization'],
+        text: 'Drove the outer search with **MAP-Elites** quality-diversity — an archive of elite genomes spread across behavioral descriptors (complexity, recall, latency) — explored by a **registry** of composable **genetic operators** (tournament/Boltzmann selection, subtree crossover, focused & guided mutation) and a **three-tier LLM** loop that diagnoses genomes and prescribes targeted mutations',
+        tags: ['ml', 'optimization', 'llm'],
+      },
+      {
+        id: 'systems',
+        text: 'Implemented it **GPU-native** in **PyTorch**, stepping the entire swarm in parallel as batched tensor ops over a compact **CSR** graph (~**16M** edges) at ~**50 ms**/query, with fitness caching, a cross-generation embedding cache, and convergence detection keeping multi-hundred-generation runs fast and VRAM-bounded',
+        tags: ['systems', 'pytorch', 'gpu'],
       },
       {
         id: 'arch',
         text: 'Designed a pluggable architecture with swappable **vector-store**, **graph-store**, and **embedding-provider** adapters (Cohere, Gemini, OpenAI)',
         tags: ['architecture', 'python'],
-      },
-      {
-        id: 'systems',
-        text: 'Implemented it **GPU-native** in **PyTorch**, stepping the entire swarm in parallel as batched tensor ops over a **CSR** graph (**16M** edges in **65MB**)',
-        tags: ['systems', 'pytorch', 'gpu'],
       },
     ],
   },
