@@ -147,12 +147,12 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'aco',
-        text: 'Built a **GraphRAG** retriever where swarm agents traverse the **129K-node STaRK Prime** knowledge graph, adapting **ant-colony optimization** with a novel pheromone-repulsion signal',
+        text: 'Built a **GraphRAG** retriever where a swarm of agents traverse the **129K-node STaRK Prime** knowledge graph via **ant-colony optimization**, converging on the subgraphs most relevant to each query',
         tags: ['ai', 'rag', 'python'],
       },
       {
         id: 'mapelites',
-        text: 'Auto-tuned its scoring functions via **genetic programming** under a **quality-diversity (MAP-Elites)** optimizer with **LLM-guided** mutation',
+        text: "Designed a **registry** of composable **genetic operators** (crossover, mutation, selection, initialization — incl. **LLM-guided** strategies) that an **evolutionary** optimizer searches over to auto-tune the swarm's scoring and heuristic functions",
         tags: ['ml', 'optimization'],
       },
       {
