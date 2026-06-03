@@ -45,20 +45,24 @@ function project(e: ResumeEntry, ids: string[]): string {
   const links = e.links ?? [];
   const primary = links[0];
   const name = primary
-    ? `{\\href{${escapeLatexUrl(primary.href)}}{\\textcolor{black}{${escapeLatex(e.title)}~\\raisebox{0.1em}{\\scalebox{0.8}{\\faExternalLink*}}}}}`
+    ? `{\\href{${escapeLatexUrl(primary.href)}}{\\textcolor{black}{${escapeLatex(e.title)}~\\raisebox{0.1em}{\\scalebox{0.8}{\\faExternalLink}}}}}`
     : `{${escapeLatex(e.title)}}`;
-  const subtitle = [
+  const badges = [
     ...(e.awards ?? []).map((a) => `\\award{${escapeLatex(a)}}`),
     ...(e.grants ?? []).map((g) => `\\grant{${escapeLatex(g)}}`),
+  ];
+  const context = [
     e.subtitle ? escapeLatex(e.subtitle) : '',
     ...links.slice(1).map((l) =>
       /github\.com/i.test(l.href)
         ? `\\repolink{${escapeLatexUrl(l.href)}}{${escapeLatex(l.label)}}`
         : `\\weblink{${escapeLatexUrl(l.href)}}{${escapeLatex(l.label)}}`,
     ),
-  ]
+  ].filter(Boolean);
+  // Awards/grants sit on their own line; the event/subtitle + any extra links wrap below.
+  const subtitle = [badges.join(' '), context.join(' ')]
     .filter(Boolean)
-    .join(' ');
+    .join(badges.length && context.length ? ' \\newline ' : ' ');
   return [
     '  \\resumeProject',
     `  ${name}`,
@@ -103,7 +107,7 @@ function header(p: Profile): string {
     '\\begin{center}',
     `    {\\Huge\\textbf{${escapeLatex(p.name)}}}`,
     '\\end{center}',
-    '\\vspace{-6mm}',
+    '\\vspace{-4.5mm}',
     '',
     '\\begin{center}',
     '    \\small{',
@@ -118,9 +122,9 @@ function skillsBlock(groups: SkillGroup[]): string {
   const rows = groups
     .map(
       (g) =>
-        `  \\item \\makebox[85pt][l]{\\fontsize{12pt}{12pt}\\selectfont ${escapeLatex(
+        `  \\item \\makebox[85pt][l]{\\fontsize{12pt}{12pt}\\selectfont \\textbf{${escapeLatex(
           g.category,
-        )}:}\n        ${g.items.map((s) => `\\skilltag{${escapeLatex(s)}}`).join(' ')}`,
+        )}:}}\n        ${g.items.map((s) => `\\skilltag{${escapeLatex(s)}}`).join(' ')}`,
     )
     .join('\n');
   return [

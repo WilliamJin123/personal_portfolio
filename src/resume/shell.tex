@@ -15,7 +15,7 @@
 
 
 \documentclass[a4paper,11pt]{article}
-\renewcommand{\normalsize}{\fontsize{10pt}{12.5pt}\selectfont}
+\renewcommand{\normalsize}{\fontsize{10pt}{12pt}\selectfont}
 % Package imports
 \usepackage{tikz}
 \usepackage{latexsym}
@@ -36,7 +36,7 @@
 \usepackage{graphicx}
 \usepackage{cfr-lm}
 \usepackage[T1]{fontenc}
-\usepackage{fontawesome5}
+\usepackage{fontawesome} % v4, not fontawesome5: fontawesome5 aborts tectonic (XeTeX) — its OTF isn't in the bundle
 
 % Color definitions
 \definecolor{darkblue}{RGB}{0,0,139}
@@ -48,7 +48,7 @@
 \fancyfoot{}
 \renewcommand{\headrulewidth}{0pt}
 \renewcommand{\footrulewidth}{0pt}
-\geometry{left=1.2cm, top=1.2cm, right=1.2cm, bottom=1cm}
+\geometry{left=1.2cm, top=1.0cm, right=1.2cm, bottom=0.8cm}
 \setlength{\footskip}{5pt} % Addressing fancyhdr warning
 
 % Hyperlink setup (moved after fancyhdr to address warning)
@@ -86,8 +86,8 @@
 
 % Section formatting
 \titleformat{\section}
-  {\vspace{-2pt}\raggedright\LARGE\mdseries}{}{0em}{}
-  [\color{black}\titlerule \vspace{-3pt}]
+  {\vspace{-4pt}\raggedright\Large\mdseries}{}{0em}{}
+  [\color{black}\titlerule \vspace{-5pt}]
 
 % Custom commands
 \newcommand{\resumeItem}[2]{
@@ -116,7 +116,7 @@
 \vspace{0.5mm}\item[]
     \begin{tabular*}{0.98\textwidth}[t]{l@{\extracolsep{\fill}}r}
         \textbf{\large #1} & \textit{\footnotesize{#3}} \\
-        \textit{#2}
+        \multicolumn{2}{@{}p{0.97\textwidth}@{}}{\textit{#2}}
     \end{tabular*}
     \vspace{-2.4mm}
 }
@@ -130,7 +130,7 @@
 \newcommand{\resumeHeadingSkillStart}{\begin{itemize}[leftmargin=*,itemsep=1.7mm, rightmargin=2ex, label={}]}
 \newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=5mm,labelsep=3mm,itemsep=-0.25mm]}
 
-\newcommand{\resumeSubHeadingListEnd}{\end{itemize}\vspace{2mm}}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}\vspace{1mm}}
 \newcommand{\resumeHeadingSkillEnd}{\end{itemize}\vspace{-3.5mm}}
 \newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-3.5mm}}
 \newcommand{\cvsection}[1]{%
@@ -161,24 +161,31 @@
 \newcommand{\headerfontix}{\fontfamily{qtm}\selectfont} % Quasi-Times (another Times New Roman alternative)
 \newcommand{\headerfontx}{\fontfamily{bch}\selectfont} % Charter (clean serif font)
 
-\newcommand{\headerfontxi}{\fontfamily{phv}\selectfont} % MY FONT
+% Document font: TeX Gyre Heros (a Helvetica twin) loaded as OpenType via fontspec.
+% Keeps the Helvetica look AND working \textbf under tectonic — the Type1 phv/qhv
+% Helvetica families silently lose their bold series once fontspec is active (which
+% fontawesome pulls in under XeTeX). fontspec is already loaded by fontawesome above.
+\newfontfamily\resumemain{texgyreheros}[
+  Extension=.otf, UprightFont=*-regular, BoldFont=*-bold,
+  ItalicFont=*-italic, BoldItalicFont=*-bolditalic]
+\newcommand{\headerfontxi}{\resumemain}
 
 \begin{document}
 \headerfontxi
 
 % \skilltag is used by the generated body; define it here in the shell.
-\newcommand{\skilltag}[1]{{\textbf{#1}}\hspace{5pt}}
+\newcommand{\skilltag}[1]{{#1}\hspace{5pt}} % items are regular weight; the category label is the bold one (see generate.ts skillsBlock)
 
 % \award highlights wins/honors (upright bold amber + trophy); used in project subtitles.
 \definecolor{awardamber}{RGB}{189,116,27}
 \newcommand{\award}[1]{{\normalfont\textbf{\textcolor{awardamber}{\faTrophy~#1}}}\hspace{6pt}}
 % \grant highlights funding/grants (upright bold green + dollar sign).
 \definecolor{grantgreen}{RGB}{58,125,92}
-\newcommand{\grant}[1]{{\normalfont\textbf{\textcolor{grantgreen}{\faDollarSign~#1}}}\hspace{6pt}}
+\newcommand{\grant}[1]{{\normalfont\textbf{\textcolor{grantgreen}{\faUsd~#1}}}\hspace{6pt}}
 % \repolink renders a secondary repo link (github icon + label) in a project subtitle.
 \newcommand{\repolink}[2]{{\normalfont\href{#1}{\footnotesize\faGithub~#2}}\hspace{6pt}}
 % \weblink renders a secondary non-github link (external-link icon + label), e.g. a paper.
-\newcommand{\weblink}[2]{{\normalfont\href{#1}{\footnotesize\faExternalLink*~#2}}\hspace{6pt}}
+\newcommand{\weblink}[2]{{\normalfont\href{#1}{\footnotesize\faExternalLink~#2}}\hspace{6pt}}
 
 %%RESUME_BODY%%
 

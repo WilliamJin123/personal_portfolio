@@ -17,7 +17,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'rag',
-        text: 'Developed a **RAG** chatbot (10+ engineer team) for employees to query an internal regulation corpus, built on **Azure OpenAI**, **Azure AI Search**, and Container Apps',
+        text: 'Developed a **Retrieval-Augmented Generation (RAG)** chatbot (10+ engineer team) for employees to query an internal regulation corpus, built on **Azure OpenAI**, **Azure AI Search**, and Container Apps',
         tags: ['ai', 'rag', 'azure'],
       },
       {
@@ -47,6 +47,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'map',
+        default: false,
         text: 'Created a publication map to visualize citation networks and communicate research impact',
         tags: ['dataviz'],
       },
@@ -60,6 +61,7 @@ const authored: ResumeEntry[] = [
   {
     id: 'weaccel',
     section: 'experience',
+    include: false, // PD program (not validated employment) — excluded from the résumé; kept in the pool
     title: 'WE Accelerate Azure & AI Stream',
     location: 'Waterloo, Ontario',
     role: 'Professional Development Participant',
@@ -110,14 +112,14 @@ const authored: ResumeEntry[] = [
   {
     id: 'tract',
     section: 'projects',
-    title: 'tract',
+    title: 'Tract',
     subtitle: 'Personal Project',
     dateLabel: 'Feb 2026 - Mar 2026',
     links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/tract' }],
     bullets: [
       {
         id: 'dag',
-        text: 'Built **tract**, a from-scratch git-style version-control engine for LLM context: a content-addressed **SHA-256** commit **DAG** with branching, three-way merge, and rebase, in **Python**',
+        text: 'Built **Tract**, a from-scratch git-style version-control engine for LLM context: a content-addressed **SHA-256** commit **DAG** with branching, three-way merge, and rebase, in **Python**',
         tags: ['systems', 'python'],
       },
       {
@@ -127,11 +129,13 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'semantic',
+        default: false,
         text: 'Added LLM-mediated semantic merges and context compression, mapping model output to typed **Pydantic** results with fail-open validation',
         tags: ['ai', 'llm'],
       },
       {
         id: 'storage',
+        default: false,
         text: 'Persisted the object store in **SQLite** (**SQLAlchemy**, auto-migrating schema), backed by a property-based and end-to-end test suite',
         tags: ['backend', 'database'],
       },
@@ -140,6 +144,7 @@ const authored: ResumeEntry[] = [
   {
     id: 'swarm-rag',
     section: 'projects',
+    include: false, // one-page trim: strongest solo build but unvalidated + 3 long bullets; top swap-in
     title: 'Swarm RAG',
     subtitle: 'Research Project',
     dateLabel: 'Dec 2025 - Feb 2026',
@@ -162,11 +167,13 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'systems',
+        default: false,
         text: 'Implemented it **GPU-native** in **PyTorch**, stepping the entire swarm in parallel as batched tensor ops over a compact **CSR** graph (~**16M** edges) at ~**50 ms**/query, with fitness caching, a cross-generation embedding cache, and convergence detection keeping multi-hundred-generation runs fast and VRAM-bounded',
         tags: ['systems', 'pytorch', 'gpu'],
       },
       {
         id: 'arch',
+        default: false,
         text: 'Designed a pluggable architecture with swappable **vector-store**, **graph-store**, and **embedding-provider** adapters (Cohere, Gemini, OpenAI)',
         tags: ['architecture', 'python'],
       },
@@ -175,6 +182,7 @@ const authored: ResumeEntry[] = [
   {
     id: 'kan-cppn',
     section: 'projects',
+    include: false, // one-page trim: niche research; swap in for ML-research-flavored apps
     title: 'KAN-CPPN',
     subtitle: 'Personal Project',
     dateLabel: 'Feb 2026',
@@ -205,6 +213,7 @@ const authored: ResumeEntry[] = [
   {
     id: 'volleyclip',
     section: 'projects',
+    include: false, // one-page trim: full-stack + live demo; swap-in if you want a web/demo project
     title: 'VolleyClip',
     subtitle: 'Personal Project',
     dateLabel: 'Jan 2026 - Feb 2026',
@@ -225,11 +234,13 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'ffmpeg',
+        default: false,
         text: 'Engineered an **FFmpeg** pipeline that stream-copies clips straight from **Cloudflare R2** presigned URLs for near-instant lossless cuts, auto-generating thumbnails',
         tags: ['video', 'backend'],
       },
       {
         id: 'infra',
+        default: false,
         text: 'Deployed the frontend on **Vercel** and the **Docker**-containerized backend on **Google Cloud Run**, backed by **Supabase** Postgres, auth, and row-level security',
         tags: ['infra', 'devops'],
       },
@@ -259,16 +270,19 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'veo',
+        default: false,
         text: 'Created a **Veo 3.1** transition tool that frame-interpolates between the boundary frames of two adjacent clips for a seamless cut',
         tags: ['ai', 'video'],
       },
       {
         id: 'tts',
+        default: false,
         text: 'Generated AI voiceover with **ElevenLabs** TTS, fitting each clip to a target duration via **FFmpeg** time-stretching',
         tags: ['ai', 'audio'],
       },
       {
         id: 'ui',
+        default: false,
         text: 'Built a custom **React 19** timeline editor where AI and manual edits share a single undo/redo history',
         tags: ['frontend', 'react'],
       },
@@ -277,6 +291,7 @@ const authored: ResumeEntry[] = [
   {
     id: 'rlm-plus-plus',
     section: 'projects',
+    include: false, // one-page trim: strong alternate (78% vs 24%); overlaps tract thematically
     title: 'RLM++',
     subtitle: 'Personal Project',
     dateLabel: 'Jan 2026',
@@ -310,6 +325,7 @@ const authored: ResumeEntry[] = [
   {
     id: 'graphrag-agent',
     section: 'projects',
+    include: false, // one-page trim: redundant with Swarm RAG (GraphRAG) + Solana SDK (same team)
     title: 'GraphRAG Codebase Agent',
     subtitle: 'Solana Swift SDK',
     dateLabel: 'Nov 2025 - Dec 2025',
@@ -355,16 +371,18 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'crypto',
-        text: 'Built the wallet connect and signing flow as an **x25519 + XSalsa20-Poly1305** encrypted deeplink handshake (**TweetNacl**) with per-session shared secrets',
+        text: 'Built the wallet connect and signing flow as an **encrypted deeplink handshake** with per-session shared secrets between app and wallet',
         tags: ['swift', 'crypto'],
       },
       {
         id: 'arch',
+        default: false,
         text: "Architected a protocol-oriented wallet layer so new wallets plug in via conformance, polyfilling Phantom's deprecated sign-and-send over the **RPC** client",
         tags: ['swift', 'architecture'],
       },
       {
         id: 'ship',
+        default: false,
         text: 'Shipped the open-source SDK via **Swift Package Manager** with full documentation',
         tags: ['open-source'],
       },
@@ -394,6 +412,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'backend',
+        default: false,
         text: 'Built the backend using **Firebase Cloud Functions** and **Firestore** and the frontend using **SwiftUI**',
         tags: ['firebase', 'swiftui'],
       },
@@ -402,6 +421,7 @@ const authored: ResumeEntry[] = [
   {
     id: 'email-llm',
     section: 'projects',
+    include: false, // one-page trim: smallest project
     title: 'Email-Style LLM SFT',
     subtitle: 'Personal Project',
     dateLabel: 'Sept 2025',
@@ -435,7 +455,7 @@ const authored: ResumeEntry[] = [
       { id: 'gpa', text: 'GPA: 3.90/4.00' },
       {
         id: 'courses',
-        text: 'Relevant Coursework: Intro to Data Abstraction and Implementation, Statistics, Foundations of Sequential Programs, Digital Computers',
+        text: 'Relevant Coursework: Data Abstraction and Implementation, Statistics, Sequential Programs, Digital Computers',
       },
     ],
   },
