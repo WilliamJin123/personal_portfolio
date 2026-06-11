@@ -14,13 +14,18 @@
 // instrument scanning the topology. Same telemetry language as the HUD and
 // crosshair; skipped under reduced motion.
 //
+// Optimizers: the terrain is a loss landscape, so a few amber markers run
+// gradient descent on it — momentum physics, a fading trail, and when one
+// converges it pulses and respawns elsewhere. The surface never stops
+// morphing, so the minima move and the descent never ends.
+//
 // Reduced-motion renders a single static pose; paused when the tab is
 // backgrounded.
 
 import {
   Scene, PerspectiveCamera, WebGLRenderer,
-  BufferGeometry, BufferAttribute,
-  LineSegments, ShaderMaterial,
+  BufferGeometry, BufferAttribute, Float32BufferAttribute,
+  LineSegments, Line, Points, ShaderMaterial,
   Color,
 } from 'three';
 
@@ -56,12 +61,21 @@ const SCROLL_TO_NOISE = 0.0045; // noise units per pixel scrolled (forward trave
 
 // Survey sweep — period between sweeps, travel time, band half-width, and the
 // Z run (starts just behind the camera, parks beyond the fade when idle)
-const SWEEP_PERIOD = 17;
+const SWEEP_PERIOD = 23;
 const SWEEP_TRAVEL = 6.5;
 const SWEEP_WIDTH = 3.0;
 const SWEEP_FROM = 9;
 const SWEEP_TO = -44;
 const SWEEP_IDLE = 999;
+
+// Optimizers — gradient descent with momentum on the live height field
+const N_OPT = 3;
+const TRAIL = 64;          // trail samples per optimizer
+const OPT_ACCEL = 3.1;     // gradient pull
+const OPT_DAMP = 1.9;      // velocity damping (momentum-ish)
+const OPT_LIFT = 0.07;     // hover above the surface so lines don't cut the dot
+const CONV_T = 2.6;        // s near-stationary before declaring convergence
+const PULSE_T = 0.8;       // s of converge pulse before respawning
 
 // Random per-session phase offsets — same code, different terrain every load.
 const PHASES = [
@@ -170,13 +184,16 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
       uFadeFar: { value: FADE_FAR },
       uScanZ: { value: SWEEP_IDLE },
       uScanW: { value: SWEEP_WIDTH },
+      uH: { value: HSCALE },
     },
     vertexShader: `
       varying float vDist;
       varying float vZ;
+      varying float vY;
       void main() {
         vDist = length(position.xz);
         vZ = position.z;
+        vY = position.y;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
@@ -188,10 +205,14 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
       uniform float uFadeFar;
       uniform float uScanZ;
       uniform float uScanW;
+      uniform float uH;
       varying float vDist;
       varying float vZ;
+      varying float vY;
       void main() {
         float fade = 1.0 - smoothstep(uFadeNear, uFadeFar, vDist);
+        // ridges read slightly crisper than valleys — a cheap depth cue
+        fade *= mix(0.76, 1.22, smoothstep(-uH, uH, vY));
         float scan = 1.0 - smoothstep(0.0, uScanW, abs(vZ - uScanZ));
         vec3 col = mix(uColor, uAmber, scan * 0.85);
         gl_FragColor = vec4(col, (uBaseAlpha + 0.115 * scan) * fade);
@@ -200,6 +221,127 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
     transparent: true,
   });
   scene.add(new LineSegments(geom, mat));
+
+  // ── optimizers — gradient descent on the live height field ──
+  // Physics runs on the same noise the mesh samples, so the dots genuinely
+  // ride the surface. Scroll shifts the field under them (like the terrain),
+  // which keeps them honest: the landscape moves, they re-descend.
+  const heightAt = (x: number, z: number, t: number, off: number): number =>
+    noise(x, z + off, t) * HSCALE;
+
+  interface Opt {
+    x: number; z: number; vx: number; vz: number;
+    still: number;   // s spent near-stationary (convergence timer)
+    pulse: number;   // s remaining in the converge pulse (0 = not pulsing)
+    trail: number[]; // flat xyz ring, newest first
+  }
+  const spawn = (): Opt => ({
+    x: (Math.random() * 2 - 1) * SCALE_X * 0.8,
+    z: -30 + Math.random() * 32,
+    vx: 0, vz: 0, still: 0, pulse: 0, trail: [],
+  });
+  const opts: Opt[] = Array.from({ length: N_OPT }, spawn);
+
+  const headArr = new Float32Array(N_OPT * 3);
+  const headPulse = new Float32Array(N_OPT);
+  const headGeom = new BufferGeometry();
+  headGeom.setAttribute('position', new BufferAttribute(headArr, 3));
+  headGeom.setAttribute('aPulse', new BufferAttribute(headPulse, 1));
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const headMat = new ShaderMaterial({
+    uniforms: { uAmber: { value: AMBER }, uDpr: { value: dpr } },
+    vertexShader: `
+      attribute float aPulse;
+      varying float vPulse;
+      uniform float uDpr;
+      void main() {
+        vPulse = aPulse;
+        gl_PointSize = (4.5 + 7.0 * aPulse) * uDpr;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uAmber;
+      varying float vPulse;
+      void main() {
+        vec2 d = gl_PointCoord - 0.5;
+        if (dot(d, d) > 0.25) discard;
+        gl_FragColor = vec4(uAmber, mix(0.5, 0.0, vPulse)); // pulse grows + dissolves
+      }
+    `,
+    transparent: true,
+    depthWrite: false,
+  });
+  scene.add(new Points(headGeom, headMat));
+
+  const trailMat = new ShaderMaterial({
+    uniforms: { uAmber: { value: AMBER } },
+    vertexShader: `
+      attribute float aAge;
+      varying float vAge;
+      void main() { vAge = aAge; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+    `,
+    fragmentShader: `
+      uniform vec3 uAmber;
+      varying float vAge;
+      void main() { gl_FragColor = vec4(uAmber, 0.30 * (1.0 - vAge) * (1.0 - vAge)); }
+    `,
+    transparent: true,
+    depthWrite: false,
+  });
+  const trailGeoms = opts.map(() => {
+    const g = new BufferGeometry();
+    g.setAttribute('position', new Float32BufferAttribute(new Float32Array(TRAIL * 3), 3));
+    g.setAttribute('aAge', new Float32BufferAttribute(new Float32Array(TRAIL).fill(1), 1));
+    g.setDrawRange(0, 0);
+    scene.add(new Line(g, trailMat));
+    return g;
+  });
+
+  const stepOpts = (dt: number, t: number, off: number): void => {
+    const EPS = 0.45;
+    for (let i = 0; i < N_OPT; i++) {
+      const o = opts[i];
+      if (o.pulse > 0) {
+        o.pulse -= dt;
+        if (o.pulse <= 0) { opts[i] = spawn(); trailGeoms[i].setDrawRange(0, 0); opts[i].trail = []; }
+      } else {
+        const gx = (heightAt(o.x + EPS, o.z, t, off) - heightAt(o.x - EPS, o.z, t, off)) / (2 * EPS);
+        const gz = (heightAt(o.x, o.z + EPS, t, off) - heightAt(o.x, o.z - EPS, t, off)) / (2 * EPS);
+        o.vx += (-gx * OPT_ACCEL - o.vx * OPT_DAMP) * dt;
+        o.vz += (-gz * OPT_ACCEL - o.vz * OPT_DAMP) * dt;
+        o.x += o.vx * dt;
+        o.z += o.vz * dt;
+        const slow = Math.hypot(o.vx, o.vz) < 0.07 && Math.hypot(gx, gz) < 0.06;
+        o.still = slow ? o.still + dt : 0;
+        const out = Math.abs(o.x) > SCALE_X * 0.92 || o.z > 10 || o.z < -SCALE_Z * 0.95;
+        if (out) { opts[i] = spawn(); trailGeoms[i].setDrawRange(0, 0); opts[i].trail = []; continue; }
+        if (o.still > CONV_T) o.pulse = PULSE_T;
+        const y = heightAt(o.x, o.z, t, off) + OPT_LIFT;
+        o.trail.unshift(o.x, y, o.z);
+        if (o.trail.length > TRAIL * 3) o.trail.length = TRAIL * 3;
+      }
+      // write head + trail buffers
+      const cur = opts[i];
+      const y = heightAt(cur.x, cur.z, t, off) + OPT_LIFT;
+      headArr[i * 3] = cur.x; headArr[i * 3 + 1] = y; headArr[i * 3 + 2] = cur.z;
+      headPulse[i] = cur.pulse > 0 ? 1 - cur.pulse / PULSE_T : 0;
+      const tg = trailGeoms[i];
+      const tp = tg.getAttribute('position') as BufferAttribute;
+      const ta = tg.getAttribute('aAge') as BufferAttribute;
+      const n = cur.trail.length / 3;
+      for (let k = 0; k < n; k++) {
+        tp.setXYZ(k, cur.trail[k * 3], cur.trail[k * 3 + 1], cur.trail[k * 3 + 2]);
+        ta.setX(k, n > 1 ? k / (n - 1) : 1);
+      }
+      tg.setDrawRange(0, n);
+      tp.needsUpdate = true;
+      ta.needsUpdate = true;
+    }
+    (headGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
+    (headGeom.getAttribute('aPulse') as BufferAttribute).needsUpdate = true;
+  };
+  stepOpts(0, 0, 0); // seat the dots on the surface before the first paint
 
   const resize = (): void => {
     const w = canvas.clientWidth || window.innerWidth;
@@ -271,6 +413,8 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
       } else {
         mat.uniforms.uScanZ.value = SWEEP_IDLE;
       }
+
+      stepOpts(dt, t, scrollY * SCROLL_TO_NOISE);
 
       recomputeHeights(t, scrollY * SCROLL_TO_NOISE);
       updateY();

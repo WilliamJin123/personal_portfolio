@@ -24,6 +24,7 @@ import {
 
 const INK = new Color(0x141820);
 const AMBER = new Color(0xbd741b);
+const GREEN = new Color(0x3a7d5c); // grant green — the backward pass (gradients)
 
 const AERIAL = 0.62;     // tilt for the horizontal figures (agentic / stack)
 const NET_TILT = 0.14;   // near face-on so the layered structure reads clearly
@@ -180,6 +181,8 @@ function agenticFigure(): Figure {
 
   const glyphs = [gearGlyph(0.27), searchGlyph(0.28), codeGlyph(0.3)];
   const tools: LineSegments[] = [];
+  const hot: LineSegments[] = [];          // amber twin of each glyph — lights up as the call lands
+  const hotMats: LineBasicMaterial[] = [];
   const toolPos: [number, number][] = [];
   const toolAng: number[] = [];
   for (let i = 0; i < 3; i++) {
@@ -192,6 +195,12 @@ function agenticFigure(): Figure {
     m.position.set(cx, 0, cz);
     spin.add(m);
     tools.push(m);
+    const hm = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 });
+    const h = glyphXY(glyphs[i], hm);
+    h.position.set(cx, 0, cz);
+    spin.add(h);
+    hot.push(h);
+    hotMats.push(hm);
   }
 
   const moverArr = new Float32Array(4 * 3);
@@ -200,9 +209,11 @@ function agenticFigure(): Figure {
   spin.add(new Points(moverGeom, amberPts));
 
   const win = 0.9;
+  let fadeK = 1;
   return {
     group,
     setFade: (k) => {
+      fadeK = k;
       inkLine.opacity = EDGE_OP * k;
       amberLine.opacity = CORE_OP * k;
       amberPts.opacity = ACCENT_OP * k;
@@ -215,6 +226,7 @@ function agenticFigure(): Figure {
       moverArr[0] = Math.cos(aTok) * R;
       moverArr[1] = 0;
       moverArr[2] = Math.sin(aTok) * R;
+      let sMax = 0;
       for (let i = 0; i < 3; i++) {
         let d = Math.abs(aTok - toolAng[i]) % (Math.PI * 2);
         if (d > Math.PI) d = Math.PI * 2 - d;
@@ -223,7 +235,11 @@ function agenticFigure(): Figure {
         moverArr[o] = toolPos[i][0] * s;
         moverArr[o + 1] = s < 0.04 ? 999 : 0; // hide idle pulses off-screen
         moverArr[o + 2] = toolPos[i][1] * s;
+        hot[i].lookAt(cam.position);
+        hotMats[i].opacity = ACCENT_OP * s * s * fadeK; // the tool itself fires as the call lands
+        if (s > sMax) sMax = s;
       }
+      core.scale.setScalar(1 + 0.22 * sMax); // the model breathes with each call/response
       (moverGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
     },
   };
@@ -307,23 +323,45 @@ function stackFigure(): Figure {
   spin.add(lineSeg(seg, inkLine));
   spin.add(lineSeg(faint, faintLine));
 
+  // Amber twin of each layer's outline — flashes as the packet passes through.
+  const flashSegs: number[][] = [[], [], []];
+  rect(yTop, flashSegs[0]);
+  rect(yMid, flashSegs[1]);
+  ellipse(drumTop, flashSegs[2]);
+  const flashY = [yTop, yMid, drumTop];
+  const flashMats = flashSegs.map(() => new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 }));
+  flashSegs.forEach((s, i) => spin.add(lineSeg(s, flashMats[i])));
+
   const packet = lineSeg(cubeSegs(0.1), amberLine);
   spin.add(packet);
 
+  let fadeK = 1;
   return {
     group,
     setFade: (k) => {
+      fadeK = k;
       inkLine.opacity = EDGE_OP * k;
       faintLine.opacity = FAINT_OP * k;
       amberLine.opacity = ACCENT_OP * k;
     },
     update: (t) => {
       spin.rotation.y = t * SPIN;
-      const P = 2.6;
+      // request lifecycle: ease down through the layers, dwell at the database
+      // (the commit), ease back up with the response
+      const P = 3.4;
       const ph = (t % P) / P;
-      const tri = ph < 0.5 ? ph * 2 : 2 - ph * 2; // 0 -> 1 -> 0
-      packet.position.set(0, lerp(yTop, drumBot + 0.08, tri), 0);
+      const ease = (k: number): number => k * k * (3 - 2 * k);
+      const yLo = drumBot + 0.08;
+      let py = yTop;
+      if (ph < 0.44) py = lerp(yTop, yLo, ease(ph / 0.44));
+      else if (ph < 0.54) py = yLo;
+      else if (ph < 0.98) py = lerp(yLo, yTop, ease((ph - 0.54) / 0.44));
+      packet.position.set(0, py, 0);
       packet.rotation.y = t * 0.9;
+      for (let i = 0; i < 3; i++) {
+        const s = Math.max(0, 1 - Math.abs(py - flashY[i]) / 0.3);
+        flashMats[i].opacity = ACCENT_OP * s * fadeK;
+      }
     },
   };
 }
@@ -366,30 +404,37 @@ function netFigure(): Figure {
   const nEdges = pairs.length / 2;
 
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const nodeAct = new Float32Array(nNodes);
+  const nodeAct = new Float32Array(nNodes);   // forward activation (amber)
+  const nodeActB = new Float32Array(nNodes);  // backward gradient (green)
   const nodeGeom = new BufferGeometry();
   nodeGeom.setAttribute('position', new Float32BufferAttribute(new Float32Array(npos), 3));
   nodeGeom.setAttribute('aAct', new Float32BufferAttribute(nodeAct, 1));
+  nodeGeom.setAttribute('aActB', new Float32BufferAttribute(nodeActB, 1));
   const nodeMat = new ShaderMaterial({
-    uniforms: { uInk: { value: INK }, uAmber: { value: AMBER }, uFade: { value: 1 }, uDpr: { value: dpr } },
+    uniforms: { uInk: { value: INK }, uAmber: { value: AMBER }, uGreen: { value: GREEN }, uFade: { value: 1 }, uDpr: { value: dpr } },
     vertexShader: `
       attribute float aAct;
+      attribute float aActB;
       varying float vAct;
+      varying float vActB;
       uniform float uDpr;
       void main() {
         vAct = aAct;
-        gl_PointSize = mix(7.0, 17.0, aAct) * uDpr; // grows when firing
+        vActB = aActB;
+        gl_PointSize = mix(7.0, 17.0, max(aAct, aActB)) * uDpr; // grows when firing
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
     fragmentShader: `
       varying float vAct;
-      uniform vec3 uInk; uniform vec3 uAmber; uniform float uFade;
+      varying float vActB;
+      uniform vec3 uInk; uniform vec3 uAmber; uniform vec3 uGreen; uniform float uFade;
       void main() {
         vec2 d = gl_PointCoord - 0.5;
         if (dot(d, d) > 0.25) discard; // round dot
         vec3 c = mix(uInk, uAmber, vAct);
-        float a = mix(0.72, 1.0, vAct) * uFade;
+        c = mix(c, uGreen, vActB);
+        float a = mix(0.72, 1.0, max(vAct, vActB)) * uFade;
         gl_FragColor = vec4(c, a);
       }
     `,
@@ -424,8 +469,8 @@ function netFigure(): Figure {
   edgeGeom.setAttribute('aSeg', new Float32BufferAttribute(edgeSeg, 1));
   const edgeMat = new ShaderMaterial({
     uniforms: {
-      uInk: { value: INK }, uAmber: { value: AMBER }, uFade: { value: 1 },
-      uHead: { value: 0 }, uHead2: { value: 0.5 },
+      uInk: { value: INK }, uAmber: { value: AMBER }, uGreen: { value: GREEN }, uFade: { value: 1 },
+      uHead: { value: -9 }, uHeadB: { value: -9 },
     },
     vertexShader: `
       attribute float aEnd;
@@ -435,17 +480,19 @@ function netFigure(): Figure {
       void main() { vEnd = aEnd; vSeg = aSeg; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
     `,
     fragmentShader: `
-      uniform vec3 uInk; uniform vec3 uAmber; uniform float uFade; uniform float uHead; uniform float uHead2;
+      uniform vec3 uInk; uniform vec3 uAmber; uniform vec3 uGreen; uniform float uFade; uniform float uHead; uniform float uHeadB;
       varying float vEnd; varying float vSeg;
       float pulseAt(float head) {
         float local = (head - vSeg) * 3.0;             // head's progress within this edge's gap (each gap = 1/3)
         if (local < 0.0 || local > 1.0) return 0.0;     // head not crossing this gap right now
-        return smoothstep(0.22, 0.0, abs(vEnd - local)); // bright dot riding the wire from source -> target
+        return smoothstep(0.22, 0.0, abs(vEnd - local)); // bright dot riding the wire along the gap
       }
       void main() {
-        float p = max(pulseAt(uHead), pulseAt(uHead2));
-        vec3 c = mix(uInk, uAmber, p);
-        float a = mix(0.30, 0.96, p) * uFade;           // faint resting weight -> bright as the signal passes
+        float pf = pulseAt(uHead);                      // forward pass — amber activation
+        float pb = pulseAt(uHeadB);                     // backward pass — green gradient
+        vec3 c = mix(uInk, uAmber, pf);
+        c = mix(c, uGreen, pb);
+        float a = mix(0.30, 0.96, max(pf, pb)) * uFade; // faint resting weight -> bright as the signal passes
         gl_FragColor = vec4(c, a);
       }
     `,
@@ -462,20 +509,25 @@ function netFigure(): Figure {
     },
     update: (t) => {
       spin.rotation.y = 0.35 * Math.sin(t * 0.4); // gentle sway reveals z-depth; layers stay readable
-      // Two activation "heads" sweep the network 0 -> 1 (layer 0 -> layer 3) and
-      // wrap, offset by half a cycle so a forward pass is always visibly flowing.
-      const CYCLE = 2.4;
-      const h1 = (t / CYCLE) % 1;
-      const h2 = (h1 + 0.5) % 1;
-      edgeMat.uniforms.uHead.value = h1;
-      edgeMat.uniforms.uHead2.value = h2;
+      // One training step per cycle: the forward pass sweeps left -> right
+      // (amber activations), a beat, then the backward pass returns right ->
+      // left (green gradients — backprop). Heads park at -9 between passes.
+      const T = 5.2;
+      const ph = (t % T) / T;
+      let hF = -9;
+      let hB = -9;
+      if (ph < 0.4) hF = ph / 0.4;
+      else if (ph >= 0.48 && ph < 0.88) hB = 1 - (ph - 0.48) / 0.4;
+      edgeMat.uniforms.uHead.value = hF;
+      edgeMat.uniforms.uHeadB.value = hB;
       const WW = 0.16; // a node fires while a head is within this of its layer
       for (let n = 0; n < nNodes; n++) {
         const coord = nodeLayer[n] / 3;
-        const d = Math.min(Math.abs(coord - h1), Math.abs(coord - h2));
-        nodeAct[n] = Math.max(0, 1 - d / WW);
+        nodeAct[n] = hF < -1 ? 0 : Math.max(0, 1 - Math.abs(coord - hF) / WW);
+        nodeActB[n] = hB < -1 ? 0 : Math.max(0, 1 - Math.abs(coord - hB) / WW);
       }
       (nodeGeom.getAttribute('aAct') as BufferAttribute).needsUpdate = true;
+      (nodeGeom.getAttribute('aActB') as BufferAttribute).needsUpdate = true;
     },
   };
 }
@@ -526,10 +578,15 @@ export function initInterestsGraph(canvas: HTMLCanvasElement): void {
   );
 
   let hover = -1;
-  document.querySelectorAll<HTMLElement>('.int-item').forEach((el, i) => {
+  const items = [...document.querySelectorAll<HTMLElement>('.int-item')];
+  items.forEach((el, i) => {
     el.addEventListener('pointerenter', () => { hover = i; });
     el.addEventListener('pointerleave', () => { hover = -1; });
   });
+  // The bullet list mirrors the stage: whichever figure is up carries .live
+  // (amber index + underline, styled in the page CSS).
+  const setLive = (i: number): void => items.forEach((el, k) => el.classList.toggle('live', k === i));
+  setLive(0);
 
   let visible = true;
   new IntersectionObserver(
@@ -593,6 +650,7 @@ export function initInterestsGraph(canvas: HTMLCanvasElement): void {
           to = desired;
           mix = 0;
           dwellT = 0;
+          setLive(to);
         } else if (hover < 0) {
           dwellT += dt;
           if (dwellT >= DWELL) { autoIdx = (autoIdx + 1) % 3; dwellT = 0; }
