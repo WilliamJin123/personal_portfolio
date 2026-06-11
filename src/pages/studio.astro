@@ -1,0 +1,121 @@
+---
+// Studio mode — the second site: a dark, full-bleed WebGL world (shell).
+// Self-contained like index.astro: own theme, fonts, and scripts; inherits
+// nothing from the paper site. The placeholder sections below give the
+// scroll→scene rig real distance — future design passes replace their
+// content with actual scenes.
+// Spec: docs/superpowers/specs/2026-06-10-studio-mode-design.md
+---
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="theme-color" content="#0b0c0e" />
+<title>William Jin — Studio</title>
+<meta name="description" content="William Jin — studio mode. A WebGL experiment in progress." />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@300..600&display=swap" />
+<style>
+  :root{
+    --ground:#0b0c0e; --ink:#e7e9ee; --mute:#8b8f98; --faint:#4a4e57;
+    --rule:rgba(231,233,238,.14); --amber:#d08a2e; --amber-rgb:208,138,46;
+    --sans:'Geist',system-ui,sans-serif; --mono:'Geist Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth;overflow-x:clip}
+  body{background:var(--ground);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+  .m{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
+
+  #studio-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;contain:strict}
+  body.no-gl #studio-canvas{display:none}
+
+  /* top bar — identity left, exit right */
+  .bar{position:fixed;top:0;left:0;right:0;z-index:10;display:flex;justify-content:space-between;align-items:center;padding:22px clamp(20px,3vw,44px)}
+  .bar .id{color:var(--ink)}
+  .bar .id .sl{color:var(--amber)}
+  .exit{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);text-decoration:none;border:1px solid var(--rule);border-radius:999px;padding:9px 18px;transition:border-color .25s,color .25s,box-shadow .25s,transform .25s}
+  .exit:hover{border-color:var(--amber);color:var(--amber);transform:translateY(-2px);box-shadow:0 6px 18px rgba(var(--amber-rgb),.18)}
+
+  /* placeholder sections — full-viewport stubs the scroll rig reads from */
+  .scn{position:relative;z-index:1;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;padding:0 clamp(20px,3vw,44px) clamp(28px,5vh,56px)}
+  .scn .ix{font-family:var(--mono);font-size:clamp(64px,12vw,140px);font-weight:300;line-height:1;color:transparent;-webkit-text-stroke:1px var(--faint);letter-spacing:.02em;user-select:none}
+  .scn .lb{margin-top:14px;display:flex;align-items:baseline;gap:14px}
+  .scn .lb .nm{font-size:clamp(18px,2.2vw,26px);font-weight:480;letter-spacing:-.015em}
+  .scn .lb .wip{color:var(--faint)}
+  .scn.first{justify-content:center;align-items:center;text-align:center}
+  .scn.first .greet{color:var(--amber)}
+  .scn.first h1{margin-top:18px;font-weight:480;font-size:clamp(30px,4.6vw,58px);letter-spacing:-.025em;line-height:1.08}
+  .scn.first .sub{margin-top:16px;color:var(--mute);font-size:14px;max-width:44ch;line-height:1.6}
+  .nogl-note{display:none;margin-top:18px;color:var(--faint)}
+  body.no-gl .nogl-note{display:block}
+  .hint{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);color:var(--faint)}
+
+  /* scroll readout — same instrument flavor as the paper site HUD */
+  .hud{position:fixed;left:18px;bottom:15px;z-index:10;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;pointer-events:none;display:flex;gap:8px}
+  .hud .hv{color:var(--mute)}
+
+  @media (max-width:760px){
+    .hud{display:none}
+  }
+</style>
+</head>
+<body>
+<canvas id="studio-canvas" aria-hidden="true"></canvas>
+
+<div class="bar">
+  <span class="m id"><span class="sl">//</span> william jin — studio</span>
+  <a class="exit" href="/">Exit</a>
+</div>
+
+<section class="scn first">
+  <div>
+    <div class="m greet">/ studio — under construction</div>
+    <h1>The other site.</h1>
+    <p class="sub">A scroll-driven WebGL experiment. Scenes are on their way — this is the rig they'll run on.</p>
+    <p class="m nogl-note">webgl unavailable — static view</p>
+  </div>
+  <span class="m hint">scroll ↓</span>
+</section>
+
+<section class="scn">
+  <span class="ix">01</span>
+  <div class="lb"><span class="nm">Work</span><span class="m wip">scene — coming</span></div>
+</section>
+
+<section class="scn">
+  <span class="ix">02</span>
+  <div class="lb"><span class="nm">Play</span><span class="m wip">scene — coming</span></div>
+</section>
+
+<section class="scn">
+  <span class="ix">03</span>
+  <div class="lb"><span class="nm">Contact</span><span class="m wip">scene — coming</span></div>
+</section>
+
+<div class="hud" aria-hidden="true"><span>scroll</span><span class="hv" id="hud-scroll">0%</span></div>
+
+<script>
+  // Bundled module (Vite tree-shakes three.js). If the renderer can't be
+  // constructed, degrade to the static dark page.
+  import { initStudioScene } from '../scripts/studio-scene';
+  const c = document.getElementById('studio-canvas');
+  if (c instanceof HTMLCanvasElement) {
+    try {
+      initStudioScene(c);
+    } catch {
+      document.body.classList.add('no-gl');
+    }
+  } else {
+    document.body.classList.add('no-gl');
+  }
+</script>
+<script is:inline>
+  const hudScroll=document.getElementById('hud-scroll');
+  function updScroll(){const h=document.documentElement;const max=(h.scrollHeight-innerHeight)||1;hudScroll.textContent=Math.round(Math.max(0,Math.min(1,h.scrollTop/max))*100)+'%';}
+  addEventListener('scroll',updScroll,{passive:true}); updScroll();
+</script>
+</body>
+</html>
