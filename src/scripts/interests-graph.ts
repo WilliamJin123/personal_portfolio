@@ -210,6 +210,8 @@ function agenticFigure(): Figure {
 
   const win = 0.9;
   let fadeK = 1;
+  let lastT = 0;
+  const hotOp = [0, 0, 0]; // per-tool flash with a decay tail, so hits linger
   return {
     group,
     setFade: (k) => {
@@ -219,6 +221,8 @@ function agenticFigure(): Figure {
       amberPts.opacity = ACCENT_OP * k;
     },
     update: (t, cam) => {
+      const dtl = Math.min(0.05, Math.max(0, t - lastT));
+      lastT = t;
       spin.rotation.y = t * SPIN;
       core.rotation.y = -t * 0.8; // crossed sparkle shimmers in 3D
       for (const m of tools) m.lookAt(cam.position); // billboard so icons stay readable
@@ -236,10 +240,11 @@ function agenticFigure(): Figure {
         moverArr[o + 1] = s < 0.04 ? 999 : 0; // hide idle pulses off-screen
         moverArr[o + 2] = toolPos[i][1] * s;
         hot[i].lookAt(cam.position);
-        hotMats[i].opacity = ACCENT_OP * s * s * fadeK; // the tool itself fires as the call lands
+        hotOp[i] = Math.max(hotOp[i] - dtl * 1.6, s * s); // sharp attack, slow decay
+        hotMats[i].opacity = ACCENT_OP * hotOp[i] * fadeK; // the tool fires as the call lands
         if (s > sMax) sMax = s;
       }
-      core.scale.setScalar(1 + 0.22 * sMax); // the model breathes with each call/response
+      core.scale.setScalar(1 + 0.35 * sMax); // the model breathes with each call/response
       (moverGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
     },
   };
@@ -336,6 +341,8 @@ function stackFigure(): Figure {
   spin.add(packet);
 
   let fadeK = 1;
+  let lastT = 0;
+  const layerOp = [0, 0, 0]; // per-layer flash with a decay tail
   return {
     group,
     setFade: (k) => {
@@ -345,6 +352,8 @@ function stackFigure(): Figure {
       amberLine.opacity = ACCENT_OP * k;
     },
     update: (t) => {
+      const dtl = Math.min(0.05, Math.max(0, t - lastT));
+      lastT = t;
       spin.rotation.y = t * SPIN;
       // request lifecycle: ease down through the layers, dwell at the database
       // (the commit), ease back up with the response
@@ -359,8 +368,9 @@ function stackFigure(): Figure {
       packet.position.set(0, py, 0);
       packet.rotation.y = t * 0.9;
       for (let i = 0; i < 3; i++) {
-        const s = Math.max(0, 1 - Math.abs(py - flashY[i]) / 0.3);
-        flashMats[i].opacity = ACCENT_OP * s * fadeK;
+        const s = Math.max(0, 1 - Math.abs(py - flashY[i]) / 0.38);
+        layerOp[i] = Math.max(layerOp[i] - dtl * 1.8, s); // flash lingers after the packet moves on
+        flashMats[i].opacity = ACCENT_OP * layerOp[i] * fadeK;
       }
     },
   };
@@ -421,7 +431,7 @@ function netFigure(): Figure {
       void main() {
         vAct = aAct;
         vActB = aActB;
-        gl_PointSize = mix(7.0, 17.0, max(aAct, aActB)) * uDpr; // grows when firing
+        gl_PointSize = mix(7.0, 23.0, max(aAct, aActB)) * uDpr; // grows when firing
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
@@ -485,14 +495,14 @@ function netFigure(): Figure {
       float pulseAt(float head) {
         float local = (head - vSeg) * 3.0;             // head's progress within this edge's gap (each gap = 1/3)
         if (local < 0.0 || local > 1.0) return 0.0;     // head not crossing this gap right now
-        return smoothstep(0.22, 0.0, abs(vEnd - local)); // bright dot riding the wire along the gap
+        return smoothstep(0.34, 0.0, abs(vEnd - local)); // bright streak riding the wire along the gap
       }
       void main() {
         float pf = pulseAt(uHead);                      // forward pass — amber activation
         float pb = pulseAt(uHeadB);                     // backward pass — green gradient
         vec3 c = mix(uInk, uAmber, pf);
         c = mix(c, uGreen, pb);
-        float a = mix(0.30, 0.96, max(pf, pb)) * uFade; // faint resting weight -> bright as the signal passes
+        float a = mix(0.30, 1.0, max(pf, pb)) * uFade;  // faint resting weight -> bright as the signal passes
         gl_FragColor = vec4(c, a);
       }
     `,
@@ -512,15 +522,15 @@ function netFigure(): Figure {
       // One training step per cycle: the forward pass sweeps left -> right
       // (amber activations), a beat, then the backward pass returns right ->
       // left (green gradients — backprop). Heads park at -9 between passes.
-      const T = 5.2;
+      const T = 4.4;
       const ph = (t % T) / T;
       let hF = -9;
       let hB = -9;
-      if (ph < 0.4) hF = ph / 0.4;
-      else if (ph >= 0.48 && ph < 0.88) hB = 1 - (ph - 0.48) / 0.4;
+      if (ph < 0.42) hF = ph / 0.42;
+      else if (ph >= 0.5 && ph < 0.92) hB = 1 - (ph - 0.5) / 0.42;
       edgeMat.uniforms.uHead.value = hF;
       edgeMat.uniforms.uHeadB.value = hB;
-      const WW = 0.16; // a node fires while a head is within this of its layer
+      const WW = 0.22; // a node fires while a head is within this of its layer
       for (let n = 0; n < nNodes; n++) {
         const coord = nodeLayer[n] / 3;
         nodeAct[n] = hF < -1 ? 0 : Math.max(0, 1 - Math.abs(coord - hF) / WW);

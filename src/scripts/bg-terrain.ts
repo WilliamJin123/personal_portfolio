@@ -25,7 +25,8 @@
 import {
   Scene, PerspectiveCamera, WebGLRenderer,
   BufferGeometry, BufferAttribute, Float32BufferAttribute,
-  LineSegments, Line, Points, ShaderMaterial,
+  LineSegments, Line, LineLoop, Points,
+  ShaderMaterial, LineBasicMaterial,
   Color,
 } from 'three';
 
@@ -61,7 +62,7 @@ const SCROLL_TO_NOISE = 0.0045; // noise units per pixel scrolled (forward trave
 
 // Survey sweep — period between sweeps, travel time, band half-width, and the
 // Z run (starts just behind the camera, parks beyond the fade when idle)
-const SWEEP_PERIOD = 23;
+const SWEEP_PERIOD = 13;
 const SWEEP_TRAVEL = 6.5;
 const SWEEP_WIDTH = 3.0;
 const SWEEP_FROM = 9;
@@ -69,13 +70,13 @@ const SWEEP_TO = -44;
 const SWEEP_IDLE = 999;
 
 // Optimizers — gradient descent with momentum on the live height field
-const N_OPT = 3;
-const TRAIL = 64;          // trail samples per optimizer
-const OPT_ACCEL = 3.1;     // gradient pull
-const OPT_DAMP = 1.9;      // velocity damping (momentum-ish)
+const N_OPT = 5;
+const TRAIL = 96;          // trail samples per optimizer
+const OPT_ACCEL = 6.0;     // gradient pull
+const OPT_DAMP = 1.6;      // velocity damping (momentum-ish; low enough to overshoot)
 const OPT_LIFT = 0.07;     // hover above the surface so lines don't cut the dot
-const CONV_T = 2.6;        // s near-stationary before declaring convergence
-const PULSE_T = 0.8;       // s of converge pulse before respawning
+const CONV_T = 1.8;        // s near-stationary before declaring convergence
+const PULSE_T = 1.1;       // s of converge pulse (expanding ring) before respawning
 
 // Random per-session phase offsets — same code, different terrain every load.
 const PHASES = [
@@ -179,7 +180,7 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
     uniforms: {
       uColor: { value: INK },
       uAmber: { value: AMBER },
-      uBaseAlpha: { value: 0.105 },
+      uBaseAlpha: { value: 0.14 },
       uFadeNear: { value: FADE_NEAR },
       uFadeFar: { value: FADE_FAR },
       uScanZ: { value: SWEEP_IDLE },
@@ -211,11 +212,11 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
       varying float vY;
       void main() {
         float fade = 1.0 - smoothstep(uFadeNear, uFadeFar, vDist);
-        // ridges read slightly crisper than valleys — a cheap depth cue
-        fade *= mix(0.76, 1.22, smoothstep(-uH, uH, vY));
+        // ridges read crisper than valleys — depth without extra geometry
+        fade *= mix(0.5, 1.5, smoothstep(-uH, uH, vY));
         float scan = 1.0 - smoothstep(0.0, uScanW, abs(vZ - uScanZ));
-        vec3 col = mix(uColor, uAmber, scan * 0.85);
-        gl_FragColor = vec4(col, (uBaseAlpha + 0.115 * scan) * fade);
+        vec3 col = mix(uColor, uAmber, scan * 0.9);
+        gl_FragColor = vec4(col, (uBaseAlpha + 0.16 * scan) * fade);
       }
     `,
     transparent: true,
@@ -256,7 +257,7 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
       uniform float uDpr;
       void main() {
         vPulse = aPulse;
-        gl_PointSize = (4.5 + 7.0 * aPulse) * uDpr;
+        gl_PointSize = (7.0 + 9.0 * aPulse) * uDpr;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
@@ -266,7 +267,7 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
       void main() {
         vec2 d = gl_PointCoord - 0.5;
         if (dot(d, d) > 0.25) discard;
-        gl_FragColor = vec4(uAmber, mix(0.5, 0.0, vPulse)); // pulse grows + dissolves
+        gl_FragColor = vec4(uAmber, mix(0.85, 0.0, vPulse)); // pulse grows + dissolves
       }
     `,
     transparent: true,
@@ -284,7 +285,7 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
     fragmentShader: `
       uniform vec3 uAmber;
       varying float vAge;
-      void main() { gl_FragColor = vec4(uAmber, 0.30 * (1.0 - vAge) * (1.0 - vAge)); }
+      void main() { gl_FragColor = vec4(uAmber, 0.55 * (1.0 - vAge) * (1.0 - vAge)); }
     `,
     transparent: true,
     depthWrite: false,
@@ -298,13 +299,47 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
     return g;
   });
 
+  // Converge ring — expands and dissolves flat on the surface where an
+  // optimizer settles, marking the minimum it found.
+  const ringGeom = (() => {
+    const n = 48;
+    const pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      pos[i * 3] = Math.cos(a);
+      pos[i * 3 + 2] = Math.sin(a);
+    }
+    const g = new BufferGeometry();
+    g.setAttribute('position', new BufferAttribute(pos, 3));
+    return g;
+  })();
+  const ringMats = opts.map(() => new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 }));
+  const rings = ringMats.map((m) => {
+    const r = new LineLoop(ringGeom, m);
+    r.visible = false;
+    scene.add(r);
+    return r;
+  });
+
   const stepOpts = (dt: number, t: number, off: number): void => {
     const EPS = 0.45;
     for (let i = 0; i < N_OPT; i++) {
       const o = opts[i];
       if (o.pulse > 0) {
         o.pulse -= dt;
-        if (o.pulse <= 0) { opts[i] = spawn(); trailGeoms[i].setDrawRange(0, 0); opts[i].trail = []; }
+        const k = 1 - Math.max(0, o.pulse) / PULSE_T;
+        const ring = rings[i];
+        ring.visible = true;
+        ring.position.set(o.x, heightAt(o.x, o.z, t, off) + OPT_LIFT, o.z);
+        ring.scale.setScalar(0.4 + 3.2 * k);
+        ringMats[i].opacity = 0.8 * (1 - k);
+        if (o.pulse <= 0) {
+          ring.visible = false;
+          ringMats[i].opacity = 0;
+          opts[i] = spawn();
+          trailGeoms[i].setDrawRange(0, 0);
+          opts[i].trail = [];
+        }
       } else {
         const gx = (heightAt(o.x + EPS, o.z, t, off) - heightAt(o.x - EPS, o.z, t, off)) / (2 * EPS);
         const gz = (heightAt(o.x, o.z + EPS, t, off) - heightAt(o.x, o.z - EPS, t, off)) / (2 * EPS);
@@ -312,7 +347,7 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
         o.vz += (-gz * OPT_ACCEL - o.vz * OPT_DAMP) * dt;
         o.x += o.vx * dt;
         o.z += o.vz * dt;
-        const slow = Math.hypot(o.vx, o.vz) < 0.07 && Math.hypot(gx, gz) < 0.06;
+        const slow = Math.hypot(o.vx, o.vz) < 0.13 && Math.hypot(gx, gz) < 0.09;
         o.still = slow ? o.still + dt : 0;
         const out = Math.abs(o.x) > SCALE_X * 0.92 || o.z > 10 || o.z < -SCALE_Z * 0.95;
         if (out) { opts[i] = spawn(); trailGeoms[i].setDrawRange(0, 0); opts[i].trail = []; continue; }

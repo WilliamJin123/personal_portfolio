@@ -132,12 +132,16 @@ const links = {
   .int-item{display:flex;align-items:flex-start;gap:18px;will-change:transform,opacity}
   .int-num{flex-shrink:0;font-size:11px;letter-spacing:.14em;color:var(--faint);padding-top:6px;transition:color .45s ease}
   .int-row{display:flex;flex-direction:column;gap:7px;min-width:0}
-  .int-name{font-size:clamp(20px,2.4vw,28px);font-weight:540;letter-spacing:-.02em;line-height:1.1;color:var(--ink)}
+  .int-name{font-size:clamp(20px,2.4vw,28px);font-weight:540;letter-spacing:-.02em;line-height:1.1;color:var(--ink);transition:color .45s ease}
   /* the list mirrors the canvas: the figure on stage carries .live (set by the
-     interests-graph script) — amber index + an underline that draws in */
-  .int-name::after{content:"";display:block;height:1.5px;width:0;background:var(--amber);margin-top:7px;transition:width .55s cubic-bezier(.2,.7,.2,1)}
+     interests-graph script) — amber index, ink name, full underline drawing in;
+     off-stage rows recede to faint. Gated on :has(.live) so a no-JS page (no
+     .live anywhere) keeps every row at full strength. NOTE: dim via color, not
+     opacity — the scroll-reveal loop writes inline opacity on .int-item. */
+  .int-name::after{content:"";display:block;height:1.5px;width:0;background:var(--amber);margin-top:7px;transition:width .6s cubic-bezier(.2,.7,.2,1)}
+  .int-list:has(.live) .int-item:not(.live) .int-name{color:var(--faint)}
   .int-item.live .int-num{color:var(--amber)}
-  .int-item.live .int-name::after{width:34px}
+  .int-item.live .int-name::after{width:100%}
 
   .stack{padding:60px 0 14px;border-top:1px solid var(--rule)}
   .stack-head{display:flex;align-items:center;gap:20px;margin-bottom:18px;flex-wrap:wrap}
