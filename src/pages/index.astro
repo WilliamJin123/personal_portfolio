@@ -280,6 +280,16 @@ const links = {
   /* flair — viewport instrument: viewfinder corners, crosshair cursor */
   /* ambient site-wide background canvas — fixed full-viewport, behind everything */
   #bg-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;contain:strict}
+  /* mode shutter — the trip to/from /3d. Cover: a dark panel descends over
+     the page (dropping into the dark site), amber hairline leading. Reveal
+     (arriving back): a paper panel — invisible on paper — slides up and off,
+     so all you see is the amber edge scanning up as the page prints in. */
+  .shutter{position:fixed;left:0;top:-2vh;width:100%;height:104vh;z-index:200;pointer-events:none;visibility:hidden}
+  .shutter .sedge{position:absolute;left:0;bottom:-1px;width:100%;height:2px;background:var(--amber);box-shadow:0 0 18px rgba(var(--amber-rgb),.6)}
+  .shutter.cover{visibility:visible;background:#0b0c0e;transform:translateY(-103%);animation:shCover .5s cubic-bezier(.76,0,.24,1) forwards}
+  .shutter.reveal{visibility:visible;background:var(--paper);transform:translateY(0);animation:shReveal .6s cubic-bezier(.7,0,.22,1) .06s both}
+  @keyframes shCover{to{transform:translateY(0)}}
+  @keyframes shReveal{to{transform:translateY(-103%)}}
   .frame{position:fixed;inset:0;z-index:35;pointer-events:none}
   .frame .cnr{position:absolute;width:13px;height:13px;border:1px solid var(--faint);opacity:.55}
   .frame .tl{top:13px;left:13px;border-right:0;border-bottom:0}
@@ -507,6 +517,8 @@ const links = {
   <div class="hud-row"><span class="hk">waterloo</span><span class="hv"><span class="dot"></span><span id="hud-time">--:--:--</span></span></div>
 </div>
 
+<div class="shutter" id="shutter" aria-hidden="true"><span class="sedge"></span></div>
+
 <script is:inline type="application/json" id="work-data" set:html={workJson}></script>
 <script is:inline>
   const clamp=x=>Math.max(0,Math.min(1,x));
@@ -671,6 +683,29 @@ const links = {
   addEventListener('scroll',updScroll,{passive:true}); updScroll();
   function updTime(){try{hudTime.textContent=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Toronto',hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false}).format(new Date());}catch(e){hudTime.textContent='--';}}
   updTime(); setInterval(updTime,1000);
+
+  // mode shutter — animate out to /3d; animate back in when returning
+  (()=>{
+    const sh=document.getElementById('shutter');
+    if(!sh)return;
+    const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(!rm && sessionStorage.getItem('wj-transit')==='up'){
+      sh.classList.add('reveal');
+      sh.addEventListener('animationend',()=>sh.classList.remove('reveal'),{once:true});
+    }
+    sessionStorage.removeItem('wj-transit');
+    document.querySelectorAll('a[href="/3d"]').forEach(a=>{
+      a.addEventListener('click',e=>{
+        if(rm||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||e.button)return;
+        e.preventDefault();
+        if(sh.classList.contains('cover'))return;
+        sessionStorage.setItem('wj-transit','down');
+        sh.classList.add('cover');
+        sh.addEventListener('animationend',()=>{location.href=a.href;},{once:true});
+      });
+    });
+    addEventListener('pageshow',e=>{if(e.persisted)sh.classList.remove('cover','reveal');});
+  })();
 </script>
 
 <script>

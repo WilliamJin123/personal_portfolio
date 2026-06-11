@@ -58,6 +58,17 @@
   .hud{position:fixed;left:18px;bottom:15px;z-index:10;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;pointer-events:none;display:flex;gap:8px}
   .hud .hv{color:var(--mute)}
 
+  /* mode shutter — mirror of the paper site's. Cover: a paper panel rises
+     over the scene (surfacing back to the paper site), amber edge leading.
+     Reveal (arriving): the dark panel that closed over the paper site slides
+     down and off — its amber edge scans down as the scene uncovers. */
+  .shutter{position:fixed;left:0;top:-2vh;width:100%;height:104vh;z-index:200;pointer-events:none;visibility:hidden}
+  .shutter .sedge{position:absolute;left:0;top:-1px;width:100%;height:2px;background:var(--amber);box-shadow:0 0 18px rgba(var(--amber-rgb),.6)}
+  .shutter.cover{visibility:visible;background:#eceef1;transform:translateY(103%);animation:shCover .5s cubic-bezier(.76,0,.24,1) forwards}
+  .shutter.reveal{visibility:visible;background:var(--ground);transform:translateY(0);animation:shReveal .6s cubic-bezier(.7,0,.22,1) .06s both}
+  @keyframes shCover{to{transform:translateY(0)}}
+  @keyframes shReveal{to{transform:translateY(103%)}}
+
   @media (max-width:760px){
     .hud{display:none}
   }
@@ -98,6 +109,8 @@
 
 <div class="hud" aria-hidden="true"><span>scroll</span><span class="hv" id="hud-scroll">0%</span></div>
 
+<div class="shutter" id="shutter" aria-hidden="true"><span class="sedge"></span></div>
+
 <script>
   // Bundled module (Vite tree-shakes three.js). If the renderer can't be
   // constructed, degrade to the static dark page.
@@ -117,6 +130,28 @@
   const hudScroll=document.getElementById('hud-scroll');
   function updScroll(){const h=document.documentElement;const max=(h.scrollHeight-innerHeight)||1;hudScroll.textContent=Math.round(Math.max(0,Math.min(1,h.scrollTop/max))*100)+'%';}
   addEventListener('scroll',updScroll,{passive:true}); updScroll();
+
+  // mode shutter — reveal on arrival from the paper site; cover on exit
+  (()=>{
+    const sh=document.getElementById('shutter');
+    if(!sh)return;
+    const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(!rm && sessionStorage.getItem('wj-transit')==='down'){
+      sh.classList.add('reveal');
+      sh.addEventListener('animationend',()=>sh.classList.remove('reveal'),{once:true});
+    }
+    sessionStorage.removeItem('wj-transit');
+    const exit=document.querySelector('a.exit');
+    if(exit)exit.addEventListener('click',e=>{
+      if(rm||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||e.button)return;
+      e.preventDefault();
+      if(sh.classList.contains('cover'))return;
+      sessionStorage.setItem('wj-transit','up');
+      sh.classList.add('cover');
+      sh.addEventListener('animationend',()=>{location.href=exit.href;},{once:true});
+    });
+    addEventListener('pageshow',e=>{if(e.persisted)sh.classList.remove('cover','reveal');});
+  })();
 </script>
 </body>
 </html>
