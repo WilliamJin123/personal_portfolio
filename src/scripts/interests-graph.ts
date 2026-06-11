@@ -1,18 +1,26 @@
-// Hairline concept diagrams for "I'm interested in" — three distinct 3D figures,
-// one per bullet, each a literal little mechanism that animates to show what the
-// concept *does*. Each figure has its own motion inside a shared pivot that
-// carries cursor parallax. The page cross-dissolves (scale + opacity) between
-// figures; hovering a bullet snaps to its figure.
+// Hairline concept instruments for "I'm interested in" — three figures, one
+// per bullet, each a small mechanism that plays its concept as a complete
+// causal story rather than posing as an icon:
 //
-//   01 Agentic Applications -> an "AI model" sparkle ringed by camera-facing tool
-//      icons (gear / search / code) on a feedback loop; a token circles the loop
-//      and fires a pulse out to each tool as it passes.
-//   02 Full Stack          -> a UI window, a logic grid, and a data drum stacked
-//      on a spine; a cube packet drops down through the layers and rises back up.
-//   03 Machine Learning    -> a feed-forward net with depth; weights rest faint
-//      and an activation wave sweeps left-to-right, firing nodes + weights amber.
+//   01 Agentic Applications -> THE LOOP. A gyroscope core (the model) ringed
+//      by three tool stations (gear / search / code). One call at a time: an
+//      amber pulse rides a spoke out (the call), the tool fires with a ripple
+//      (it runs), the pulse rides back (the result), the core's rings flash as
+//      the observation lands — and a context arc accretes around the core.
+//      After three calls the context clears and the loop begins again.
+//   02 Full Stack          -> THE ROUND TRIP. UI window / logic grid / data
+//      drum on a spine. A click ripples on the window, a packet drops through
+//      the logic layer (the matched cell fires) down to the drum, the commit
+//      rings outward, the response rises — and a new content line draws
+//      itself into the window. Data became UI; that's the whole job.
+//   03 Machine Learning    -> THE TRAINING STEP. A feed-forward net staggered
+//      in depth: amber activations sweep forward, green gradients sweep back
+//      (backprop), and with each completed step a hairline loss curve under
+//      the net descends one notch toward its minimum — gradient descent on
+//      an instrument readout.
 //
-// Reduced-motion renders one static pose; paused when off-screen or backgrounded.
+// Reduced-motion renders one static mid-action pose; paused when off-screen
+// or backgrounded.
 
 import {
   Scene, PerspectiveCamera, WebGLRenderer,
@@ -28,16 +36,16 @@ const GREEN = new Color(0x3a7d5c); // grant green — the backward pass (gradien
 
 const AERIAL = 0.62;     // tilt for the horizontal figures (agentic / stack)
 const NET_TILT = 0.14;   // near face-on so the layered structure reads clearly
-const SPIN = 0.16;       // turntable rad/s (stack)
+const SPIN = 0.16;       // turntable rad/s
 const DWELL = 4.5;       // s a figure is held before auto-advancing
 const FADE = 1.0;        // s cross-dissolve
 
 const EDGE_OP = 0.62;    // primary hairline
-const FAINT_OP = 0.22;   // spine
-const ACCENT_OP = 0.95;  // amber moving element
-const CORE_OP = 0.86;    // amber sparkle
+const FAINT_OP = 0.22;   // guides / spine / spokes
+const ACCENT_OP = 0.95;  // amber moving elements
 
 const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
+const ez = (k: number): number => k * k * (3 - 2 * k); // smoothstep
 
 interface Figure {
   group: Group;                              // outer (tilt) group — visibility / scale
@@ -58,6 +66,28 @@ const glyphXY = (g2: number[], mat: LineBasicMaterial): LineSegments => {
   for (let i = 0; i < g2.length; i += 4) segs.push(g2[i], g2[i + 1], 0, g2[i + 2], g2[i + 3], 0);
   return lineSeg(segs, mat);
 };
+
+const circle2d = (r: number, n: number): number[] => {
+  const s: number[] = [];
+  for (let k = 0; k < n; k++) {
+    const a0 = (k / n) * Math.PI * 2;
+    const a1 = ((k + 1) / n) * Math.PI * 2;
+    s.push(Math.cos(a0) * r, Math.sin(a0) * r, Math.cos(a1) * r, Math.sin(a1) * r);
+  }
+  return s;
+};
+
+// Circle / arc lying flat in the XZ plane at height y.
+const arcSegsXZ = (r: number, a0: number, a1: number, n: number, y = 0): number[] => {
+  const s: number[] = [];
+  for (let k = 0; k < n; k++) {
+    const b0 = a0 + (k / n) * (a1 - a0);
+    const b1 = a0 + ((k + 1) / n) * (a1 - a0);
+    s.push(Math.cos(b0) * r, y, Math.sin(b0) * r, Math.cos(b1) * r, y, Math.sin(b1) * r);
+  }
+  return s;
+};
+const circleSegsXZ = (r: number, n: number, y = 0): number[] => arcSegsXZ(r, 0, Math.PI * 2, n, y);
 
 const gearGlyph = (R: number): number[] => {
   const s: number[] = [];
@@ -111,32 +141,6 @@ const codeGlyph = (w: number): number[] => {
   ];
 };
 
-// Single 4-point "AI sparkle" outline as 2D [u,v] pairs.
-const star2d = (rO: number, rI: number): number[] => {
-  const pts: [number, number][] = [];
-  for (let k = 0; k < 8; k++) {
-    const a = (k / 8) * Math.PI * 2;
-    const r = k % 2 === 0 ? rO : rI;
-    pts.push([Math.cos(a) * r, Math.sin(a) * r]);
-  }
-  const s: number[] = [];
-  for (let k = 0; k < 8; k++) {
-    const p = pts[k];
-    const q = pts[(k + 1) % 8];
-    s.push(p[0], p[1], q[0], q[1]);
-  }
-  return s;
-};
-
-// Two 4-point stars crossed in perpendicular planes — a sparkle with 3D depth.
-const sparkle3d = (rO: number, rI: number): number[] => {
-  const s2 = star2d(rO, rI);
-  const segs: number[] = [];
-  for (let i = 0; i < s2.length; i += 4) segs.push(s2[i], s2[i + 1], 0, s2[i + 2], s2[i + 3], 0);
-  for (let i = 0; i < s2.length; i += 4) segs.push(s2[i], 0, s2[i + 1], s2[i + 2], 0, s2[i + 3]);
-  return segs;
-};
-
 const cubeSegs = (c: number): number[] => {
   const v = [
     [-c, -c, -c], [c, -c, -c], [c, c, -c], [-c, c, -c],
@@ -156,102 +160,158 @@ const figureGroups = (tilt: number): { group: Group; spin: Group } => {
   return { group, spin };
 };
 
-// 01 — Agentic: a model sparkle (crossed 3D) at the center of a single feedback
-// loop ring carrying three camera-facing tool icons (gear / search / code). A
-// token circles the loop and pulses out to each tool as it passes; the whole
-// thing turntable-spins.
+// 01 — Agentic: the loop. Pulse out (call) -> tool fires (run) -> pulse back
+// (result) -> core flash (observe) -> context arc accretes. Three tools per
+// cycle, sequenced; the whole instrument turntable-spins.
 function agenticFigure(): Figure {
   const { group, spin } = figureGroups(AERIAL);
   const inkLine = new LineBasicMaterial({ color: INK, transparent: true, opacity: EDGE_OP });
-  const amberLine = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: CORE_OP });
-  const amberPts = new PointsMaterial({ color: AMBER, size: 0.14, sizeAttenuation: true, transparent: true, opacity: ACCENT_OP });
+  const faintLine = new LineBasicMaterial({ color: INK, transparent: true, opacity: FAINT_OP });
+  const corePt = new PointsMaterial({ color: AMBER, size: 0.15, sizeAttenuation: true, transparent: true, opacity: ACCENT_OP });
+  const pulsePt = new PointsMaterial({ color: AMBER, size: 0.15, sizeAttenuation: true, transparent: true, opacity: ACCENT_OP });
 
-  const core = lineSeg(sparkle3d(0.5, 0.15), amberLine);
-  spin.add(core);
+  // ── core: a hairline gyroscope — the outer ring precesses about Y, the
+  // nested inner ring counter-spins about X; an amber point sits at the pivot.
+  const gyroFlashMat = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 });
+  const oGrp = new Group();
+  oGrp.add(glyphXY(circle2d(0.46, 40), inkLine));
+  oGrp.add(glyphXY(circle2d(0.46, 40), gyroFlashMat));
+  const iGrp = new Group();
+  iGrp.add(glyphXY(circle2d(0.31, 32), inkLine));
+  iGrp.add(glyphXY(circle2d(0.31, 32), gyroFlashMat));
+  oGrp.add(iGrp);
+  spin.add(oGrp);
 
+  const coreGeom = new BufferGeometry();
+  coreGeom.setAttribute('position', new Float32BufferAttribute(new Float32Array([0, 0, 0]), 3));
+  spin.add(new Points(coreGeom, corePt));
+
+  // ── orbit guide, spokes, tool stations
   const R = 1.5;
-  const segN = 64;
-  const ring: number[] = [];
-  for (let i = 0; i < segN; i++) {
-    const a0 = (i / segN) * Math.PI * 2;
-    const a1 = ((i + 1) / segN) * Math.PI * 2;
-    ring.push(Math.cos(a0) * R, 0, Math.sin(a0) * R, Math.cos(a1) * R, 0, Math.sin(a1) * R);
-  }
-  spin.add(lineSeg(ring, inkLine));
+  spin.add(lineSeg(circleSegsXZ(R, 64), faintLine));
 
   const glyphs = [gearGlyph(0.27), searchGlyph(0.28), codeGlyph(0.3)];
   const tools: LineSegments[] = [];
-  const hot: LineSegments[] = [];          // amber twin of each glyph — lights up as the call lands
+  const hot: LineSegments[] = [];          // amber twin of each glyph — fires as the call lands
   const hotMats: LineBasicMaterial[] = [];
-  const toolPos: [number, number][] = [];
   const toolAng: number[] = [];
+  const spokes: number[] = [];
   for (let i = 0; i < 3; i++) {
     const a = Math.PI / 2 + (i / 3) * Math.PI * 2;
     toolAng.push(a);
-    const cx = Math.cos(a) * R;
-    const cz = Math.sin(a) * R;
-    toolPos.push([cx, cz]);
+    const cx = Math.cos(a);
+    const cz = Math.sin(a);
+    spokes.push(cx * 0.66, 0, cz * 0.66, cx * (R - 0.34), 0, cz * (R - 0.34));
     const m = glyphXY(glyphs[i], inkLine);
-    m.position.set(cx, 0, cz);
+    m.position.set(cx * R, 0, cz * R);
     spin.add(m);
     tools.push(m);
     const hm = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 });
     const h = glyphXY(glyphs[i], hm);
-    h.position.set(cx, 0, cz);
+    h.position.set(cx * R, 0, cz * R);
     spin.add(h);
     hot.push(h);
     hotMats.push(hm);
   }
+  spin.add(lineSeg(spokes, faintLine));
 
-  const moverArr = new Float32Array(4 * 3);
-  const moverGeom = new BufferGeometry();
-  moverGeom.setAttribute('position', new Float32BufferAttribute(moverArr, 3));
-  spin.add(new Points(moverGeom, amberPts));
+  // ── tool ripple — one billboarded circle, moved to whichever tool is firing
+  const blipMat = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 });
+  const blip = glyphXY(circle2d(0.3, 28), blipMat);
+  spin.add(blip);
 
-  const win = 0.9;
+  // ── context arcs — one third of a ring accretes per observation
+  const arcMats = [0, 1, 2].map(() => new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 }));
+  const arcOp = [0, 0, 0];
+  for (let i = 0; i < 3; i++) {
+    const a0 = Math.PI / 2 + (i / 3) * Math.PI * 2 + 0.16;
+    const a1 = Math.PI / 2 + ((i + 1) / 3) * Math.PI * 2 - 0.16;
+    spin.add(lineSeg(arcSegsXZ(0.82, a0, a1, 18), arcMats[i]));
+  }
+
+  // ── the pulse — a single amber point riding the active spoke
+  // NOTE: mutable attributes use BufferAttribute (keeps the array reference);
+  // Float32BufferAttribute copies, so per-frame writes would never upload.
+  const pulseArr = new Float32Array(3);
+  const pulseGeom = new BufferGeometry();
+  pulseGeom.setAttribute('position', new BufferAttribute(pulseArr, 3));
+  spin.add(new Points(pulseGeom, pulsePt));
+
+  const TOOL_P = 2.7; // s per call; full cycle = 3 calls
   let fadeK = 1;
   let lastT = 0;
-  const hotOp = [0, 0, 0]; // per-tool flash with a decay tail, so hits linger
+  let gyroFl = 0;
+  const hotOp = [0, 0, 0];
   return {
     group,
     setFade: (k) => {
       fadeK = k;
       inkLine.opacity = EDGE_OP * k;
-      amberLine.opacity = CORE_OP * k;
-      amberPts.opacity = ACCENT_OP * k;
+      faintLine.opacity = FAINT_OP * k;
+      corePt.opacity = ACCENT_OP * k;
+      pulsePt.opacity = ACCENT_OP * k;
     },
     update: (t, cam) => {
       const dtl = Math.min(0.05, Math.max(0, t - lastT));
       lastT = t;
       spin.rotation.y = t * SPIN;
-      core.rotation.y = -t * 0.8; // crossed sparkle shimmers in 3D
+      oGrp.rotation.y = t * 0.55;
+      iGrp.rotation.x = t * 1.15;
       for (const m of tools) m.lookAt(cam.position); // billboard so icons stay readable
-      const aTok = (t * 0.65) % (Math.PI * 2);
-      moverArr[0] = Math.cos(aTok) * R;
-      moverArr[1] = 0;
-      moverArr[2] = Math.sin(aTok) * R;
-      let sMax = 0;
-      for (let i = 0; i < 3; i++) {
-        let d = Math.abs(aTok - toolAng[i]) % (Math.PI * 2);
-        if (d > Math.PI) d = Math.PI * 2 - d;
-        const s = Math.max(0, 1 - d / win);
-        const o = (1 + i) * 3;
-        moverArr[o] = toolPos[i][0] * s;
-        moverArr[o + 1] = s < 0.04 ? 999 : 0; // hide idle pulses off-screen
-        moverArr[o + 2] = toolPos[i][1] * s;
-        hot[i].lookAt(cam.position);
-        hotOp[i] = Math.max(hotOp[i] - dtl * 1.6, s * s); // sharp attack, slow decay
-        hotMats[i].opacity = ACCENT_OP * hotOp[i] * fadeK; // the tool fires as the call lands
-        if (s > sMax) sMax = s;
+      for (const h of hot) h.lookAt(cam.position);
+      blip.lookAt(cam.position);
+
+      const tc = t % (TOOL_P * 3);
+      const i = Math.min(2, Math.floor(tc / TOOL_P)); // active tool
+      const u = (tc % TOOL_P) / TOOL_P;               // progress within this call
+      const ca = Math.cos(toolAng[i]);
+      const sa = Math.sin(toolAng[i]);
+
+      // pulse: out 0–0.30, at tool 0.30–0.50, back 0.50–0.80, absorb 0.80–1
+      let r = -1;
+      if (u < 0.30) r = lerp(0.55, R, ez(u / 0.30));
+      else if (u >= 0.50 && u < 0.80) r = lerp(R, 0.55, ez((u - 0.50) / 0.30));
+      pulseArr[0] = ca * r;
+      pulseArr[1] = r < 0 ? 999 : 0; // hidden while the tool runs / core absorbs
+      pulseArr[2] = sa * r;
+      (pulseGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
+
+      // the tool fires while the call is with it; flash lingers after
+      const fire = u >= 0.30 && u < 0.50 ? 1 : 0;
+      for (let k = 0; k < 3; k++) {
+        hotOp[k] = Math.max(hotOp[k] - dtl * 1.7, k === i ? fire : 0);
+        hotMats[k].opacity = ACCENT_OP * hotOp[k] * fadeK;
       }
-      core.scale.setScalar(1 + 0.35 * sMax); // the model breathes with each call/response
-      (moverGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
+
+      // ripple expanding from the firing tool
+      if (fire) {
+        const k2 = (u - 0.30) / 0.20;
+        blip.position.set(ca * R, 0, sa * R);
+        blip.scale.setScalar(lerp(0.45, 1.7, ez(k2)));
+        blipMat.opacity = ACCENT_OP * (1 - k2) * 0.8 * fadeK;
+      } else {
+        blipMat.opacity = 0;
+      }
+
+      // the core absorbs the observation — rings flash, pivot point breathes
+      const absorb = u >= 0.80 ? 1 - (u - 0.80) / 0.20 : 0;
+      gyroFl = Math.max(gyroFl - dtl * 2.2, absorb);
+      gyroFlashMat.opacity = ACCENT_OP * gyroFl * 0.85 * fadeK;
+      corePt.size = 0.15 * (1 + 0.55 * gyroFl);
+
+      // context accretes one arc per completed observation; clears on restart
+      for (let k = 0; k < 3; k++) {
+        const on = k < i || (k === i && u > 0.86) ? 1 : 0;
+        arcOp[k] += (on - arcOp[k]) * Math.min(1, dtl * 3.2);
+        arcMats[k].opacity = ACCENT_OP * 0.8 * arcOp[k] * fadeK;
+      }
     },
   };
 }
 
-// 02 — Full Stack: a UI window (top), a logic grid (middle), a database drum
-// (bottom) on a spine. A cube packet drops top -> bottom then rises.
+// 02 — Full Stack: the round trip. Click ripple (UI) -> packet descends ->
+// logic cell fires -> DB commit rings -> response rises -> a new content
+// line renders into the window.
 function stackFigure(): Figure {
   const { group, spin } = figureGroups(AERIAL);
   const inkLine = new LineBasicMaterial({ color: INK, transparent: true, opacity: EDGE_OP });
@@ -337,12 +397,54 @@ function stackFigure(): Figure {
   const flashMats = flashSegs.map(() => new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 }));
   flashSegs.forEach((s, i) => spin.add(lineSeg(s, flashMats[i])));
 
+  // ── click — two staggered ripples on the window where the request begins
+  const CLICK_X = 0.42;
+  const CLICK_Z = 0.33;
+  const clickMats = [0, 1].map(() => new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 }));
+  const clicks = clickMats.map((m) => {
+    const c = lineSeg(circleSegsXZ(0.15, 22), m);
+    c.position.set(CLICK_X, yTop, CLICK_Z);
+    spin.add(c);
+    return c;
+  });
+
+  // ── the logic cell the request routes through — fires as the packet passes
+  const cellMat = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 });
+  {
+    const x0 = 0;
+    const x1 = (2 * W) / gx;
+    const z0 = -D + (2 * D) / gz;
+    const z1 = -D + (4 * D) / gz;
+    spin.add(lineSeg([
+      x0, yMid, z0, x1, yMid, z0,
+      x1, yMid, z0, x1, yMid, z1,
+      x1, yMid, z1, x0, yMid, z1,
+      x0, yMid, z1, x0, yMid, z0,
+    ], cellMat));
+  }
+
+  // ── commit ring — an ellipse that rings outward from the drum on write
+  const commitMat = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 });
+  const commit = lineSeg(circleSegsXZ(dr, 44), commitMat);
+  commit.position.y = drumTop;
+  spin.add(commit);
+
+  // ── the rendered line — the response becomes UI, drawn left to right
+  const renderMat = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 });
+  const RENDER_LEN = (W - 0.4) - (-W + 0.16);
+  const renderLine = lineSeg([0, 0, 0, 1, 0, 0], renderMat);
+  renderLine.position.set(-W + 0.16, yTop, -D + 1.16);
+  renderLine.scale.x = 0;
+  spin.add(renderLine);
+
   const packet = lineSeg(cubeSegs(0.1), amberLine);
   spin.add(packet);
 
   let fadeK = 1;
   let lastT = 0;
-  const layerOp = [0, 0, 0]; // per-layer flash with a decay tail
+  let cellOp = 0;
+  let renderOp = 0;
+  const layerOp = [0, 0, 0];
   return {
     group,
     setFade: (k) => {
@@ -355,30 +457,68 @@ function stackFigure(): Figure {
       const dtl = Math.min(0.05, Math.max(0, t - lastT));
       lastT = t;
       spin.rotation.y = t * SPIN;
-      // request lifecycle: ease down through the layers, dwell at the database
-      // (the commit), ease back up with the response
-      const P = 3.4;
+      // request lifecycle: click -> descend -> commit -> rise -> render
+      const P = 4.6;
       const ph = (t % P) / P;
-      const ease = (k: number): number => k * k * (3 - 2 * k);
       const yLo = drumBot + 0.08;
       let py = yTop;
-      if (ph < 0.44) py = lerp(yTop, yLo, ease(ph / 0.44));
+      if (ph < 0.10) py = yTop;
+      else if (ph < 0.42) py = lerp(yTop, yLo, ez((ph - 0.10) / 0.32));
       else if (ph < 0.54) py = yLo;
-      else if (ph < 0.98) py = lerp(yLo, yTop, ease((ph - 0.54) / 0.44));
+      else if (ph < 0.86) py = lerp(yLo, yTop, ez((ph - 0.54) / 0.32));
       packet.position.set(0, py, 0);
       packet.rotation.y = t * 0.9;
+
+      // click ripples while the packet is still parked at the top
+      for (let k = 0; k < 2; k++) {
+        const s = (ph - k * 0.035) / 0.105;
+        if (s > 0 && s < 1) {
+          clicks[k].scale.set(lerp(0.4, 2.1, ez(s)), 1, lerp(0.4, 2.1, ez(s)));
+          clickMats[k].opacity = ACCENT_OP * (1 - s) * 0.9 * fadeK;
+        } else {
+          clickMats[k].opacity = 0;
+        }
+      }
+
+      // layer outlines flash as the packet passes; flash lingers
       for (let i = 0; i < 3; i++) {
         const s = Math.max(0, 1 - Math.abs(py - flashY[i]) / 0.38);
-        layerOp[i] = Math.max(layerOp[i] - dtl * 1.8, s); // flash lingers after the packet moves on
+        layerOp[i] = Math.max(layerOp[i] - dtl * 1.8, s);
         flashMats[i].opacity = ACCENT_OP * layerOp[i] * fadeK;
       }
+
+      // the routed cell fires as the request crosses the logic layer
+      const cs = Math.max(0, 1 - Math.abs(py - yMid) / 0.26);
+      cellOp = Math.max(cellOp - dtl * 1.5, cs);
+      cellMat.opacity = ACCENT_OP * cellOp * fadeK;
+
+      // commit ring while the packet dwells at the drum
+      if (ph >= 0.42 && ph < 0.58) {
+        const k = (ph - 0.42) / 0.16;
+        commit.scale.set(1 + 0.55 * ez(k), 1, 1 + 0.55 * ez(k));
+        commitMat.opacity = ACCENT_OP * (1 - k) * 0.9 * fadeK;
+      } else {
+        commitMat.opacity = 0;
+      }
+
+      // the response renders: a new content line draws into the window, holds,
+      // and dissolves under the next cycle's click
+      if (ph >= 0.86) {
+        const k = ez(Math.min(1, (ph - 0.86) / 0.12));
+        renderLine.scale.x = RENDER_LEN * k;
+        renderOp = k;
+      } else {
+        renderOp = Math.max(0, renderOp - dtl * 1.1);
+        if (renderOp <= 0.001) renderLine.scale.x = 0;
+      }
+      renderMat.opacity = ACCENT_OP * renderOp * fadeK;
     },
   };
 }
 
-// 03 — Machine Learning: a feed-forward net staggered in depth (so the sway reveals
-// 3D). Round nodes + faint resting weights; an activation wavefront sweeps left
-// to right, firing nodes and the weights between them amber (the forward pass).
+// 03 — Machine Learning: the training step. Forward pass (amber) -> backprop
+// (green) -> the loss curve under the net descends one notch. Eight epochs,
+// then the readout clears and training restarts.
 function netFigure(): Figure {
   const { group, spin } = figureGroups(NET_TILT);
   const counts = [3, 5, 5, 3]; // symmetric -> clean, well-shaped silhouette
@@ -418,8 +558,8 @@ function netFigure(): Figure {
   const nodeActB = new Float32Array(nNodes);  // backward gradient (green)
   const nodeGeom = new BufferGeometry();
   nodeGeom.setAttribute('position', new Float32BufferAttribute(new Float32Array(npos), 3));
-  nodeGeom.setAttribute('aAct', new Float32BufferAttribute(nodeAct, 1));
-  nodeGeom.setAttribute('aActB', new Float32BufferAttribute(nodeActB, 1));
+  nodeGeom.setAttribute('aAct', new BufferAttribute(nodeAct, 1));
+  nodeGeom.setAttribute('aActB', new BufferAttribute(nodeActB, 1));
   const nodeMat = new ShaderMaterial({
     uniforms: { uInk: { value: INK }, uAmber: { value: AMBER }, uGreen: { value: GREEN }, uFade: { value: 1 }, uDpr: { value: dpr } },
     vertexShader: `
@@ -511,19 +651,73 @@ function netFigure(): Figure {
   });
   spin.add(new LineSegments(edgeGeom, edgeMat));
 
+  // ── loss readout — hairline axes + a curve that gains one descending
+  // segment per training cycle. Sits outside the sway group: it's the
+  // instrument panel, not the apparatus.
+  const X0 = 0.50;
+  const X1 = 1.64;
+  const Y0 = -1.94;
+  const H = 0.52;
+  const EPOCHS = 8;
+  const faintLine = new LineBasicMaterial({ color: INK, transparent: true, opacity: FAINT_OP });
+  group.add(lineSeg([
+    X0, Y0 + H + 0.10, 0, X0, Y0, 0,
+    X0, Y0, 0, X1, Y0, 0,
+  ], faintLine));
+
+  const px: number[] = [];
+  const pyv: number[] = [];
+  let seed = Math.random() * 10;
+  const regen = (): void => {
+    seed = Math.random() * 10;
+    for (let i = 0; i < EPOCHS; i++) {
+      px[i] = X0 + 0.07 + (i / (EPOCHS - 1)) * (X1 - X0 - 0.14);
+      const jit = i > 0 ? 0.05 * Math.sin(i * 9.7 + seed) : 0;
+      pyv[i] = Y0 + 0.05 + (0.10 + 0.82 * Math.exp(-0.55 * i) + jit) * H;
+    }
+  };
+  regen();
+
+  const lossPos = new Float32Array((EPOCHS - 1) * 6);
+  const lossGeom = new BufferGeometry();
+  lossGeom.setAttribute('position', new BufferAttribute(lossPos, 3));
+  const lossMat = new LineBasicMaterial({ color: AMBER, transparent: true, opacity: ACCENT_OP * 0.85 });
+  group.add(new LineSegments(lossGeom, lossMat));
+
+  const headArr = new Float32Array(3);
+  const headGeom = new BufferGeometry();
+  headGeom.setAttribute('position', new BufferAttribute(headArr, 3));
+  const headMat = new PointsMaterial({ color: AMBER, size: 0.09, sizeAttenuation: true, transparent: true, opacity: ACCENT_OP });
+  group.add(new Points(headGeom, headMat));
+
+  let fadeK = 1;
+  let lastN = -1;
+  let plotOp = 1;
+  let lastT = 0;
   return {
     group,
     setFade: (k) => {
+      fadeK = k;
       nodeMat.uniforms.uFade.value = k;
       edgeMat.uniforms.uFade.value = k;
+      faintLine.opacity = FAINT_OP * k;
     },
     update: (t) => {
+      const dtl = Math.min(0.05, Math.max(0, t - lastT));
+      lastT = t;
       spin.rotation.y = 0.35 * Math.sin(t * 0.4); // gentle sway reveals z-depth; layers stay readable
       // One training step per cycle: the forward pass sweeps left -> right
       // (amber activations), a beat, then the backward pass returns right ->
       // left (green gradients — backprop). Heads park at -9 between passes.
       const T = 4.4;
+      const n = Math.floor(t / T);
       const ph = (t % T) / T;
+      if (n !== lastN) {
+        lastN = n;
+        if (n % EPOCHS === 0) regen(); // readout cleared — fresh run
+      }
+      const e = n % EPOCHS; // epoch index: e segments already on the readout
+
       let hF = -9;
       let hB = -9;
       if (ph < 0.42) hF = ph / 0.42;
@@ -531,13 +725,38 @@ function netFigure(): Figure {
       edgeMat.uniforms.uHead.value = hF;
       edgeMat.uniforms.uHeadB.value = hB;
       const WW = 0.22; // a node fires while a head is within this of its layer
-      for (let n = 0; n < nNodes; n++) {
-        const coord = nodeLayer[n] / 3;
-        nodeAct[n] = hF < -1 ? 0 : Math.max(0, 1 - Math.abs(coord - hF) / WW);
-        nodeActB[n] = hB < -1 ? 0 : Math.max(0, 1 - Math.abs(coord - hB) / WW);
+      for (let k = 0; k < nNodes; k++) {
+        const coord = nodeLayer[k] / 3;
+        nodeAct[k] = hF < -1 ? 0 : Math.max(0, 1 - Math.abs(coord - hF) / WW);
+        nodeActB[k] = hB < -1 ? 0 : Math.max(0, 1 - Math.abs(coord - hB) / WW);
       }
       (nodeGeom.getAttribute('aAct') as BufferAttribute).needsUpdate = true;
       (nodeGeom.getAttribute('aActB') as BufferAttribute).needsUpdate = true;
+
+      // the step lands: after backprop completes, the curve extends one notch
+      const stepK = ph >= 0.92 ? ez((ph - 0.92) / 0.08) : 0;
+      let hx = px[Math.min(e, EPOCHS - 1)];
+      let hy = pyv[Math.min(e, EPOCHS - 1)];
+      for (let s = 0; s < EPOCHS - 1; s++) {
+        let ax = px[s]; let ay = pyv[s]; let bx = ax; let by = ay;
+        if (s < e) { bx = px[s + 1]; by = pyv[s + 1]; } // settled history
+        else if (s === e && e < EPOCHS - 1 && stepK > 0) {
+          bx = lerp(ax, px[s + 1], stepK);
+          by = lerp(ay, pyv[s + 1], stepK);
+          hx = bx; hy = by;
+        } else { ax = hx; ay = hy; bx = hx; by = hy; } // future — collapsed, invisible
+        lossPos[s * 6 + 0] = ax; lossPos[s * 6 + 1] = ay; lossPos[s * 6 + 2] = 0;
+        lossPos[s * 6 + 3] = bx; lossPos[s * 6 + 4] = by; lossPos[s * 6 + 5] = 0;
+      }
+      (lossGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
+      headArr[0] = hx; headArr[1] = hy;
+      (headGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
+
+      // converged: hold the full curve a beat, then clear for the next run
+      const tgt = e === EPOCHS - 1 && ph > 0.6 ? 0 : 1;
+      plotOp += (tgt - plotOp) * Math.min(1, dtl * 3);
+      lossMat.opacity = ACCENT_OP * 0.85 * plotOp * fadeK;
+      headMat.opacity = ACCENT_OP * plotOp * fadeK;
     },
   };
 }
@@ -547,7 +766,7 @@ export function initInterestsGraph(canvas: HTMLCanvasElement): void {
 
   const scene = new Scene();
   const camera = new PerspectiveCamera(40, 1, 0.1, 100);
-  camera.position.set(0, 0, 7);
+  camera.position.set(0, 0, 6.55);
 
   const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -594,7 +813,7 @@ export function initInterestsGraph(canvas: HTMLCanvasElement): void {
     el.addEventListener('pointerleave', () => { hover = -1; });
   });
   // The bullet list mirrors the stage: whichever figure is up carries .live
-  // (amber index + underline, styled in the page CSS).
+  // (amber index + underline + caption, styled in the page CSS).
   const setLive = (i: number): void => items.forEach((el, k) => el.classList.toggle('live', k === i));
   setLive(0);
 
@@ -613,7 +832,9 @@ export function initInterestsGraph(canvas: HTMLCanvasElement): void {
   let dwellT = 0;
 
   let prev = 0;
-  let t = 0;
+  // Start mid-action so the very first frame (and the reduced-motion static
+  // pose) shows each mechanism doing its job, not waiting to.
+  let t = 21;
 
   const render = (): void => {
     for (const fig of figures) fig.group.visible = false;

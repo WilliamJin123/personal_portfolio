@@ -9,12 +9,11 @@
 // has no visible boundary regardless of its extent. (LineBasicMaterial has
 // no per-vertex alpha; this is the clean way to do it.)
 //
-// Local minima: the deepest basins of the height field are annotated with
-// faded amber callouts — a small chevron pointing into the basin, a thin
-// vertical leader, a short tick at the top. The topology-video annotation,
-// all straight hairlines so it sits with the angular wireframe. Basins are
-// re-detected every frame; callouts ease in when a basin forms, drift with
-// it, and dissolve when the morph fills it back in.
+// Local minima: instead of explicit markers, amber light pools in the
+// deepest basins — the fragment shader warms the line color and lifts the
+// alpha as a vertex approaches the bottom of the height range, so dips glow
+// faintly from within and fade as the morph fills them back in. No extra
+// geometry, no chrome.
 //
 // Scroll inertia: the roll chases the real scroll position through an
 // exponential smoother, so the hills coast to a stop (both directions)
@@ -63,22 +62,6 @@ const SCROLL_TO_NOISE = 0.0045; // noise units per pixel scrolled (forward trave
 // Scroll inertia — how quickly the roll catches up to the scrollbar (per s).
 // Lower = longer coast after the user stops scrolling.
 const SCROLL_CHASE = 2.4;
-
-// Local-minima callouts — pool size, detection depth, spacing, marker shape.
-const MIN_MAX = 7;                 // marker pool (also caps basins per frame)
-const MIN_TH = -0.55 * HSCALE;     // only basins deeper than this get marked
-const MIN_SEP = 5.0;               // min world separation between marked basins
-const MIN_MATCH = 2.0;             // a marker follows its basin within this drift
-const MIN_ZMAX = 3;                // ignore basins at/behind the camera line
-const MIN_EDGE = 3;                // grid margin (8-neighbor test needs room)
-const MIN_CHEV_W = 0.30;           // chevron half-width
-const MIN_CHEV_H = 0.24;           // chevron arm rise
-const MIN_LIFT = 0.12;             // chevron tip clearance above the surface
-const MIN_GAP = 0.14;              // breathing room between elements
-const MIN_LEAD = 1.5;              // leader line length
-const MIN_TICK = 0.16;             // top tick half-width
-const MIN_ALPHA = 0.6;             // peak callout alpha before distance fade
-const MIN_EASE = 2.4;              // fade-in/out rate (per s)
 
 // Random per-session phase offsets — same code, different terrain every load.
 const PHASES = [
@@ -181,6 +164,7 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
   const mat = new ShaderMaterial({
     uniforms: {
       uColor: { value: INK },
+      uAmber: { value: AMBER },
       uBaseAlpha: { value: 0.10 },
       uFadeNear: { value: FADE_NEAR },
       uFadeFar: { value: FADE_FAR },
@@ -197,6 +181,7 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
     `,
     fragmentShader: `
       uniform vec3 uColor;
+      uniform vec3 uAmber;
       uniform float uBaseAlpha;
       uniform float uFadeNear;
       uniform float uFadeFar;
@@ -207,156 +192,16 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
         float fade = 1.0 - smoothstep(uFadeNear, uFadeFar, vDist);
         // ridges read crisper than valleys — depth without extra geometry
         fade *= mix(0.68, 1.25, smoothstep(-uH, uH, vY));
-        gl_FragColor = vec4(uColor, uBaseAlpha * fade);
+        // amber pools quietly in the deepest basins (the local minima)
+        float pool = 1.0 - smoothstep(-uH, -0.45 * uH, vY);
+        pool *= pool;
+        vec3 col = mix(uColor, uAmber, pool * 0.85);
+        gl_FragColor = vec4(col, uBaseAlpha * fade * (1.0 + pool * 2.4));
       }
     `,
     transparent: true,
   });
   scene.add(new LineSegments(geom, mat));
-
-  // ── local minima callouts — amber chevron + leader + tick per basin.
-  // One shared LineSegments buffer: per-slot markers, per-vertex fade.
-  const markVerts = 12; // 6 segments per marker: double chevron, leader, top tick
-  const minPos = new Float32Array(MIN_MAX * markVerts * 3);
-  const minFade = new Float32Array(MIN_MAX * markVerts);
-  const minGeom = new BufferGeometry();
-  minGeom.setAttribute('position', new BufferAttribute(minPos, 3));
-  minGeom.setAttribute('aFade', new BufferAttribute(minFade, 1));
-  const minMat = new ShaderMaterial({
-    uniforms: {
-      uAmber: { value: AMBER },
-      uFadeNear: { value: FADE_NEAR },
-      uFadeFar: { value: FADE_FAR },
-      uAlpha: { value: MIN_ALPHA },
-    },
-    vertexShader: `
-      attribute float aFade;
-      uniform float uFadeNear;
-      uniform float uFadeFar;
-      varying float vA;
-      void main() {
-        vA = aFade * (1.0 - smoothstep(uFadeNear, uFadeFar, length(position.xz)));
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 uAmber;
-      uniform float uAlpha;
-      varying float vA;
-      void main() {
-        gl_FragColor = vec4(uAmber, vA * uAlpha);
-      }
-    `,
-    transparent: true,
-  });
-  scene.add(new LineSegments(minGeom, minMat));
-
-  interface Basin { x: number; z: number; on: boolean; op: number }
-  const basins: Basin[] = Array.from({ length: MIN_MAX }, () => ({ x: 0, z: 0, on: false, op: 0 }));
-
-  // Strict 8-neighbor local minima of the height grid, deepest first, with a
-  // minimum spacing so clusters of dimples read as one basin.
-  function detectBasins(): { x: number; z: number; h: number }[] {
-    const found: { x: number; z: number; h: number }[] = [];
-    for (let zi = MIN_EDGE; zi < GW - MIN_EDGE; zi++) {
-      const z = zWorld(zi);
-      if (z > MIN_ZMAX) continue;
-      for (let xi = MIN_EDGE; xi < GW - MIN_EDGE; xi++) {
-        const h = heights[zi * GW + xi];
-        if (h > MIN_TH) continue;
-        let isMin = true;
-        for (let dz = -1; dz <= 1 && isMin; dz++) {
-          for (let dx = -1; dx <= 1; dx++) {
-            if (dx === 0 && dz === 0) continue;
-            if (heights[(zi + dz) * GW + (xi + dx)] <= h) { isMin = false; break; }
-          }
-        }
-        if (isMin) found.push({ x: xWorld(xi), z, h });
-      }
-    }
-    found.sort((a, b) => a.h - b.h);
-    const kept: { x: number; z: number; h: number }[] = [];
-    for (const c of found) {
-      if (kept.length >= MIN_MAX) break;
-      if (kept.every((k) => (k.x - c.x) ** 2 + (k.z - c.z) ** 2 >= MIN_SEP * MIN_SEP)) kept.push(c);
-    }
-    return kept;
-  }
-
-  function updateBasins(dt: number, t: number, scrollOff: number): void {
-    const kept = detectBasins();
-    const claimed = new Array<boolean>(kept.length).fill(false);
-
-    // live markers follow their basin if it survived the morph, else dissolve
-    for (const b of basins) {
-      if (!b.on && b.op <= 0.01) continue;
-      let best = -1;
-      let bestD = MIN_MATCH * MIN_MATCH;
-      for (let i = 0; i < kept.length; i++) {
-        if (claimed[i]) continue;
-        const d = (kept[i].x - b.x) ** 2 + (kept[i].z - b.z) ** 2;
-        if (d < bestD) { bestD = d; best = i; }
-      }
-      if (best >= 0) {
-        claimed[best] = true;
-        b.x = kept[best].x;
-        b.z = kept[best].z;
-        b.on = true;
-      } else {
-        b.on = false;
-      }
-    }
-    // newly formed basins take a dormant slot and ease in
-    for (let i = 0; i < kept.length; i++) {
-      if (claimed[i]) continue;
-      const slot = basins.find((b) => !b.on && b.op <= 0.01);
-      if (!slot) break;
-      slot.x = kept[i].x;
-      slot.z = kept[i].z;
-      slot.on = true;
-      slot.op = 0;
-    }
-
-    const ease = 1 - Math.exp(-dt * MIN_EASE);
-    let v = 0; // vertex index into minPos/minFade
-    const put = (x: number, y: number, z: number, f: number): void => {
-      minPos[v * 3 + 0] = x;
-      minPos[v * 3 + 1] = y;
-      minPos[v * 3 + 2] = z;
-      minFade[v] = f;
-      v++;
-    };
-    for (const b of basins) {
-      b.op += ((b.on ? 1 : 0) - b.op) * ease;
-      const tip = noise(b.x, b.z + scrollOff, t) * HSCALE + MIN_LIFT;
-      const arm = tip + MIN_CHEV_H;
-      const tip2 = arm + MIN_GAP * 0.7;
-      const arm2 = tip2 + MIN_CHEV_H;
-      const lo = arm2 + MIN_GAP;
-      const hi = lo + MIN_LEAD;
-      // double chevron pointing down into the basin
-      put(b.x - MIN_CHEV_W, arm, b.z, b.op);
-      put(b.x, tip, b.z, b.op);
-      put(b.x, tip, b.z, b.op);
-      put(b.x + MIN_CHEV_W, arm, b.z, b.op);
-      put(b.x - MIN_CHEV_W, arm2, b.z, b.op * 0.6);
-      put(b.x, tip2, b.z, b.op * 0.6);
-      put(b.x, tip2, b.z, b.op * 0.6);
-      put(b.x + MIN_CHEV_W, arm2, b.z, b.op * 0.6);
-      // leader, fading toward the top so it never competes with page content
-      put(b.x, lo, b.z, b.op * 0.8);
-      put(b.x, hi, b.z, b.op * 0.5);
-      // top tick
-      put(b.x - MIN_TICK, hi, b.z, b.op * 0.55);
-      put(b.x + MIN_TICK, hi, b.z, b.op * 0.55);
-    }
-    (minGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
-    (minGeom.getAttribute('aFade') as BufferAttribute).needsUpdate = true;
-  }
-
-  // Static pose (and reduced motion) still gets its minima annotated — a huge
-  // dt snaps opacities to their targets.
-  updateBasins(100, 0, 0);
 
   const resize = (): void => {
     const w = canvas.clientWidth || window.innerWidth;
@@ -426,8 +271,6 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
       recomputeHeights(t, scrollOff);
       updateY();
       positionAttr.needsUpdate = true;
-
-      updateBasins(dt, t, scrollOff);
 
       camera.position.set(curOffX * 0.95, CAM_Y + curOffY * 0.75, CAM_Z);
       camera.lookAt(curOffX * 0.45, curOffY * 0.22, LOOK_Z);
