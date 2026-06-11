@@ -66,18 +66,18 @@ const SCROLL_CHASE = 2.4;
 
 // Local-minima callouts — pool size, detection depth, spacing, marker shape.
 const MIN_MAX = 7;                 // marker pool (also caps basins per frame)
-const MIN_TH = -0.62 * HSCALE;     // only basins deeper than this get marked
+const MIN_TH = -0.55 * HSCALE;     // only basins deeper than this get marked
 const MIN_SEP = 5.0;               // min world separation between marked basins
 const MIN_MATCH = 2.0;             // a marker follows its basin within this drift
 const MIN_ZMAX = 3;                // ignore basins at/behind the camera line
 const MIN_EDGE = 3;                // grid margin (8-neighbor test needs room)
-const MIN_CHEV_W = 0.18;           // chevron half-width
-const MIN_CHEV_H = 0.16;           // chevron arm rise
+const MIN_CHEV_W = 0.30;           // chevron half-width
+const MIN_CHEV_H = 0.24;           // chevron arm rise
 const MIN_LIFT = 0.12;             // chevron tip clearance above the surface
-const MIN_GAP = 0.10;              // breathing room between chevron and leader
-const MIN_LEAD = 0.85;             // leader line length
-const MIN_TICK = 0.12;             // top tick half-width
-const MIN_ALPHA = 0.38;            // peak callout alpha before distance fade
+const MIN_GAP = 0.14;              // breathing room between elements
+const MIN_LEAD = 1.5;              // leader line length
+const MIN_TICK = 0.16;             // top tick half-width
+const MIN_ALPHA = 0.6;             // peak callout alpha before distance fade
 const MIN_EASE = 2.4;              // fade-in/out rate (per s)
 
 // Random per-session phase offsets — same code, different terrain every load.
@@ -216,7 +216,7 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
 
   // ── local minima callouts — amber chevron + leader + tick per basin.
   // One shared LineSegments buffer: per-slot markers, per-vertex fade.
-  const markVerts = 8; // 4 segments per marker: chevron ×2, leader, top tick
+  const markVerts = 12; // 6 segments per marker: double chevron, leader, top tick
   const minPos = new Float32Array(MIN_MAX * markVerts * 3);
   const minFade = new Float32Array(MIN_MAX * markVerts);
   const minGeom = new BufferGeometry();
@@ -330,19 +330,25 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
       b.op += ((b.on ? 1 : 0) - b.op) * ease;
       const tip = noise(b.x, b.z + scrollOff, t) * HSCALE + MIN_LIFT;
       const arm = tip + MIN_CHEV_H;
-      const lo = arm + MIN_GAP;
+      const tip2 = arm + MIN_GAP * 0.7;
+      const arm2 = tip2 + MIN_CHEV_H;
+      const lo = arm2 + MIN_GAP;
       const hi = lo + MIN_LEAD;
-      // chevron pointing down into the basin
+      // double chevron pointing down into the basin
       put(b.x - MIN_CHEV_W, arm, b.z, b.op);
       put(b.x, tip, b.z, b.op);
       put(b.x, tip, b.z, b.op);
       put(b.x + MIN_CHEV_W, arm, b.z, b.op);
+      put(b.x - MIN_CHEV_W, arm2, b.z, b.op * 0.6);
+      put(b.x, tip2, b.z, b.op * 0.6);
+      put(b.x, tip2, b.z, b.op * 0.6);
+      put(b.x + MIN_CHEV_W, arm2, b.z, b.op * 0.6);
       // leader, fading toward the top so it never competes with page content
-      put(b.x, lo, b.z, b.op * 0.85);
+      put(b.x, lo, b.z, b.op * 0.8);
       put(b.x, hi, b.z, b.op * 0.5);
       // top tick
-      put(b.x - MIN_TICK, hi, b.z, b.op * 0.5);
-      put(b.x + MIN_TICK, hi, b.z, b.op * 0.5);
+      put(b.x - MIN_TICK, hi, b.z, b.op * 0.55);
+      put(b.x + MIN_TICK, hi, b.z, b.op * 0.55);
     }
     (minGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
     (minGeom.getAttribute('aFade') as BufferAttribute).needsUpdate = true;

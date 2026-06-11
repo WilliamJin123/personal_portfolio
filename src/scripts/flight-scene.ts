@@ -21,7 +21,8 @@ import {
   Scene, PerspectiveCamera, WebGLRenderer,
   BufferGeometry, BufferAttribute,
   Mesh, ShaderMaterial, PlaneGeometry, SphereGeometry,
-  Color, Vector3, BackSide, AdditiveBlending,
+  Points, PointsMaterial, Group, LineSegments, LineLoop, LineBasicMaterial,
+  Color, Vector2, Vector3, BackSide, AdditiveBlending,
 } from 'three';
 import {
   EffectComposer, RenderPass, EffectPass,
@@ -61,6 +62,19 @@ const POOL_MAX = 8;
 const POOL_SEP = 22;      // min separation between pools
 const POOL_R = 3.4;       // patch half-size
 const POOL_A = 0.5;       // peak alpha
+
+// ── celestial: the sky is half the film. A twinkling star field, a nebula
+// band of fbm dust, one dim ringed planet over the horizon, and a faint
+// constellation per station that brightens as its stretch of the flight
+// arrives. Everything rides in a camera-following group (classic skybox
+// trick) so the heavens stay fixed while the terrain travels.
+const STAR_N = 1400;
+const STAR_R = 350;
+const PLANET_DIR = new Vector3(0.42, 0.30, -0.86).normalize();
+const PLANET_DIST = 300;
+const PLANET_R = 21;
+const CONST_BOOST = 2.3;  // constellation brightening near its station
+const CONST_ZONE = 0.1;   // |p - station| inside which it brightens
 
 // ── stations: boundary progress + title card. Crossing one triggers the
 // letterbox moment; look-at keyframes compose the camera per stretch.
@@ -237,13 +251,20 @@ export function initFlightScene(canvas: HTMLCanvasElement): void {
   });
   scene.add(new Mesh(terraGeom, terraMat));
 
-  // ── sky: gradient dome + sun disk with a haze band
+  // ── celestial group — sky, stars, planet, constellations; follows the
+  // camera each frame so the heavens never get closer.
+  const celestial = new Group();
+  scene.add(celestial);
+
+  // sky: gradient dome + sun disk with a haze band + nebula dust
   const skyMat = new ShaderMaterial({
     uniforms: {
       uSunDir: { value: SUN_DIR },
       uSun: { value: SUN },
       uHorizon: { value: new Color(0x171108) },
       uZenith: { value: new Color(0x0a0b0d) },
+      uBandN: { value: new Vector3(0.55, 0.30, 0.35).normalize() },
+      uSeed: { value: new Vector2(Math.random() * 90, Math.random() * 90) },
     },
     side: BackSide,
     depthWrite: false,
@@ -255,18 +276,182 @@ export function initFlightScene(canvas: HTMLCanvasElement): void {
       }
     `,
     fragmentShader: `
-      uniform vec3 uSunDir, uSun, uHorizon, uZenith;
+      uniform vec3 uSunDir, uSun, uHorizon, uZenith, uBandN;
+      uniform vec2 uSeed;
       varying vec3 vDir;
+      float h21(vec2 p){return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);}
+      float n2(vec2 p){
+        vec2 i = floor(p); vec2 f = fract(p); vec2 u = f * f * (3.0 - 2.0 * f);
+        return mix(mix(h21(i), h21(i + vec2(1.0, 0.0)), u.x),
+                   mix(h21(i + vec2(0.0, 1.0)), h21(i + vec2(1.0, 1.0)), u.x), u.y);
+      }
+      float fbm2(vec2 p){
+        float v = 0.0; float a = 0.5;
+        for (int i = 0; i < 4; i++) { v += n2(p) * a; p = p * 2.13 + 7.7; a *= 0.5; }
+        return v;
+      }
       void main() {
         vec3 d = normalize(vDir);
         vec3 col = mix(uHorizon, uZenith, smoothstep(0.0, 0.4, d.y));
+        // nebula: a tilted band of warm dust, plus the faintest cool haze above
+        float nb = fbm2(d.xy * 3.1 + d.zx * 1.4 + uSeed);
+        float band = exp(-pow(dot(d, uBandN), 2.0) * 9.0);
+        col += vec3(0.50, 0.40, 0.27) * nb * nb * band * 0.30;
+        col += vec3(0.18, 0.21, 0.28) * nb * 0.06 * smoothstep(0.0, 0.35, d.y);
         float s = max(dot(d, uSunDir), 0.0);
         col += uSun * (pow(s, 700.0) * 1.4 + pow(s, 30.0) * 0.22 + pow(s, 6.0) * 0.05);
         gl_FragColor = vec4(col, 1.0);
       }
     `,
   });
-  scene.add(new Mesh(new SphereGeometry(380, 32, 16), skyMat));
+  const sky = new Mesh(new SphereGeometry(380, 32, 16), skyMat);
+  sky.renderOrder = -1;
+  celestial.add(sky);
+
+  // stars: one shared point cloud, per-star size/phase/color, gentle twinkle
+  const starTime = { value: 0 };
+  {
+    const sp = new Float32Array(STAR_N * 3);
+    const ss = new Float32Array(STAR_N);
+    const sph = new Float32Array(STAR_N);
+    const scl = new Float32Array(STAR_N * 3);
+    for (let i = 0; i < STAR_N; i++) {
+      const az = Math.random() * Math.PI * 2;
+      const el = Math.asin(Math.random()) * 0.96 + 0.02;
+      sp[i * 3] = Math.sin(az) * Math.cos(el) * STAR_R;
+      sp[i * 3 + 1] = Math.sin(el) * STAR_R;
+      sp[i * 3 + 2] = Math.cos(az) * Math.cos(el) * STAR_R;
+      ss[i] = 0.9 + Math.random() * 1.5;
+      sph[i] = Math.random() * 50;
+      const amber = Math.random() < 0.07;
+      const lum = 0.35 + Math.random() * 0.6;
+      scl[i * 3] = (amber ? 0.82 : 0.74) * lum;
+      scl[i * 3 + 1] = (amber ? 0.54 : 0.79) * lum;
+      scl[i * 3 + 2] = (amber ? 0.18 : 0.9) * lum;
+    }
+    const g = new BufferGeometry();
+    g.setAttribute('position', new BufferAttribute(sp, 3));
+    g.setAttribute('aSize', new BufferAttribute(ss, 1));
+    g.setAttribute('aPhase', new BufferAttribute(sph, 1));
+    g.setAttribute('aCol', new BufferAttribute(scl, 3));
+    const m = new ShaderMaterial({
+      uniforms: { uT: starTime, uDpr: { value: renderer.getPixelRatio() } },
+      transparent: true,
+      depthWrite: false,
+      blending: AdditiveBlending,
+      vertexShader: `
+        attribute float aSize, aPhase;
+        attribute vec3 aCol;
+        uniform float uDpr;
+        varying vec3 vC;
+        varying float vP;
+        void main() {
+          vC = aCol; vP = aPhase;
+          gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+          gl_PointSize = aSize * uDpr;
+        }
+      `,
+      fragmentShader: `
+        uniform float uT;
+        varying vec3 vC;
+        varying float vP;
+        void main() {
+          float d = length(gl_PointCoord - 0.5) * 2.0;
+          float tw = 0.72 + 0.28 * sin(uT * (0.5 + fract(vP * 0.63) * 1.6) + vP);
+          gl_FragColor = vec4(vC, smoothstep(1.0, 0.15, d) * tw);
+        }
+      `,
+    });
+    celestial.add(new Points(g, m));
+  }
+
+  // planet: a dim banded giant over the horizon, amber crescent toward the
+  // sun, ringed with hairline orbits — the site's linework, in the sky.
+  {
+    const pg = new Group();
+    pg.position.copy(PLANET_DIR).multiplyScalar(PLANET_DIST);
+    const m = new ShaderMaterial({
+      uniforms: { uSunDir: { value: SUN_DIR }, uSun: { value: SUN } },
+      vertexShader: `
+        varying vec3 vN, vW;
+        void main() {
+          vN = normalize(mat3(modelMatrix) * normal);
+          vec4 w = modelMatrix * vec4(position, 1.0);
+          vW = w.xyz;
+          gl_Position = projectionMatrix * viewMatrix * w;
+        }
+      `,
+      fragmentShader: `
+        uniform vec3 uSunDir, uSun;
+        varying vec3 vN, vW;
+        void main() {
+          vec3 n = normalize(vN);
+          float diff = max(dot(n, uSunDir), 0.0);
+          float bands = 0.82 + 0.18 * sin(n.y * 14.0 + sin(n.x * 5.0) * 0.7);
+          vec3 col = vec3(0.15, 0.17, 0.22) * (0.10 + 1.35 * diff) * bands;
+          vec3 v = normalize(cameraPosition - vW);
+          col += uSun * pow(1.0 - max(dot(n, v), 0.0), 3.0) * (0.1 + diff) * 0.55;
+          gl_FragColor = vec4(col, 1.0);
+        }
+      `,
+    });
+    pg.add(new Mesh(new SphereGeometry(PLANET_R, 48, 32), m));
+    for (const [rr, op] of [[1.55, 0.30], [1.8, 0.17], [2.02, 0.09]]) {
+      const seg = 160;
+      const rp = new Float32Array(seg * 3);
+      for (let i = 0; i < seg; i++) {
+        const a = (i / seg) * Math.PI * 2;
+        rp[i * 3] = Math.cos(a) * PLANET_R * rr;
+        rp[i * 3 + 2] = Math.sin(a) * PLANET_R * rr;
+      }
+      const g = new BufferGeometry();
+      g.setAttribute('position', new BufferAttribute(rp, 3));
+      pg.add(new LineLoop(g, new LineBasicMaterial({ color: 0xbfc6d4, transparent: true, opacity: op })));
+    }
+    pg.rotation.set(0.42, 0, 0.45);
+    celestial.add(pg);
+  }
+
+  // constellations: a hairline star pattern per station (plus one free one
+  // near the start), each with an amber alpha star. Brightens near its station.
+  interface Cluster { mats: (PointsMaterial | LineBasicMaterial)[]; base: number[]; st: number; k: number }
+  const clusters: Cluster[] = [];
+  for (const c of [
+    { az: 0.55, el: 0.52, st: -1 },
+    { az: -0.65, el: 0.45, st: 0 },
+    { az: 0.95, el: 0.62, st: 1 },
+    { az: -0.15, el: 0.38, st: 2 },
+  ]) {
+    const n = 5 + Math.floor(Math.random() * 3);
+    const dirs: Vector3[] = [];
+    let a = c.az;
+    let e = c.el;
+    for (let i = 0; i < n; i++) {
+      dirs.push(new Vector3(Math.sin(a) * Math.cos(e), Math.sin(e), -Math.cos(a) * Math.cos(e)));
+      a += (Math.random() - 0.5) * 0.17;
+      e += (Math.random() - 0.5) * 0.13;
+    }
+    const R = STAR_R * 0.98;
+    const pts = new Float32Array(dirs.length * 3);
+    dirs.forEach((d, i) => { pts[i * 3] = d.x * R; pts[i * 3 + 1] = d.y * R; pts[i * 3 + 2] = d.z * R; });
+    const pg = new BufferGeometry();
+    pg.setAttribute('position', new BufferAttribute(pts, 3));
+    const starMat = new PointsMaterial({ color: 0xcfd6e4, size: 3, sizeAttenuation: false, transparent: true, opacity: 0.5, depthWrite: false });
+    celestial.add(new Points(pg, starMat));
+    const apg = new BufferGeometry();
+    apg.setAttribute('position', new BufferAttribute(pts.slice(0, 3), 3));
+    const alphaMat = new PointsMaterial({ color: 0xd08a2e, size: 4.5, sizeAttenuation: false, transparent: true, opacity: 0.8, depthWrite: false });
+    celestial.add(new Points(apg, alphaMat));
+    const lp = new Float32Array((dirs.length - 1) * 6);
+    for (let i = 0; i < dirs.length - 1; i++) {
+      lp.set([pts[i * 3], pts[i * 3 + 1], pts[i * 3 + 2], pts[i * 3 + 3], pts[i * 3 + 4], pts[i * 3 + 5]], i * 6);
+    }
+    const lg = new BufferGeometry();
+    lg.setAttribute('position', new BufferAttribute(lp, 3));
+    const lineMat = new LineBasicMaterial({ color: 0xaab2c4, transparent: true, opacity: 0.13, depthWrite: false });
+    celestial.add(new LineSegments(lg, lineMat));
+    clusters.push({ mats: [starMat, alphaMat, lineMat], base: [0.5, 0.8, 0.13], st: c.st, k: 1 });
+  }
 
   // ── minima glow pools: deepest separated basins inside the corridor
   {
@@ -401,6 +586,7 @@ export function initFlightScene(canvas: HTMLCanvasElement): void {
     const lx = pathX(lz) + bx;
     camera.lookAt(lx + curX * 1.4, heightAt(lx, lz) + 2.0 + by + curY * 0.6, lz);
     camera.rotateZ(0.008 * Math.sin(t * 0.31));
+    celestial.position.copy(camera.position); // the heavens never get closer
   };
 
   let running = true;
@@ -426,6 +612,12 @@ export function initFlightScene(canvas: HTMLCanvasElement): void {
       pS += (rawProgress() - pS) * (1 - Math.exp(-dt * SCROLL_CHASE));
 
       letterbox(pS);
+      starTime.value = t;
+      for (const cl of clusters) {
+        const near = cl.st >= 0 && Math.abs(pS - STATIONS[cl.st].p) < CONST_ZONE;
+        cl.k += ((near ? CONST_BOOST : 1) - cl.k) * (1 - Math.exp(-dt * 2));
+        cl.mats.forEach((m, i) => { m.opacity = Math.min(1, cl.base[i] * cl.k); });
+      }
       if (dof) {
         const near = STATIONS.some((s) => Math.abs(pS - s.p) < FOCUS_ZONE);
         focus += ((near ? FOCUS_NEAR : FOCUS_FAR) - focus) * (1 - Math.exp(-dt * 2.5));

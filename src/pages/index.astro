@@ -184,10 +184,26 @@ const links = {
   .chips span:hover{border-color:var(--amber);background:var(--paper2);transform:translateY(-2px)}
   .chips span:hover .ic{background:var(--amber)}
 
-  /* selected work — chronological timeline */
+  /* work experience + projects — chronological timeline with a big sticky
+     title at its left so the section announces itself; a hairline arrow
+     nudges toward the entries. */
   .work{padding:60px 0 110px;border-top:1px solid var(--rule)}
-  .work-head{margin-bottom:28px}
-  .work-eye{display:block;margin-bottom:16px}
+  .work-body{display:grid;grid-template-columns:minmax(190px,250px) minmax(0,760px);gap:clamp(24px,4vw,64px);justify-content:center}
+  .work-side .in{position:sticky;top:110px;padding-top:8px}
+  .wt{font-size:clamp(26px,3vw,40px);font-weight:560;letter-spacing:-.02em;line-height:1.16;color:var(--ink)}
+  .wt .l{display:block}
+  .wt .sl,.wt .plus{color:var(--amber)}
+  .wt-arrow{display:block;margin-top:24px;color:var(--amber)}
+  .wt-arrow svg{display:block;overflow:visible}
+  .wt-arrow .shaft{animation:wtNudge 2.1s cubic-bezier(.45,0,.4,1) infinite}
+  @keyframes wtNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(9px)}}
+  @media (max-width:900px){
+    .work-body{display:block}
+    .work-side .in{position:static;display:flex;align-items:center;gap:16px;margin-bottom:26px;flex-wrap:wrap}
+    .wt .l{display:inline}
+    .wt-arrow{margin:0;transform:rotate(90deg)}
+  }
+  @media (prefers-reduced-motion:reduce){.wt-arrow .shaft{animation:none}}
 
   .wd-links{margin-top:14px;display:flex;flex-wrap:wrap;gap:18px}
   .wd-link{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
@@ -499,10 +515,13 @@ const links = {
   </footer>
 
   <section class="work" id="work" data-reveal>
-    <div class="work-head">
-      <span class="m work-eye"><span style="color:var(--amber)">//</span> selected work</span>
-    </div>
     <div class="work-body">
+      <aside class="work-side">
+        <div class="in">
+          <h2 class="wt"><span class="l"><span class="sl">//</span> Work</span> <span class="l">experience</span> <span class="l plus">+ projects</span></h2>
+          <span class="wt-arrow" aria-hidden="true"><svg width="64" height="14" viewBox="0 0 64 14" fill="none"><g class="shaft"><path d="M0 7h56M49 1.5 56 7l-7 5.5" stroke="currentColor" stroke-width="1.5"/></g></svg></span>
+        </div>
+      </aside>
       <div class="wtl" id="wtl"></div>
     </div>
   </section>
