@@ -20,6 +20,10 @@ design of the studio world is explicitly out of scope here.
 - **No persistence.** Visitors always land on the paper site; `/studio` is an
   invitation, not a trap.
 - **Toggle naming:** `Studio` link in the paper nav; `Exit` control in studio.
+  - *Amended post-ship:* William wanted a name that's obviously clickable —
+    route renamed to **`/3d`**, button relabeled **"Enter 3D"** with a periodic
+    beacon (amber node pulse + border self-trace every ~7s, previewing the
+    hover state). `/studio` 308-redirects via astro.config.
 
 ## Components
 

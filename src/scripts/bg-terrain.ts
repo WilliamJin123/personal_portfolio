@@ -9,6 +9,11 @@
 // has no visible boundary regardless of its extent. (LineBasicMaterial has
 // no per-vertex alpha; this is the clean way to do it.)
 //
+// Survey sweep: every so often a soft amber band travels front-to-back
+// through the terrain — the lines it crosses warm up and brighten, like an
+// instrument scanning the topology. Same telemetry language as the HUD and
+// crosshair; skipped under reduced motion.
+//
 // Reduced-motion renders a single static pose; paused when the tab is
 // backgrounded.
 
@@ -20,6 +25,7 @@ import {
 } from 'three';
 
 const INK = new Color(0x141820);
+const AMBER = new Color(0xbd741b);
 
 // Mesh — stretched in Z so the terrain has a long runway ahead of the camera
 // before the shader fade takes it; X kept tighter since the camera is low and
@@ -47,6 +53,15 @@ const FADE_FAR = 38;
 // Motion
 const TIME_SPEED = 0.45;
 const SCROLL_TO_NOISE = 0.0045; // noise units per pixel scrolled (forward travel)
+
+// Survey sweep — period between sweeps, travel time, band half-width, and the
+// Z run (starts just behind the camera, parks beyond the fade when idle)
+const SWEEP_PERIOD = 17;
+const SWEEP_TRAVEL = 6.5;
+const SWEEP_WIDTH = 3.0;
+const SWEEP_FROM = 9;
+const SWEEP_TO = -44;
+const SWEEP_IDLE = 999;
 
 // Random per-session phase offsets — same code, different terrain every load.
 const PHASES = [
@@ -149,26 +164,37 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
   const mat = new ShaderMaterial({
     uniforms: {
       uColor: { value: INK },
+      uAmber: { value: AMBER },
       uBaseAlpha: { value: 0.105 },
       uFadeNear: { value: FADE_NEAR },
       uFadeFar: { value: FADE_FAR },
+      uScanZ: { value: SWEEP_IDLE },
+      uScanW: { value: SWEEP_WIDTH },
     },
     vertexShader: `
       varying float vDist;
+      varying float vZ;
       void main() {
         vDist = length(position.xz);
+        vZ = position.z;
         gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
       }
     `,
     fragmentShader: `
       uniform vec3 uColor;
+      uniform vec3 uAmber;
       uniform float uBaseAlpha;
       uniform float uFadeNear;
       uniform float uFadeFar;
+      uniform float uScanZ;
+      uniform float uScanW;
       varying float vDist;
+      varying float vZ;
       void main() {
         float fade = 1.0 - smoothstep(uFadeNear, uFadeFar, vDist);
-        gl_FragColor = vec4(uColor, uBaseAlpha * fade);
+        float scan = 1.0 - smoothstep(0.0, uScanW, abs(vZ - uScanZ));
+        vec3 col = mix(uColor, uAmber, scan * 0.85);
+        gl_FragColor = vec4(col, (uBaseAlpha + 0.115 * scan) * fade);
       }
     `,
     transparent: true,
@@ -220,6 +246,9 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
   const positionAttr = geom.getAttribute('position') as BufferAttribute;
   let t = 0;
   let prev = 0;
+  // Sweep runs on wall-clock time (t advances at TIME_SPEED, too slow here).
+  // Offset so the first sweep arrives a beat after load, not mid-paint.
+  let sweepT = SWEEP_PERIOD - 3.5;
 
   const frame = (now: number): void => {
     const dt = prev ? Math.min(0.05, (now - prev) / 1000) : 0;
@@ -233,6 +262,15 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
       t += dt * TIME_SPEED;
       curOffX += (tgtOffX - curOffX) * 0.06;
       curOffY += (tgtOffY - curOffY) * 0.06;
+
+      sweepT = (sweepT + dt) % SWEEP_PERIOD;
+      if (sweepT < SWEEP_TRAVEL) {
+        const k = sweepT / SWEEP_TRAVEL;
+        const e = k * k * (3 - 2 * k); // ease in-out across the run
+        mat.uniforms.uScanZ.value = SWEEP_FROM + (SWEEP_TO - SWEEP_FROM) * e;
+      } else {
+        mat.uniforms.uScanZ.value = SWEEP_IDLE;
+      }
 
       recomputeHeights(t, scrollY * SCROLL_TO_NOISE);
       updateY();

@@ -1,10 +1,11 @@
 ---
-// Studio mode — the second site: a dark, full-bleed WebGL world (shell).
+// 3D mode — the second site: a dark, full-bleed WebGL world (shell).
 // Self-contained like index.astro: own theme, fonts, and scripts; inherits
 // nothing from the paper site. The placeholder sections below give the
 // scroll→scene rig real distance — future design passes replace their
 // content with actual scenes.
 // Spec: docs/superpowers/specs/2026-06-10-studio-mode-design.md
+// (route renamed /studio → /3d post-review; astro.config redirects the old URL)
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -12,8 +13,8 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0b0c0e" />
-<title>William Jin — Studio</title>
-<meta name="description" content="William Jin — studio mode. A WebGL experiment in progress." />
+<title>William Jin — 3D</title>
+<meta name="description" content="William Jin — 3D mode. A WebGL experiment in progress." />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -66,13 +67,13 @@
 <canvas id="studio-canvas" aria-hidden="true"></canvas>
 
 <div class="bar">
-  <span class="m id"><span class="sl">//</span> william jin — studio</span>
+  <span class="m id"><span class="sl">//</span> william jin — 3d</span>
   <a class="exit" href="/">Exit</a>
 </div>
 
 <section class="scn first">
   <div>
-    <div class="m greet">/ studio — under construction</div>
+    <div class="m greet">/ 3d mode — under construction</div>
     <h1>The other site.</h1>
     <p class="sub">A scroll-driven WebGL experiment. Scenes are on their way — this is the rig they'll run on.</p>
     <p class="m nogl-note">webgl unavailable — static view</p>

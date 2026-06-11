@@ -51,7 +51,7 @@ const links = {
   mail: 'mailto:w3jin@uwaterloo.ca',
   linkedin: 'https://www.linkedin.com/in/william-jin-874b572a1',
   devpost: 'https://devpost.com/jinwilliam-jin',
-  studio: '/studio', // the second site — dark WebGL mode (shell for now)
+  mode3d: '/3d', // the second site — dark WebGL mode (shell for now)
 };
 ---
 <!DOCTYPE html>
@@ -81,9 +81,11 @@ const links = {
   header{padding:26px 0 16px;border-bottom:1px dashed var(--rule)}
   .hd{display:flex;justify-content:space-between;align-items:center}
   .id{display:flex;align-items:center;gap:13px}
-  .icon-ph{width:30px;height:30px;border-radius:8px;background:var(--paper2);border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;position:relative}
-  .icon-ph::after{content:"";width:11px;height:11px;border:1.5px solid var(--faint);transform:rotate(45deg)}
-  .icon-ph .tag{position:absolute;bottom:-15px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:7px;letter-spacing:.1em;color:var(--faint);white-space:nowrap;text-transform:uppercase}
+  /* monogram — hairline W, amber node on the centre apex (same node-on-a-graph
+     language as the timeline dots and HUD) */
+  .mark{width:30px;height:30px;border-radius:8px;background:var(--paper2);border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;color:var(--ink)}
+  .mark svg{width:17px;height:17px;display:block;overflow:visible}
+  .mark .apex{fill:var(--amber)}
   .id .nm{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
 
   nav{display:flex;gap:12px}
@@ -95,6 +97,16 @@ const links = {
   .nl:hover .bd rect{stroke-dashoffset:0}
   .nl .t{position:relative;z-index:2;transition:color .22s ease}
   .nl:hover .t{color:var(--paper);transition-delay:.52s}
+  /* the 3D-mode link beckons: every ~7s an amber node pulses and the border
+     traces itself once — a periodic preview of the hover state, so the door
+     to the other site reads as a door. Quiet under reduced motion. */
+  .nl-3d .t::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--amber);margin-right:7px;vertical-align:1px;animation:nlDot 7.5s ease-in-out infinite;transition:background .22s ease}
+  .nl-3d:hover .t::before{background:var(--paper);transition-delay:.52s;animation:none}
+  .nl-3d .bd rect{animation:nlTrace 7.5s ease-in-out infinite}
+  .nl-3d:hover .bd rect{animation:none}
+  @keyframes nlTrace{0%,74%,96%,100%{stroke-dashoffset:1}82%,88%{stroke-dashoffset:0}}
+  @keyframes nlDot{0%,72%,100%{opacity:.45;box-shadow:0 0 0 0 rgba(var(--amber-rgb),0)}80%{opacity:1;box-shadow:0 0 0 4px rgba(var(--amber-rgb),.16)}90%{opacity:1;box-shadow:0 0 0 0 rgba(var(--amber-rgb),0)}}
+  @media (prefers-reduced-motion:reduce){.nl-3d .bd rect,.nl-3d .t::before{animation:none}.nl-3d .t::before{opacity:1}}
 
   .hero{padding:104px 0 120px}
   .greet{margin-bottom:24px}
@@ -321,7 +333,7 @@ const links = {
   <header>
     <div class="hd">
       <div class="id">
-        <div class="icon-ph"><span class="tag">icon</span></div>
+        <span class="mark" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4.5 7.2 9 17l3-7 3 7 4.5-9.8" stroke="currentColor" stroke-width="1.5"/><circle class="apex" cx="12" cy="10" r="1.7"/></svg></span>
         <span class="nm">William Jin</span>
       </div>
       <nav>
@@ -330,7 +342,7 @@ const links = {
         <a class="nl" href={links.mail}><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">Mail</span></a>
         <a class="nl" href={links.linkedin} target="_blank" rel="noreferrer"><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">LinkedIn</span></a>
         <a class="nl" href={links.devpost} target="_blank" rel="noreferrer"><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">Devpost</span></a>
-        <a class="nl" href={links.studio}><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">Studio</span></a>
+        <a class="nl nl-3d" href={links.mode3d}><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">Enter 3D</span></a>
       </nav>
     </div>
   </header>
@@ -544,7 +556,7 @@ const links = {
   let cux=innerWidth/2, cuy=innerHeight/2, ctx=cux, cty=cuy;
   if(curOn){
     addEventListener('pointermove',e=>{ctx=e.clientX;cty=e.clientY;},{passive:true});
-    const sel='a,button,.chips span,.lg,.nl,.pill a,.icon-ph,.int-vis';
+    const sel='a,button,.chips span,.lg,.nl,.pill a,.mark,.int-vis';
     addEventListener('pointerover',e=>{if(e.target.closest&&e.target.closest(sel))cur.classList.add('lock');});
     addEventListener('pointerout',e=>{const t=e.target.closest&&e.target.closest(sel);const r=e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest(sel);if(t&&!r)cur.classList.remove('lock');});
   }
