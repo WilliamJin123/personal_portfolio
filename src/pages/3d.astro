@@ -1,11 +1,12 @@
 ---
 // 3D mode — the second site: a dark, full-bleed WebGL world. Self-contained
 // like index.astro: own theme, fonts, and scripts; inherits nothing from the
-// paper site. The scene is "The Flight": one continuous scroll-driven
-// tracking shot across a lit loss landscape; the sections below are the
-// stations along the route (content still placeholder).
+// paper site. The scene is "The Drift" (flight 002): one continuous
+// scroll-driven drift through open space — nebula banks, a ringed-planet
+// flyby, a beacon at the end; the sections below are the stations along the
+// route (content still placeholder).
 // Specs: docs/superpowers/specs/2026-06-10-studio-mode-design.md (shell),
-//        docs/superpowers/specs/2026-06-11-3d-flight-design.md (scene)
+//        docs/superpowers/specs/2026-06-11-3d-drift-design.md (scene)
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -101,9 +102,9 @@
 
 <section class="scn first">
   <div>
-    <div class="m greet">/ 3d mode — flight 001</div>
+    <div class="m greet">/ 3d mode — flight 002</div>
     <h1>The other site.</h1>
-    <p class="sub">One continuous shot across the loss landscape. Three stations on the route — work, play, contact — docking soon.</p>
+    <p class="sub">One continuous drift through the dust — past the rings, toward the beacon. Three stations on the route: work, play, contact.</p>
     <p class="m nogl-note">webgl unavailable — static view</p>
   </div>
   <span class="m hint">scroll ↓</span>
@@ -133,11 +134,11 @@
 <script>
   // Bundled module (Vite tree-shakes three.js). If the renderer can't be
   // constructed, degrade to the static dark page.
-  import { initFlightScene } from '../scripts/flight-scene';
+  import { initDriftScene } from '../scripts/drift-scene';
   const c = document.getElementById('studio-canvas');
   if (c instanceof HTMLCanvasElement) {
     try {
-      initFlightScene(c);
+      initDriftScene(c);
     } catch {
       document.body.classList.add('no-gl');
     }
