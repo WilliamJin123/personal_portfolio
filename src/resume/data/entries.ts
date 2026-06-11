@@ -452,7 +452,7 @@ const authored: ResumeEntry[] = [
     role: 'Bachelor of Software Engineering',
     dateLabel: 'Sept 2024 - May 2029',
     bullets: [
-      { id: 'gpa', text: 'GPA: 3.90/4.00' },
+      { id: 'gpa', text: 'GPA: 3.7/4.0' },
       {
         id: 'courses',
         text: 'Relevant Coursework: Data Abstraction and Implementation, Statistics, Sequential Programs, Digital Computers',

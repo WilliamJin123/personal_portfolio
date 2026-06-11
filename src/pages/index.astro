@@ -51,6 +51,7 @@ const links = {
   mail: 'mailto:w3jin@uwaterloo.ca',
   linkedin: 'https://www.linkedin.com/in/william-jin-874b572a1',
   devpost: 'https://devpost.com/jinwilliam-jin',
+  studio: '/studio', // the second site — dark WebGL mode (shell for now)
 };
 ---
 <!DOCTYPE html>
@@ -95,7 +96,7 @@ const links = {
   .nl .t{position:relative;z-index:2;transition:color .22s ease}
   .nl:hover .t{color:var(--paper);transition-delay:.52s}
 
-  .hero{display:grid;grid-template-columns:1.1fr .9fr;gap:72px;align-items:center;padding:104px 0 120px}
+  .hero{padding:104px 0 120px}
   .greet{margin-bottom:24px}
   h1{font-weight:540;font-size:clamp(44px,5.6vw,82px);line-height:1.04;letter-spacing:-.028em}
   .will{color:var(--amber);filter:blur(11px);opacity:0;display:inline-block;transition:filter .8s ease,opacity .8s ease}
@@ -105,8 +106,6 @@ const links = {
   .school{margin-top:8px;font-size:clamp(22px,2.6vw,32px);font-weight:470;letter-spacing:-.012em;white-space:nowrap}
   .rest{display:inline-block;clip-path:inset(-8% 100% -8% -2%);opacity:0;transition:clip-path .82s cubic-bezier(.7,0,.15,1) .15s,opacity .5s ease .2s}
   .school.on .rest{clip-path:inset(-8% -3% -8% -2%);opacity:1}
-  .hero-img{aspect-ratio:4/5;border:1px dashed var(--rule);border-radius:8px;background:repeating-linear-gradient(135deg,transparent 0 22px,rgba(0,0,0,.02) 22px 44px),var(--paper2);display:flex;align-items:center;justify-content:center}
-  .hero-img .m{color:var(--faint)}
 
   /* interests — single-screen: hairline 3D graph cloud on the left, 3 staggered bullets on the right */
   .interests{position:relative;border-top:1px solid var(--rule);padding:clamp(48px,9vh,96px) 0 clamp(56px,11vh,112px)}
@@ -155,56 +154,11 @@ const links = {
   .chips span:hover{border-color:var(--amber);background:var(--paper2);transform:translateY(-2px)}
   .chips span:hover .ic{background:var(--amber)}
 
-  /* selected work — projects / experience master-detail (List-5) */
+  /* selected work — chronological timeline */
   .work{padding:60px 0 110px;border-top:1px solid var(--rule)}
   .work-head{margin-bottom:28px}
   .work-eye{display:block;margin-bottom:16px}
-  .work-bar{display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap}
-  .seg{position:relative;display:flex;gap:26px;align-items:baseline}
-  .seg .sg{background:none;border:0;padding:0 0 9px;cursor:pointer;font-family:var(--sans);font-weight:540;font-size:clamp(21px,2.5vw,32px);letter-spacing:-.022em;color:var(--faint);transition:color .4s ease}
-  .seg .sg.active{color:var(--ink)}
-  .seg .seg-ink{position:absolute;bottom:0;left:0;width:0;height:2px;background:var(--amber);transition:left .42s cubic-bezier(.7,0,.15,1),width .42s cubic-bezier(.7,0,.15,1)}
-  .vswitch{position:relative;margin-left:auto;display:inline-flex;align-items:center;border:1px solid var(--rule);border-radius:9px;padding:3px;background:var(--paper)}
-  .vswitch .vopt{position:relative;z-index:1;display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mute);background:none;border:0;padding:8px 13px;border-radius:7px;cursor:pointer;transition:color .34s ease}
-  .vswitch .vopt svg{width:13px;height:13px;display:block}
-  .vswitch .vopt.active{color:var(--paper)}
-  .vswitch-ink{position:absolute;top:3px;bottom:3px;left:3px;width:0;background:var(--amber);border-radius:7px;z-index:0;transition:left .42s cubic-bezier(.7,0,.15,1),width .42s cubic-bezier(.7,0,.15,1)}
 
-  .wmd{display:grid;grid-template-columns:0.56fr 1.5fr 1.6fr;gap:clamp(16px,2.2vw,36px);align-items:start}
-  /* lock columns to their fr shares — keeps the gallery (and the square image) the same size on every project */
-  .wmd>*{min-width:0}
-  @property --ft{syntax:'<length>';inherits:false;initial-value:0px}
-  @property --fb{syntax:'<length>';inherits:false;initial-value:0px}
-  .wlist{display:flex;flex-direction:column;border-top:1px solid var(--rule);max-height:clamp(300px,46vh,440px);overflow-y:auto;scrollbar-width:none;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ft),#000 calc(100% - var(--fb)),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 var(--ft),#000 calc(100% - var(--fb)),transparent 100%);transition:--ft .25s linear,--fb .25s linear,opacity .26s ease,filter .26s ease,transform .26s ease}
-  .wlist::-webkit-scrollbar{display:none}
-  .witem{position:relative;text-align:left;background:none;border:0;border-bottom:1px dashed var(--rule);padding:14px 12px 14px 16px;cursor:pointer;display:flex;align-items:baseline;gap:12px;color:var(--mute);transition:color .3s,transform .3s}
-  .witem .wn{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--faint);transition:color .3s}
-  .witem .wt{font-size:15px;font-weight:480;letter-spacing:-.01em}
-  .witem .wtw{display:flex;flex-direction:column;gap:2px;min-width:0}
-  .witem .wdate{font-family:var(--mono);font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--faint)}
-  .witem:hover{color:var(--ink);transform:translateX(8px)}
-  .witem.active{color:var(--ink)}
-  .witem.active .wn{color:var(--amber)}
-  .witem .wbar{position:absolute;left:-1px;top:50%;width:2px;height:0;background:var(--amber);transform:translateY(-50%);transition:height .35s ease}
-  .witem.active .wbar{height:62%}
-
-  .wgallery{display:flex;flex-direction:column;gap:10px}
-  .gframe{position:relative;aspect-ratio:1/1;border:1px dashed var(--rule);border-radius:8px;background:repeating-linear-gradient(135deg,transparent 0 22px,rgba(0,0,0,.02) 22px 44px),var(--paper2);display:flex;align-items:center;justify-content:center;overflow:hidden}
-  .gframe .gph{color:var(--faint)}
-  .gnavs{position:absolute;top:12px;right:12px;display:flex;gap:6px}
-  .gnav{width:30px;height:30px;border:1px solid var(--rule);border-radius:7px;background:var(--paper);color:var(--ink);font-size:15px;line-height:1;cursor:pointer;transition:border-color .25s,background .25s}
-  .gnav:hover{border-color:var(--amber);background:var(--paper2)}
-  .gcount{position:absolute;left:12px;bottom:12px;color:var(--mute)}
-  .gfoot{color:var(--faint);letter-spacing:.04em}
-
-  .wdetail{padding-top:2px}
-  .wd-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px}
-  .wd-idx{color:var(--amber);flex-shrink:0}
-  .wd-name{font-size:clamp(24px,2.9vw,38px);font-weight:540;letter-spacing:-.025em;line-height:1.06}
-  .wd-line{margin-top:9px;display:flex;flex-wrap:wrap;align-items:center;gap:11px}
-  .wd-meta{color:var(--mute);text-transform:none;letter-spacing:.04em}
-  .wd-subtitle{font-size:13px;font-style:italic;color:var(--mute);line-height:1.45}
-  .wd-subtitle::before{content:"";display:inline-block;width:2px;height:11px;margin-right:11px;background:var(--amber);border-radius:1px;vertical-align:-1px;opacity:.8}
   .wd-links{margin-top:14px;display:flex;flex-wrap:wrap;gap:18px}
   .wd-link{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
   .rbul{list-style:none;margin:18px 0 0;padding:0}
@@ -224,21 +178,13 @@ const links = {
   .grant{color:var(--grant);background:rgba(var(--grant-rgb),.08);border:1px solid rgba(var(--grant-rgb),.42);--glow:var(--grant-rgb)}
   .award svg,.grant svg{width:13px;height:13px;flex-shrink:0}
   @keyframes rBadge{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-  .wdetail.play .award,.wdetail.play .grant{animation:rBadge .4s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.12s + var(--ai)*.07s)}
 
   @keyframes rRise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
   @keyframes rBold{0%{color:var(--mute);transform:scale(.97)}55%{transform:scale(1.035)}100%{color:var(--ink);transform:scale(1)}}
   @keyframes rUl{from{background-size:0 1.6px}to{background-size:100% 1.6px}}
-  .wdetail.play .wd-head{animation:rRise .42s cubic-bezier(.2,.7,.2,1) backwards}
-  .wdetail.play .wd-meta{animation:rRise .42s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:.05s}
-  .wdetail.play .wd-subtitle{animation:rRise .42s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:.1s}
-  .wdetail.play .rbullet{animation:rRise .42s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.14s + var(--bi)*.07s)}
-  .wdetail.play .rbold{animation:rBold .45s ease backwards;animation-delay:calc(.6s + var(--bi)*.07s)}
-  .wdetail.play .rlink{animation:rUl .4s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.24s + var(--bi)*.07s)}
 
-  /* timeline view — a centered, dated spine; the section's focus. Each entry
-     expands its detail in place (one open at a time). The master-detail List
-     (.wmd) is the secondary toggle; the view switch cross-fades the two. */
+  /* timeline — a centered, dated spine. Each entry expands its detail in
+     place (multiple can be open at once; the first is open by default). */
   .wtl{max-width:760px;margin:0 auto}
   .tl-yr{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--faint);padding-left:62px;margin:22px 0 6px}
   .tl-yr:first-child{margin-top:0}
@@ -280,8 +226,6 @@ const links = {
     .tl-row.open .award,.tl-row.open .grant,.tl-row.open .rbullet,.tl-row.open .rbold,.tl-row.open .rlink{animation:none}
   }
   [hidden]{display:none!important}
-  .wmd,.wtl{transition:opacity .26s ease,filter .26s ease,transform .26s ease}
-  .wmd.vout,.wtl.vout{opacity:0;filter:blur(8px);transform:scale(.98)}
 
   footer{padding:48px 0 78px;display:flex;flex-direction:column;align-items:center;gap:16px}
   .cta-line{font-size:13px}
@@ -330,11 +274,10 @@ const links = {
     nav{gap:8px;flex-wrap:wrap}
     .nl{padding:8px 11px;font-size:10px}
 
-    /* hero — single column, image below the copy */
-    .hero{grid-template-columns:1fr;gap:32px;padding:48px 0 64px}
+    /* hero */
+    .hero{padding:48px 0 64px}
     h1{font-size:clamp(38px,11vw,60px)}
     .role,.school{font-size:clamp(20px,5.8vw,28px)}
-    .hero-img{aspect-ratio:16/10;max-height:260px}
 
     /* interests — stack canvas above bullets */
     .interests{padding:48px 0 64px}
@@ -358,22 +301,6 @@ const links = {
     /* footer — let the contact pill wrap */
     .pill{flex-wrap:nowrap;justify-content:center}
 
-    /* selected work — compact horizontal pill selector; full-width image + detail below */
-    .work-bar{gap:14px}
-    .seg{gap:16px}
-    .seg .sg{font-size:clamp(19px,5.6vw,26px)}
-    .vbtn{margin-left:0}
-    .wmd{grid-template-columns:1fr;gap:18px}
-    .wlist{flex-direction:row;gap:8px;max-height:none;overflow-x:auto;overflow-y:hidden;border-top:0;padding:0 0 3px;-webkit-mask-image:linear-gradient(to right,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%);mask-image:linear-gradient(to right,transparent 0,#000 16px,#000 calc(100% - 16px),transparent 100%)}
-    .witem{flex:0 0 auto;border:1px solid var(--rule);border-radius:3px;padding:8px 13px;align-items:center;gap:8px}
-    .witem .wtw{flex-direction:row;align-items:baseline;gap:0}
-    .witem .wt{font-size:12.5px;white-space:nowrap}
-    .witem .wdate{display:none}
-    .witem .wbar{display:none}
-    .witem:hover{transform:none}
-    .witem.active{color:var(--ink);border-color:var(--amber);background:var(--paper2)}
-    .witem.active .wn{color:var(--amber)}
-    .wd-desc{max-height:none;overflow:visible}
     /* timeline — tighten the date gutter on small screens */
     .tl-row{grid-template-columns:50px 1fr}
     .tl-row::before{left:39px}
@@ -403,6 +330,7 @@ const links = {
         <a class="nl" href={links.mail}><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">Mail</span></a>
         <a class="nl" href={links.linkedin} target="_blank" rel="noreferrer"><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">LinkedIn</span></a>
         <a class="nl" href={links.devpost} target="_blank" rel="noreferrer"><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">Devpost</span></a>
+        <a class="nl" href={links.studio}><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">Studio</span></a>
       </nav>
     </div>
   </header>
@@ -414,7 +342,6 @@ const links = {
       <div class="role">Software Engineer<span class="mut"> · 2nd year</span></div>
       <div class="school" id="school">UW<span class="rest">aterloo</span></div>
     </div>
-    <div class="hero-img" data-par="-0.07" data-reveal><span class="m">image — tbd</span></div>
   </section>
 </div>
 
@@ -531,46 +458,9 @@ const links = {
   <section class="work" id="work" data-reveal>
     <div class="work-head">
       <span class="m work-eye"><span style="color:var(--amber)">//</span> selected work</span>
-      <div class="work-bar">
-        <div class="seg" id="wseg">
-          <button class="sg active" data-set="projects">Projects</button>
-          <button class="sg" data-set="work">Work Experience</button>
-          <i class="seg-ink" id="segink"></i>
-        </div>
-        <div class="vswitch" id="vswitch">
-          <button class="vopt active" data-view="timeline"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M4 2.5v11"/><circle cx="4" cy="5" r="1.4" fill="currentColor" stroke="none"/><circle cx="4" cy="11" r="1.4" fill="currentColor" stroke="none"/><path d="M7.5 5h6M7.5 11h5"/></svg>Timeline</button>
-          <button class="vopt" data-view="list"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M3 4.5h10M3 8h10M3 11.5h10"/></svg>List</button>
-          <i class="vswitch-ink" id="vswitchink"></i>
-        </div>
-      </div>
     </div>
     <div class="work-body">
       <div class="wtl" id="wtl"></div>
-      <div class="wmd" id="wmd" hidden>
-        <div class="wlist" id="wlist"></div>
-        <div class="wgallery">
-          <div class="gframe">
-            <span class="m gph" id="gph">image — tbd</span>
-            <div class="gnavs"><button class="gnav" id="gprev" aria-label="previous image">‹</button><button class="gnav" id="gnext" aria-label="next image">›</button></div>
-            <div class="gcount m" id="gcount">01 / 01</div>
-          </div>
-          <div class="gfoot m" id="gfoot">image footnote — optional</div>
-        </div>
-        <div class="wdetail" id="wdetail">
-          <div class="wd-head">
-            <h3 class="wd-name" id="wdname">—</h3>
-            <div class="wd-idx m" id="wdidx">01</div>
-          </div>
-          <div class="wd-line">
-            <span class="wd-meta m" id="wdmeta">—</span>
-            <span class="wd-subtitle" id="wdsubtitle" hidden></span>
-          </div>
-          <div class="wd-awards" id="wdawards" hidden></div>
-          <div class="wd-links" id="wdlinks" hidden></div>
-          <ul class="rbul" id="wdbullets"></ul>
-          <div class="wd-stack" id="wdstack"></div>
-        </div>
-      </div>
     </div>
   </section>
 </div>
@@ -654,7 +544,7 @@ const links = {
   let cux=innerWidth/2, cuy=innerHeight/2, ctx=cux, cty=cuy;
   if(curOn){
     addEventListener('pointermove',e=>{ctx=e.clientX;cty=e.clientY;},{passive:true});
-    const sel='a,button,.chips span,.lg,.nl,.pill a,.icon-ph,.hero-img,.int-vis';
+    const sel='a,button,.chips span,.lg,.nl,.pill a,.icon-ph,.int-vis';
     addEventListener('pointerover',e=>{if(e.target.closest&&e.target.closest(sel))cur.classList.add('lock');});
     addEventListener('pointerout',e=>{const t=e.target.closest&&e.target.closest(sel);const r=e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest(sel);if(t&&!r)cur.classList.remove('lock');});
   }
@@ -700,44 +590,21 @@ const links = {
     wheelLock=now+150;
   },{passive:false});
 
-  // selected work — a centered, expand-in-place timeline (the focus, unified
-  // chronological stream of all entries) with a secondary master-detail List view.
+  // selected work — a centered, expand-in-place timeline: one unified
+  // chronological stream of all entries (projects + roles).
   (function(){
     const ICONS={react:'react',typescript:'typescript',firebase:'firebase',swift:'swift',python:'python',pytorch:'pytorch',java:'openjdk',postgresql:'postgresql',docker:'docker',node:'nodedotjs',huggingface:'huggingface'};
     const iconURL=k=>`https://cdn.jsdelivr.net/npm/simple-icons@latest/icons/${ICONS[k]||k}.svg`;
     const WORK=JSON.parse(document.getElementById('work-data').textContent);
-    const seg=document.getElementById('wseg'), segink=document.getElementById('segink');
-    const listEl=document.getElementById('wlist'), wtlEl=document.getElementById('wtl'), wmd=document.getElementById('wmd'), wdetail=document.getElementById('wdetail');
-    const nameEl=document.getElementById('wdname'), metaEl=document.getElementById('wdmeta'), subtitleEl=document.getElementById('wdsubtitle'), awardsEl=document.getElementById('wdawards'), bulletsEl=document.getElementById('wdbullets'), linksEl=document.getElementById('wdlinks'), idxEl=document.getElementById('wdidx'), stackEl=document.getElementById('wdstack');
-    const gcount=document.getElementById('gcount'), gfoot=document.getElementById('gfoot'), gph=document.getElementById('gph'), gprev=document.getElementById('gprev'), gnext=document.getElementById('gnext');
-    const vswitch=document.getElementById('vswitch'), vink=document.getElementById('vswitchink');
-    let set='projects', sel=0, img=0, view='timeline';
-    const data=()=>WORK[set], pad=x=>String(x).padStart(2,'0');
-    // List view's scrollable selector with soft fade edges (capped height on desktop)
-    const FADE=38, narrowMo=matchMedia('(max-width:760px)');
-    const applyFade=()=>{const top=listEl.scrollTop,max=listEl.scrollHeight-listEl.clientHeight;listEl.style.setProperty('--ft',(max>2&&top>2)?FADE+'px':'0px');listEl.style.setProperty('--fb',(max>2&&top<max-2)?FADE+'px':'0px');};
-    listEl.addEventListener('scroll',applyFade,{passive:true});
-    narrowMo.addEventListener('change',applyFade);
+    const wtlEl=document.getElementById('wtl');
 
-    const moveInk=()=>{const b=seg.querySelector('.sg.active');if(b){segink.style.left=b.offsetLeft+'px';segink.style.width=b.offsetWidth+'px';}};
     const chips=st=>st.map(it=>{const label=typeof it==='string'?it:it.label,slug=typeof it==='string'?it:it.icon,ic=slug?(slug[0]==='/'?slug:iconURL(slug)):'';return `<span style="--i:url('${ic}')"><span class="ic"></span>${label}</span>`;}).join('');
     const TROPHY='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>';
     const DOLLAR='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 18V6"/></svg>';
-    const metaLine=e=>[e.role,e.dateLabel,e.location].filter(Boolean).join(' · ');
-    // detail fragments shared by the List panel and the timeline rows
     const awardsHTML=e=>{const h=[...(e.awards||[]).map(a=>['award',TROPHY,a]),...(e.grants||[]).map(g=>['grant',DOLLAR,g])];return h.length?h.map(([c,ic,t],j)=>`<span class="${c}" style="--ai:${j}">${ic}${t}</span>`).join(''):'';};
     const linksHTML=e=>(e.links&&e.links.length)?e.links.map((l,j)=>`<a class="wd-link rlink" href="${l.href}" target="_blank" rel="noreferrer" style="--bi:${j}">${l.label} ↗</a>`).join(''):'';
     const bulletsHTML=e=>e.bulletsHtml.map((h,i)=>`<li class="rbullet" style="--bi:${i}">${h}</li>`).join('');
 
-    /* List view — master-detail (secondary toggle) */
-    const renderList=()=>{listEl.innerHTML=data().map((e,i)=>`<button class="witem${i===sel?' active':''}" data-i="${i}"><span class="wbar"></span><span class="wn">${pad(i+1)}</span><span class="wtw"><span class="wt">${e.title}</span><span class="wdate">${e.dateLabel}</span></span></button>`).join('');applyFade();};
-    const paintGallery=()=>{const e=data()[sel],n=e.images.length;gcount.textContent=pad(img+1)+' / '+pad(Math.max(n,1));gfoot.textContent=e.footnotes[img]||'image — optional';gph.textContent=n?('image '+pad(img+1)):'image — tbd';};
-    const paint=()=>{const e=data()[sel];idxEl.textContent=pad(sel+1);nameEl.textContent=e.title;metaEl.textContent=metaLine(e);if(e.subtitle){subtitleEl.textContent=e.subtitle;subtitleEl.hidden=false;}else{subtitleEl.hidden=true;}const a=awardsHTML(e);awardsEl.innerHTML=a;awardsEl.hidden=!a;const lk=linksHTML(e);linksEl.innerHTML=lk;linksEl.hidden=!lk;bulletsEl.innerHTML=bulletsHTML(e);stackEl.innerHTML=chips(e.stack);img=0;paintGallery();};
-    const renderDetail=animate=>{paint();if(animate){wdetail.classList.remove('play');void wdetail.offsetWidth;wdetail.classList.add('play');}};
-    const select=(i,animate)=>{sel=i;listEl.querySelectorAll('.witem').forEach(c=>c.classList.toggle('active',+c.dataset.i===i));renderDetail(animate);};
-    const switchSet=ns=>{if(ns===set)return;set=ns;sel=0;seg.querySelectorAll('.sg').forEach(b=>b.classList.toggle('active',b.dataset.set===ns));moveInk();renderList();renderDetail(true);};
-
-    /* Timeline view — one centered, unified chronological stream; expand-in-place (the focus) */
     const ALL=[...WORK.projects.map(e=>({e,kind:'project'})),...WORK.work.map(e=>({e,kind:'role'}))].sort((a,b)=>{const ka=a.e.when?a.e.when.year*12+a.e.when.monthIndex:-1e9,kb=b.e.when?b.e.when.year*12+b.e.when.monthIndex:-1e9;return kb-ka;});
     const detailHTML=e=>{const a=awardsHTML(e),lk=linksHTML(e);return `<div class="tld-in">${a?`<div class="wd-awards">${a}</div>`:''}<ul class="rbul">${bulletsHTML(e)}</ul><div class="wd-stack">${chips(e.stack)}</div>${lk?`<div class="wd-links">${lk}</div>`:''}</div>`;};
     const renderTl=()=>{
@@ -752,37 +619,13 @@ const links = {
     };
     // each row toggles independently — multiple can be open at once (first open by default)
     const openRow=row=>{const on=!row.classList.contains('open');row.classList.toggle('open',on);const h=row.querySelector('.tl-head');if(h)h.setAttribute('aria-expanded',on);};
-
-    const moveVInk=()=>{const b=vswitch.querySelector('.vopt.active');if(b){vink.style.left=b.offsetLeft+'px';vink.style.width=b.offsetWidth+'px';}};
-    const setView=tl=>{
-      const next=tl?'timeline':'list'; if(next===view)return;
-      const out=tl?wmd:wtlEl, inc=tl?wtlEl:wmd;
-      vswitch.querySelectorAll('.vopt').forEach(b=>b.classList.toggle('active',(b.dataset.view==='timeline')===tl)); moveVInk();
-      seg.hidden=tl; view=next; // the projects/work segment is a List-only control
-      out.classList.add('vout');
-      setTimeout(()=>{out.hidden=true;out.classList.remove('vout');inc.classList.add('vout');inc.hidden=false;if(!tl){renderDetail(true);applyFade();}requestAnimationFrame(()=>requestAnimationFrame(()=>inc.classList.remove('vout')));},240);
-    };
-
-    seg.querySelectorAll('.sg').forEach(b=>b.addEventListener('click',()=>switchSet(b.dataset.set)));
-    listEl.addEventListener('click',e=>{const b=e.target.closest('.witem');if(b)select(+b.dataset.i,true);});
     wtlEl.addEventListener('click',e=>{const b=e.target.closest('.tl-head');if(b)openRow(b.parentElement);});
-    gprev.addEventListener('click',()=>{const e=data()[sel];if(!e.images.length)return;img=(img-1+e.images.length)%e.images.length;paintGallery();});
-    gnext.addEventListener('click',()=>{const e=data()[sel];if(!e.images.length)return;img=(img+1)%e.images.length;paintGallery();});
-    vswitch.querySelectorAll('.vopt').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view==='timeline')));
 
-    renderList();renderTl();paint();moveInk();moveVInk();
-    seg.hidden=(view==='timeline');
+    renderTl();
     // scroll-reveal each timeline row/year as it enters view (.reveal added by JS so no-JS still shows content)
     wtlEl.classList.add('reveal');
     const tlIO=new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting){en.target.classList.add('seen');tlIO.unobserve(en.target);}});},{threshold:.18,rootMargin:'0px 0px -6% 0px'});
     wtlEl.querySelectorAll('.tl-row,.tl-yr').forEach(el=>tlIO.observe(el));
-    addEventListener('resize',()=>{moveInk();moveVInk();applyFade();});
-    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{moveInk();moveVInk();applyFade();});
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{applyFade();}));
-
-    // populate + animate the List detail panel the first time the section is seen
-    let workSeen=false;
-    new IntersectionObserver(es=>{es.forEach(en=>{if(en.isIntersecting&&!workSeen){workSeen=true;if(view==='list')renderDetail(true);}});},{threshold:.25}).observe(document.getElementById('work'));
   })();
 
   // flair — instrument readout
