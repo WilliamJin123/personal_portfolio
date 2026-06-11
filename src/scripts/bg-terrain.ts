@@ -14,19 +14,22 @@
 // instrument scanning the topology. Same telemetry language as the HUD and
 // crosshair; skipped under reduced motion.
 //
-// Optimizers: the terrain is a loss landscape, so a few amber markers run
-// gradient descent on it — momentum physics, a fading trail, and when one
-// converges it pulses and respawns elsewhere. The surface never stops
-// morphing, so the minima move and the descent never ends.
+// Minima markers: the terrain is a loss landscape, so it annotates its own
+// minima — quiet hairline amber crosses fade in over the deepest local
+// minima, glide as the morphing surface drags them, and fade out when a
+// minimum fills in. Annotation, not actors: no trails, no chasing.
+//
+// Scroll inertia: the roll chases the real scroll position through an
+// exponential smoother, so the hills coast to a stop (both directions)
+// instead of tracking the scrollbar rigidly.
 //
 // Reduced-motion renders a single static pose; paused when the tab is
 // backgrounded.
 
 import {
   Scene, PerspectiveCamera, WebGLRenderer,
-  BufferGeometry, BufferAttribute, Float32BufferAttribute,
-  LineSegments, Line, LineLoop, Points,
-  ShaderMaterial, LineBasicMaterial,
+  BufferGeometry, BufferAttribute,
+  LineSegments, ShaderMaterial,
   Color,
 } from 'three';
 
@@ -62,21 +65,25 @@ const SCROLL_TO_NOISE = 0.0045; // noise units per pixel scrolled (forward trave
 
 // Survey sweep — period between sweeps, travel time, band half-width, and the
 // Z run (starts just behind the camera, parks beyond the fade when idle)
-const SWEEP_PERIOD = 13;
+const SWEEP_PERIOD = 18;
 const SWEEP_TRAVEL = 6.5;
 const SWEEP_WIDTH = 3.0;
 const SWEEP_FROM = 9;
 const SWEEP_TO = -44;
 const SWEEP_IDLE = 999;
 
-// Optimizers — gradient descent with momentum on the live height field
-const N_OPT = 5;
-const TRAIL = 96;          // trail samples per optimizer
-const OPT_ACCEL = 6.0;     // gradient pull
-const OPT_DAMP = 1.6;      // velocity damping (momentum-ish; low enough to overshoot)
-const OPT_LIFT = 0.07;     // hover above the surface so lines don't cut the dot
-const CONV_T = 1.8;        // s near-stationary before declaring convergence
-const PULSE_T = 1.1;       // s of converge pulse (expanding ring) before respawning
+// Minima markers — quiet amber crosses over the deepest local minima
+const N_MARK = 6;          // marker pool (also the max shown at once)
+const MARK_DEPTH = -0.6;   // only minima deeper than this (height units)
+const MARK_R = 0.55;       // cross arm half-length
+const MARK_OP = 0.6;       // peak opacity (distance fade still applies)
+const MARK_FADE = 1.1;     // fade in/out speed, alpha units per second
+const MARK_SCAN = 0.4;     // s between minima rescans
+const MARK_LIFT = 0.06;    // hover above the surface
+
+// Scroll inertia — how quickly the roll catches up to the scrollbar (per s).
+// Lower = longer coast after the user stops scrolling.
+const SCROLL_CHASE = 2.4;
 
 // Random per-session phase offsets — same code, different terrain every load.
 const PHASES = [
@@ -223,160 +230,125 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
   });
   scene.add(new LineSegments(geom, mat));
 
-  // ── optimizers — gradient descent on the live height field ──
-  // Physics runs on the same noise the mesh samples, so the dots genuinely
-  // ride the surface. Scroll shifts the field under them (like the terrain),
-  // which keeps them honest: the landscape moves, they re-descend.
+  // ── minima markers — the landscape annotates its own minima ──
+  // Every MARK_SCAN seconds the height grid is scanned for its deepest local
+  // minima; a pooled set of hairline crosses fades in over them, glides as
+  // the morphing surface drags them, and fades out when a minimum fills in.
   const heightAt = (x: number, z: number, t: number, off: number): number =>
     noise(x, z + off, t) * HSCALE;
 
-  interface Opt {
-    x: number; z: number; vx: number; vz: number;
-    still: number;   // s spent near-stationary (convergence timer)
-    pulse: number;   // s remaining in the converge pulse (0 = not pulsing)
-    trail: number[]; // flat xyz ring, newest first
+  interface Mark {
+    x: number; z: number;   // drawn position (glides toward the target)
+    tx: number; tz: number; // target = the minimum it is annotating
+    a: number;              // fade 0..1
+    on: boolean;            // slot in use
+    live: boolean;          // its minimum still exists (fade in vs out)
   }
-  const spawn = (): Opt => ({
-    x: (Math.random() * 2 - 1) * SCALE_X * 0.8,
-    z: -30 + Math.random() * 32,
-    vx: 0, vz: 0, still: 0, pulse: 0, trail: [],
-  });
-  const opts: Opt[] = Array.from({ length: N_OPT }, spawn);
+  const marks: Mark[] = Array.from({ length: N_MARK }, () => ({
+    x: 0, z: 0, tx: 0, tz: 0, a: 0, on: false, live: false,
+  }));
 
-  const headArr = new Float32Array(N_OPT * 3);
-  const headPulse = new Float32Array(N_OPT);
-  const headGeom = new BufferGeometry();
-  headGeom.setAttribute('position', new BufferAttribute(headArr, 3));
-  headGeom.setAttribute('aPulse', new BufferAttribute(headPulse, 1));
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  const headMat = new ShaderMaterial({
-    uniforms: { uAmber: { value: AMBER }, uDpr: { value: dpr } },
-    vertexShader: `
-      attribute float aPulse;
-      varying float vPulse;
-      uniform float uDpr;
-      void main() {
-        vPulse = aPulse;
-        gl_PointSize = (7.0 + 9.0 * aPulse) * uDpr;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }
-    `,
-    fragmentShader: `
-      uniform vec3 uAmber;
-      varying float vPulse;
-      void main() {
-        vec2 d = gl_PointCoord - 0.5;
-        if (dot(d, d) > 0.25) discard;
-        gl_FragColor = vec4(uAmber, mix(0.85, 0.0, vPulse)); // pulse grows + dissolves
-      }
-    `,
-    transparent: true,
-    depthWrite: false,
-  });
-  scene.add(new Points(headGeom, headMat));
-
-  const trailMat = new ShaderMaterial({
+  const markArr = new Float32Array(N_MARK * 12); // 2 segments (4 verts) per cross
+  const markAlpha = new Float32Array(N_MARK * 4);
+  const markGeom = new BufferGeometry();
+  markGeom.setAttribute('position', new BufferAttribute(markArr, 3));
+  markGeom.setAttribute('aA', new BufferAttribute(markAlpha, 1));
+  const markMat = new ShaderMaterial({
     uniforms: { uAmber: { value: AMBER } },
     vertexShader: `
-      attribute float aAge;
-      varying float vAge;
-      void main() { vAge = aAge; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
+      attribute float aA;
+      varying float vA;
+      void main() { vA = aA; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }
     `,
     fragmentShader: `
       uniform vec3 uAmber;
-      varying float vAge;
-      void main() { gl_FragColor = vec4(uAmber, 0.55 * (1.0 - vAge) * (1.0 - vAge)); }
+      varying float vA;
+      void main() { gl_FragColor = vec4(uAmber, vA); }
     `,
     transparent: true,
     depthWrite: false,
   });
-  const trailGeoms = opts.map(() => {
-    const g = new BufferGeometry();
-    g.setAttribute('position', new Float32BufferAttribute(new Float32Array(TRAIL * 3), 3));
-    g.setAttribute('aAge', new Float32BufferAttribute(new Float32Array(TRAIL).fill(1), 1));
-    g.setDrawRange(0, 0);
-    scene.add(new Line(g, trailMat));
-    return g;
-  });
+  scene.add(new LineSegments(markGeom, markMat));
 
-  // Converge ring — expands and dissolves flat on the surface where an
-  // optimizer settles, marking the minimum it found.
-  const ringGeom = (() => {
-    const n = 48;
-    const pos = new Float32Array(n * 3);
-    for (let i = 0; i < n; i++) {
-      const a = (i / n) * Math.PI * 2;
-      pos[i * 3] = Math.cos(a);
-      pos[i * 3 + 2] = Math.sin(a);
-    }
-    const g = new BufferGeometry();
-    g.setAttribute('position', new BufferAttribute(pos, 3));
-    return g;
-  })();
-  const ringMats = opts.map(() => new LineBasicMaterial({ color: AMBER, transparent: true, opacity: 0 }));
-  const rings = ringMats.map((m) => {
-    const r = new LineLoop(ringGeom, m);
-    r.visible = false;
-    scene.add(r);
-    return r;
-  });
-
-  const stepOpts = (dt: number, t: number, off: number): void => {
-    const EPS = 0.45;
-    for (let i = 0; i < N_OPT; i++) {
-      const o = opts[i];
-      if (o.pulse > 0) {
-        o.pulse -= dt;
-        const k = 1 - Math.max(0, o.pulse) / PULSE_T;
-        const ring = rings[i];
-        ring.visible = true;
-        ring.position.set(o.x, heightAt(o.x, o.z, t, off) + OPT_LIFT, o.z);
-        ring.scale.setScalar(0.4 + 3.2 * k);
-        ringMats[i].opacity = 0.8 * (1 - k);
-        if (o.pulse <= 0) {
-          ring.visible = false;
-          ringMats[i].opacity = 0;
-          opts[i] = spawn();
-          trailGeoms[i].setDrawRange(0, 0);
-          opts[i].trail = [];
-        }
-      } else {
-        const gx = (heightAt(o.x + EPS, o.z, t, off) - heightAt(o.x - EPS, o.z, t, off)) / (2 * EPS);
-        const gz = (heightAt(o.x, o.z + EPS, t, off) - heightAt(o.x, o.z - EPS, t, off)) / (2 * EPS);
-        o.vx += (-gx * OPT_ACCEL - o.vx * OPT_DAMP) * dt;
-        o.vz += (-gz * OPT_ACCEL - o.vz * OPT_DAMP) * dt;
-        o.x += o.vx * dt;
-        o.z += o.vz * dt;
-        const slow = Math.hypot(o.vx, o.vz) < 0.13 && Math.hypot(gx, gz) < 0.09;
-        o.still = slow ? o.still + dt : 0;
-        const out = Math.abs(o.x) > SCALE_X * 0.92 || o.z > 10 || o.z < -SCALE_Z * 0.95;
-        if (out) { opts[i] = spawn(); trailGeoms[i].setDrawRange(0, 0); opts[i].trail = []; continue; }
-        if (o.still > CONV_T) o.pulse = PULSE_T;
-        const y = heightAt(o.x, o.z, t, off) + OPT_LIFT;
-        o.trail.unshift(o.x, y, o.z);
-        if (o.trail.length > TRAIL * 3) o.trail.length = TRAIL * 3;
-      }
-      // write head + trail buffers
-      const cur = opts[i];
-      const y = heightAt(cur.x, cur.z, t, off) + OPT_LIFT;
-      headArr[i * 3] = cur.x; headArr[i * 3 + 1] = y; headArr[i * 3 + 2] = cur.z;
-      headPulse[i] = cur.pulse > 0 ? 1 - cur.pulse / PULSE_T : 0;
-      const tg = trailGeoms[i];
-      const tp = tg.getAttribute('position') as BufferAttribute;
-      const ta = tg.getAttribute('aAge') as BufferAttribute;
-      const n = cur.trail.length / 3;
-      for (let k = 0; k < n; k++) {
-        tp.setXYZ(k, cur.trail[k * 3], cur.trail[k * 3 + 1], cur.trail[k * 3 + 2]);
-        ta.setX(k, n > 1 ? k / (n - 1) : 1);
-      }
-      tg.setDrawRange(0, n);
-      tp.needsUpdate = true;
-      ta.needsUpdate = true;
-    }
-    (headGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
-    (headGeom.getAttribute('aPulse') as BufferAttribute).needsUpdate = true;
+  const smooth01 = (k: number): number => {
+    const c = Math.max(0, Math.min(1, k));
+    return c * c * (3 - 2 * c);
   };
-  stepOpts(0, 0, 0); // seat the dots on the surface before the first paint
+
+  let scanT = MARK_SCAN; // due immediately
+  const stepMarks = (dt: number, t: number, off: number): void => {
+    scanT += dt;
+    if (scanT >= MARK_SCAN) {
+      scanT = 0;
+      // deepest interior local minima, restricted to the clearly visible region
+      const cands: Array<[number, number, number]> = []; // [h, x, z]
+      for (let zi = 1; zi < GW - 1; zi++) {
+        for (let xi = 1; xi < GW - 1; xi++) {
+          const h = heights[zi * GW + xi];
+          if (h > MARK_DEPTH) continue;
+          if (
+            h >= heights[zi * GW + xi - 1] || h >= heights[zi * GW + xi + 1] ||
+            h >= heights[(zi - 1) * GW + xi] || h >= heights[(zi + 1) * GW + xi]
+          ) continue;
+          const x = xWorld(xi);
+          const z = zWorld(zi);
+          if (x * x + z * z > 26 * 26 || z > 4) continue; // inside the fade, in front of camera
+          cands.push([h, x, z]);
+        }
+      }
+      cands.sort((p, q) => p[0] - q[0]);
+      const top = cands.slice(0, N_MARK);
+      const taken = top.map(() => false);
+      // existing markers claim the nearest surviving minimum...
+      for (const m of marks) {
+        if (!m.on) continue;
+        let best = -1;
+        let bd = 3.5; // ...within a sane radius, else they fade out
+        for (let c = 0; c < top.length; c++) {
+          if (taken[c]) continue;
+          const d = Math.hypot(top[c][1] - m.x, top[c][2] - m.z);
+          if (d < bd) { bd = d; best = c; }
+        }
+        if (best >= 0) { taken[best] = true; m.tx = top[best][1]; m.tz = top[best][2]; m.live = true; }
+        else m.live = false;
+      }
+      // ...and fresh minima take free slots
+      for (let c = 0; c < top.length; c++) {
+        if (taken[c]) continue;
+        const free = marks.find((m) => !m.on);
+        if (!free) break;
+        free.on = true;
+        free.live = true;
+        free.a = 0;
+        free.x = free.tx = top[c][1];
+        free.z = free.tz = top[c][2];
+      }
+    }
+
+    const glide = 1 - Math.exp(-dt * 3.0);
+    for (let i = 0; i < N_MARK; i++) {
+      const m = marks[i];
+      if (m.on) {
+        m.x += (m.tx - m.x) * glide;
+        m.z += (m.tz - m.z) * glide;
+        m.a = Math.max(0, Math.min(1, m.a + (m.live ? dt : -dt) * MARK_FADE));
+        if (!m.live && m.a <= 0) m.on = false;
+      }
+      const y = heightAt(m.x, m.z, t, off) + MARK_LIFT;
+      const o = i * 12;
+      markArr[o + 0] = m.x - MARK_R; markArr[o + 1] = y; markArr[o + 2] = m.z;
+      markArr[o + 3] = m.x + MARK_R; markArr[o + 4] = y; markArr[o + 5] = m.z;
+      markArr[o + 6] = m.x; markArr[o + 7] = y; markArr[o + 8] = m.z - MARK_R;
+      markArr[o + 9] = m.x; markArr[o + 10] = y; markArr[o + 11] = m.z + MARK_R;
+      // same distance haze as the terrain lines, so markers never outshine
+      // lines that are themselves fading out
+      const haze = 1 - smooth01((Math.hypot(m.x, m.z) - FADE_NEAR) / (FADE_FAR - FADE_NEAR));
+      const av = m.on ? MARK_OP * smooth01(m.a) * haze : 0;
+      markAlpha[i * 4] = markAlpha[i * 4 + 1] = markAlpha[i * 4 + 2] = markAlpha[i * 4 + 3] = av;
+    }
+    (markGeom.getAttribute('position') as BufferAttribute).needsUpdate = true;
+    (markGeom.getAttribute('aA') as BufferAttribute).needsUpdate = true;
+  };
 
   const resize = (): void => {
     const w = canvas.clientWidth || window.innerWidth;
@@ -405,8 +377,11 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
     { passive: true },
   );
 
-  // Scroll offset shifts the noise sample → terrain "scrolls" past
-  let scrollY = 0;
+  // Scroll shifts the noise sample → the terrain rolls past. The roll
+  // carries inertia: it chases the real scroll position and coasts to a
+  // stop in both directions instead of tracking the scrollbar rigidly.
+  let scrollY = window.scrollY;
+  let scrollS = scrollY; // smoothed (drawn) scroll
   window.addEventListener(
     'scroll',
     () => {
@@ -449,11 +424,13 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
         mat.uniforms.uScanZ.value = SWEEP_IDLE;
       }
 
-      stepOpts(dt, t, scrollY * SCROLL_TO_NOISE);
+      scrollS += (scrollY - scrollS) * (1 - Math.exp(-dt * SCROLL_CHASE));
 
-      recomputeHeights(t, scrollY * SCROLL_TO_NOISE);
+      recomputeHeights(t, scrollS * SCROLL_TO_NOISE);
       updateY();
       positionAttr.needsUpdate = true;
+
+      stepMarks(dt, t, scrollS * SCROLL_TO_NOISE);
 
       camera.position.set(curOffX * 0.95, CAM_Y + curOffY * 0.75, CAM_Z);
       camera.lookAt(curOffX * 0.45, curOffY * 0.22, LOOK_Z);
