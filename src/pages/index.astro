@@ -68,9 +68,10 @@ const links = {
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@300..600&display=swap" />
 <style is:global>
   :root{
-    --paper:#eceef1; --paper2:#e2e5ea; --ink:#16181c; --mute:#6b6f78; --faint:#a6abb3;
+    --paper:#eceef1; --paper2:#e2e5ea; --ink:#16181c; --ink2:#3f444c; --mute:#6b6f78; --faint:#a6abb3;
     --rule:rgba(20,24,32,.13); --amber:#bd741b; --amber-rgb:189,116,27; --grant:#3a7d5c; --grant-rgb:58,125,92;
     --sans:'Geist',system-ui,sans-serif; --mono:'Geist Mono',ui-monospace,monospace;
+    --ease:cubic-bezier(.2,.7,.2,1); /* the house curve — fast attack, soft landing */
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html{scroll-behavior:smooth;overflow-x:clip}
@@ -109,6 +110,14 @@ const links = {
   @media (prefers-reduced-motion:reduce){.nl-3d .bd rect,.nl-3d .t::before{animation:none}.nl-3d .t::before{opacity:1}}
 
   .hero{padding:104px 0 120px}
+  /* entrance — the lead copy rises in once on load, line by line (the Will
+     blur-in and UWaterloo clip reveal then land on top of this rhythm) */
+  @keyframes leadIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+  .lead>*{animation:leadIn .65s var(--ease) backwards}
+  .lead>.greet{animation-delay:.05s}
+  .lead>h1{animation-delay:.14s}
+  .lead>.role{animation-delay:.23s}
+  .lead>.school{animation-delay:.32s}
   .greet{margin-bottom:24px}
   h1{font-weight:540;font-size:clamp(44px,5.6vw,82px);line-height:1.04;letter-spacing:-.028em}
   .will{color:var(--amber);filter:blur(11px);opacity:0;display:inline-block;transition:filter .8s ease,opacity .8s ease}
@@ -184,7 +193,7 @@ const links = {
   .wd-link{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase}
   .rbul{list-style:none;margin:18px 0 0;padding:0}
   .rbullet{position:relative;font-size:14px;line-height:1.6;color:var(--ink);margin-bottom:13px;padding-left:16px}
-  .rbullet::before{content:"–";position:absolute;left:0;color:var(--faint)}
+  .rbullet::before{content:"–";position:absolute;left:0;color:var(--mute)}
   .rbold{display:inline-block;font-weight:680;color:var(--ink)}
   .rlink{color:var(--ink);text-decoration:none;background:linear-gradient(var(--amber),var(--amber)) left bottom/100% 1.6px no-repeat;padding-bottom:1px}
   .rlink:hover{color:var(--amber)}
@@ -207,27 +216,27 @@ const links = {
   /* timeline — a centered, dated spine. Each entry expands its detail in
      place (multiple can be open at once; the first is open by default). */
   .wtl{max-width:760px;margin:0 auto}
-  .tl-yr{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--faint);padding-left:62px;margin:22px 0 6px}
+  .tl-yr{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--mute);padding-left:62px;margin:22px 0 6px}
   .tl-yr:first-child{margin-top:0}
   .tl-row{position:relative;display:grid;grid-template-columns:62px 1fr}
   .tl-row::before{content:"";position:absolute;left:46px;top:0;bottom:0;width:1px;background:var(--rule)}
   .tl-row:last-child::before{bottom:auto;height:26px}
   .tl-mark{grid-column:1;grid-row:1;position:relative;display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding:16px 24px 0 0}
-  .tl-mon{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+  .tl-mon{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
   .tl-kind{font-family:var(--mono);font-size:8px;letter-spacing:.11em;text-transform:uppercase;color:var(--amber);opacity:.85}
-  .tl-dot{position:absolute;left:41.5px;top:18px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:1.6px solid var(--faint);box-sizing:border-box;z-index:1;transition:border-color .3s,background .3s,transform .3s}
+  .tl-dot{position:absolute;left:41.5px;top:18px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:1.6px solid var(--mute);box-sizing:border-box;z-index:1;transition:border-color .3s,background .3s,transform .3s}
   .tl-row.is-role .tl-dot{border-radius:2px}
   .tl-row:hover .tl-dot{border-color:var(--amber)}
   .tl-row.open .tl-dot{border-color:var(--amber);background:var(--amber);transform:scale(1.15)}
-  .tl-head{grid-column:2;grid-row:1;text-align:left;background:none;border:0;border-bottom:1px dashed var(--rule);padding:14px 2px 14px 0;cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;color:var(--mute);transition:color .3s}
+  .tl-head{grid-column:2;grid-row:1;text-align:left;background:none;border:0;border-bottom:1px dashed var(--rule);padding:14px 2px 14px 0;cursor:pointer;display:flex;flex-wrap:wrap;align-items:baseline;gap:11px;color:var(--ink2);transition:color .3s}
   .tl-head:hover,.tl-row.open .tl-head{color:var(--ink)}
   .tl-title{font-size:clamp(16px,1.8vw,19px);font-weight:530;letter-spacing:-.015em}
   .tl-badge{width:19px;height:19px;padding:0;gap:0;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;align-self:center;box-sizing:border-box}
   .tl-badge svg{width:11px;height:11px}
   .tl-badge.award{color:var(--amber);background:rgba(var(--amber-rgb),.08);border:1px solid rgba(var(--amber-rgb),.42)}
   .tl-badge.grant{color:var(--grant);background:rgba(var(--grant-rgb),.08);border:1px solid rgba(var(--grant-rgb),.42)}
-  .tl-hmeta{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
-  .tl-chev{margin-left:auto;align-self:center;flex-shrink:0;width:7px;height:7px;border-right:1.5px solid var(--faint);border-bottom:1.5px solid var(--faint);transform:rotate(45deg);transition:transform .36s cubic-bezier(.6,0,.2,1),border-color .3s}
+  .tl-hmeta{font-family:var(--mono);font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute)}
+  .tl-chev{margin-left:auto;align-self:center;flex-shrink:0;width:8px;height:8px;border-right:1.5px solid var(--mute);border-bottom:1.5px solid var(--mute);transform:rotate(45deg);transition:transform .36s cubic-bezier(.6,0,.2,1),border-color .3s}
   .tl-row.open .tl-chev{transform:rotate(-135deg);border-color:var(--amber)}
   .tl-detail{grid-column:2;grid-row:2;display:grid;grid-template-rows:0fr;opacity:0;transition:grid-template-rows .36s cubic-bezier(.6,0,.2,1),opacity .3s ease}
   .tl-row.open .tl-detail{grid-template-rows:1fr;opacity:1}
@@ -240,11 +249,14 @@ const links = {
   .tl-row.open .rbold{animation:rBold .45s ease backwards;animation-delay:calc(.55s + var(--bi)*.06s)}
   .tl-row.open .rlink{animation:rUl .4s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(.2s + var(--bi)*.06s)}
   /* scroll reveal — each row rises in as it scrolls into view (esp. the long mobile stream) */
-  .wtl.reveal .tl-row,.wtl.reveal .tl-yr{opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .55s cubic-bezier(.2,.7,.2,1)}
+  .wtl.reveal .tl-row,.wtl.reveal .tl-yr{opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .6s var(--ease)}
   .wtl.reveal .tl-row.seen,.wtl.reveal .tl-yr.seen{opacity:1;transform:none}
   @media (prefers-reduced-motion:reduce){
     .wtl.reveal .tl-row,.wtl.reveal .tl-yr{opacity:1;transform:none;transition:none}
     .tl-row.open .award,.tl-row.open .grant,.tl-row.open .rbullet,.tl-row.open .rbold,.tl-row.open .rlink{animation:none}
+    .lead>*{animation:none}
+    .will{filter:none;opacity:1;transition:none}
+    .rest{clip-path:none;opacity:1;transition:none}
   }
   [hidden]{display:none!important}
 
@@ -510,9 +522,12 @@ const links = {
   },{threshold:[0,.2,.55,1]}).observe(document.querySelector('.lead'));
 
 
-  // combined parallax + scroll-in/scroll-out (subtle)
+  // combined parallax + scroll-in/scroll-out (subtle). Skipped entirely under
+  // reduced motion — scrubbed transforms are exactly what that setting is for.
+  const motionOK=!matchMedia('(prefers-reduced-motion: reduce)').matches;
   const animEls=[...document.querySelectorAll('[data-par],[data-reveal]')];
   function animScroll(){
+    if(!motionOK) return;
     const vh=innerHeight, c=vh/2, ramp=vh*0.30;
     animEls.forEach(el=>{
       const r=el.getBoundingClientRect(), center=r.top+r.height/2;
@@ -521,7 +536,7 @@ const links = {
       if(el.hasAttribute('data-reveal')){
         const enter=clamp((vh-r.top)/ramp), exit=clamp(r.bottom/ramp);
         op=Math.min(enter,exit);
-        ty += (1-enter)*58 - (1-exit)*58;   // rise in from below + drift up/out at top — reads clearly scrolling down
+        ty += (1-enter)*44 - (1-exit)*44;   // rise in from below + drift up/out at top — reads clearly scrolling down
       }
       el.style.opacity=op.toFixed(3);
       el.style.transform='translate3d(0,'+ty.toFixed(1)+'px,0)';
@@ -579,7 +594,7 @@ const links = {
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  setInterval(()=>{if(!drumMobile && !anim && !paused && performance.now()>holdUntil){active=(active+1)%N;setActive();from=pos;to=Math.round(pos)+1;t0=performance.now();anim=true;}},2900);
+  setInterval(()=>{if(motionOK && !drumMobile && !anim && !paused && performance.now()>holdUntil){active=(active+1)%N;setActive();from=pos;to=Math.round(pos)+1;t0=performance.now();anim=true;}},2900);
 
   // stack chips — per-row horizontal scroll: fade edges appear only where content is hidden; drag-to-scroll on mouse
   const chipRows=[...document.querySelectorAll('.slide .chips')];
