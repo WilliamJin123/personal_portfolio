@@ -226,15 +226,15 @@ const links = {
   /* timeline — a centered, dated spine. Each entry expands its detail in
      place (multiple can be open at once; the first is open by default). */
   .wtl{max-width:760px;margin:0 auto}
-  .tl-yr{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--mute);padding-left:62px;margin:22px 0 6px}
+  .tl-yr{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--mute);padding-left:112px;margin:22px 0 6px}
   .tl-yr:first-child{margin-top:0}
-  .tl-row{position:relative;display:grid;grid-template-columns:62px 1fr}
-  .tl-row::before{content:"";position:absolute;left:46px;top:0;bottom:0;width:1px;background:var(--rule)}
+  .tl-row{position:relative;display:grid;grid-template-columns:112px 1fr}
+  .tl-row::before{content:"";position:absolute;left:96px;top:0;bottom:0;width:1px;background:var(--rule)}
   .tl-row:last-child::before{bottom:auto;height:26px}
   .tl-mark{grid-column:1;grid-row:1;position:relative;display:flex;flex-direction:column;align-items:flex-end;gap:6px;padding:16px 24px 0 0}
   .tl-mon{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
-  .tl-kind{font-family:var(--mono);font-size:8px;letter-spacing:.11em;text-transform:uppercase;color:var(--amber);opacity:.85}
-  .tl-dot{position:absolute;left:41.5px;top:18px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:1.6px solid var(--mute);box-sizing:border-box;z-index:1;transition:border-color .3s,background .3s,transform .3s}
+  .tl-kind{align-self:flex-start;font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);background:rgba(var(--amber-rgb),.08);border:1px solid rgba(var(--amber-rgb),.42);border-radius:999px;padding:3px 9px;margin-top:2px}
+  .tl-dot{position:absolute;left:91.5px;top:18px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:1.6px solid var(--mute);box-sizing:border-box;z-index:1;transition:border-color .3s,background .3s,transform .3s}
   .tl-row.is-role .tl-dot{border-radius:2px}
   .tl-row:hover .tl-dot{border-color:var(--amber)}
   .tl-row.open .tl-dot{border-color:var(--amber);background:var(--amber);transform:scale(1.15)}
@@ -355,11 +355,12 @@ const links = {
     .pill{flex-wrap:nowrap;justify-content:center}
 
     /* timeline — tighten the date gutter on small screens */
-    .tl-row{grid-template-columns:50px 1fr}
-    .tl-row::before{left:39px}
-    .tl-dot{left:34.5px}
+    .tl-row{grid-template-columns:66px 1fr}
+    .tl-row::before{left:55px}
+    .tl-dot{left:50.5px}
     .tl-mark{padding-right:18px}
-    .tl-yr{padding-left:50px}
+    .tl-yr{padding-left:66px}
+    .tl-kind{font-size:8.5px;letter-spacing:.1em;padding:2px 7px}
     .tl-title{font-size:16px}
 
     /* drop the fixed telemetry HUD on small screens */
