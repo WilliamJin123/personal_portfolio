@@ -22,7 +22,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'ui',
-        text: 'Built front-end features including a **citation panel** and thumbs-up/down response analytics to surface sources and capture user feedback for evaluation',
+        text: 'Built front-end features in **TypeScript** — a **citation panel** and thumbs-up/down response analytics — to surface sources and capture user feedback for evaluation',
         tags: ['frontend', 'analytics'],
       },
       {
@@ -42,7 +42,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'scraper',
-        text: 'Developed a web scraper to automatically track citations of **7,000+** papers across 2,000+ journal websites using Selenium, Beautiful Soup with **Python**',
+        text: 'Developed a web scraper to automatically track citations of **7,000+** papers across 2,000+ journal websites in **Python** with **Selenium** and **Beautiful Soup**',
         tags: ['python', 'scraping'],
       },
       {
@@ -74,7 +74,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'data',
-        text: 'Led data preprocessing by sourcing datasets from the CDC and created a workflow for model training',
+        text: 'Led data preprocessing in **Python**, sourcing datasets from the CDC, and built a workflow for model training',
         tags: ['ml', 'data'],
       },
       {
@@ -99,7 +99,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'sql',
-        text: 'Optimized **SQL** queries (**10x** faster) by eliminating redundant table joins and adding indexes',
+        text: 'Optimized **Oracle SQL** queries (**10x** faster) by eliminating redundant table joins and adding indexes',
         tags: ['sql', 'performance'],
       },
       {
@@ -119,7 +119,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'dag',
-        text: 'Built **Tract**, a from-scratch git-style version-control engine for LLM context: a content-addressed **SHA-256** commit **DAG** with branching, three-way merge, and rebase, in **Python**',
+        text: 'Built **Tract**, a from-scratch git-style version-control engine for LLM context in **Python** — a content-addressed commit **DAG** with branching, three-way merge, and rebase',
         tags: ['systems', 'python'],
       },
       {
@@ -136,7 +136,7 @@ const authored: ResumeEntry[] = [
       {
         id: 'storage',
         default: false,
-        text: 'Persisted the object store in **SQLite** (**SQLAlchemy**, auto-migrating schema), backed by a property-based and end-to-end test suite',
+        text: 'Persisted the object store in **SQLite** (**SQLAlchemy**, auto-migrating schema), backed by a property-based and end-to-end **pytest** suite',
         tags: ['backend', 'database'],
       },
     ],
@@ -152,7 +152,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'aco',
-        text: 'Built a **GraphRAG** retriever in which an **ant-colony** swarm of agents traverses the **129K-node STaRK Prime** knowledge graph, composing per-step **movement, pheromone-deposit, and ranking** heuristics to converge on the subgraph most relevant to each query',
+        text: 'Built a **GraphRAG** retriever (**PyTorch**) in which an **ant-colony** swarm of agents traverses the **129K-node STaRK Prime** knowledge graph, composing per-step **movement, pheromone-deposit, and ranking** heuristics to converge on the subgraph most relevant to each query',
         tags: ['ai', 'rag', 'python'],
       },
       {
@@ -190,7 +190,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'kan',
-        text: 'Implemented from scratch a vectorized B-spline **Kolmogorov-Arnold Network** layer in **PyTorch** (de Boor recursion, spline degrees 1-4, autograd-safe), verified against **SciPy** as a partition of unity',
+        text: 'Implemented from scratch a vectorized B-spline **Kolmogorov-Arnold Network** layer in **PyTorch** (spline degrees 1-4, autograd-safe), verified against **SciPy** as a partition of unity',
         tags: ['ml', 'pytorch'],
       },
       {
@@ -224,7 +224,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'app',
-        text: 'Built **VolleyClip**, a full-stack app (**Next.js** + **FastAPI**) that turns a volleyball VOD into per-play clips of a chosen player from a natural-language query',
+        text: 'Built **VolleyClip**, a full-stack app (**Next.js** + **TypeScript** + **FastAPI**) that turns a volleyball VOD into per-play clips of a chosen player from a natural-language query',
         tags: ['fullstack', 'ai'],
       },
       {
@@ -260,7 +260,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'agent',
-        text: 'Built an agentic AI video editor where a **Gemini** agent edits a live timeline from natural language through **14** custom video and audio tools',
+        text: 'Built an agentic AI video editor (**Next.js**, **TypeScript**, **Supabase**) where a **Gemini** agent edits a live timeline from natural language through **14** custom video and audio tools',
         tags: ['ai', 'agents'],
       },
       {
@@ -402,7 +402,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'ios',
-        text: 'Developed a bill-splitting **iOS** application that automates receipt parsing and payment processing',
+        text: 'Developed a bill-splitting **iOS** app in **Swift** that automates receipt parsing and payment processing',
         tags: ['ios', 'swift'],
       },
       {
