@@ -1,21 +1,33 @@
 ---
-// 3D mode — the second site: a dark, full-bleed WebGL world. Self-contained
-// like index.astro: own theme, fonts, and scripts; inherits nothing from the
-// paper site. The scene is "The Drift" (flight 002): one continuous
-// scroll-driven drift through open space — nebula banks, a ringed-planet
-// flyby, a beacon at the end. The three stations along the route now carry the
-// real content, drawn as hairline star-systems floating over the cosmos:
-//   01 EXPERIENCE — an orrery (one planet per role)
-//   02 PROJECTS   — a galaxy spiral (one star per build)
-//   03 CONTACT    — the beacon, where the route ends
+// 3D mode — the second site, rebuilt as ONE diegetic world. The content is not
+// an overlay: the text and the star-system diagrams ARE the 3D scene, and we
+// scroll to fly the route through them (studio-scene.ts):
+//   01 EXPERIENCE — an amber star + orbit rings; each role a body we pass
+//   02 PROJECTS   — a galaxy spiral threaded by the path; each build a star
+//   03 CONTACT    — the beacon at the end of the route
 // Content is the SAME résumé library the paper site reads (single source of
-// truth); the presentation layer lives in studio-content.ts.
+// truth), injected as JSON. A visually-hidden DOM mirror carries the same
+// content for assistive tech + search + the no-WebGL fallback; the contact
+// links also surface as a real, clickable dock near journey's end.
 // Specs: docs/superpowers/specs/2026-06-10-studio-mode-design.md (shell),
 //        docs/superpowers/specs/2026-06-11-3d-drift-design.md (scene)
 import { entries } from '../resume/data/entries';
 import { tokenize } from '../resume/tokenize';
 import { tokensToHtml } from '../resume/html';
 import { portfolioMedia } from '../data/portfolio-media';
+
+// tidy display labels for plain simple-icons slugs (icons don't exist in 3D text)
+const NICE: Record<string, string> = {
+  python: 'Python', typescript: 'TypeScript', javascript: 'JavaScript', openjdk: 'Java',
+  microsoftazure: 'Azure', microsoftsqlserver: 'SQL Server', openai: 'OpenAI', docker: 'Docker',
+  selenium: 'Selenium', oracle: 'Oracle', firebase: 'Firebase', swift: 'Swift', solana: 'Solana',
+  pytorch: 'PyTorch', numpy: 'NumPy', scipy: 'SciPy', pandas: 'Pandas', huggingface: 'Hugging Face',
+  pydantic: 'Pydantic', sqlalchemy: 'SQLAlchemy', sqlite: 'SQLite', pytest: 'pytest',
+  fastapi: 'FastAPI', tailwindcss: 'Tailwind', nextdotjs: 'Next.js', react: 'React',
+  supabase: 'Supabase', ffmpeg: 'FFmpeg', vercel: 'Vercel', openrouter: 'OpenRouter',
+};
+const stackLabels = (m: { stack?: (string | { label: string; icon?: string })[] }): string[] =>
+  (m.stack ?? []).map((it) => (typeof it === 'string' ? (NICE[it] ?? it) : it.label));
 
 const toView = (e: (typeof entries)[number]) => {
   const m = portfolioMedia[e.id] ?? {};
@@ -26,20 +38,23 @@ const toView = (e: (typeof entries)[number]) => {
     subtitle: e.subtitle ?? '',
     dateLabel: e.dateLabel,
     location: e.location ?? '',
-    links: e.links ?? [],
-    bulletsHtml: e.bullets.map((b) => tokensToHtml(tokenize(b.text))),
     awards: e.awards ?? [],
     grants: e.grants ?? [],
-    stack: m.stack ?? [],
+    stack: stackLabels(m),
+    links: e.links ?? [],
+    bullets: e.bullets.map((b) => tokenize(b.text)),       // tokens — the scene styles bold/links in amber
+    bulletsHtml: e.bullets.map((b) => tokensToHtml(tokenize(b.text))), // for the DOM mirror only
   };
 };
-// `hidden` (portfolio-media) trims an entry from the public site; mirrors index.astro.
 const shown = (e: (typeof entries)[number]) => portfolioMedia[e.id]?.hidden !== true;
-const studioData = {
-  work: entries.filter((e) => e.section === 'experience' && shown(e)).map(toView),
-  projects: entries.filter((e) => e.section === 'projects' && shown(e)).map(toView),
-};
-const studioJson = JSON.stringify(studioData).split('<').join('\\u003c');
+const work = entries.filter((e) => e.section === 'experience' && shown(e)).map(toView);
+const projects = entries.filter((e) => e.section === 'projects' && shown(e)).map(toView);
+
+// the scene only needs the render fields (drop bulletsHtml from the JSON)
+const sceneJson = JSON.stringify({
+  work: work.map(({ bulletsHtml, ...r }) => r),
+  projects: projects.map(({ bulletsHtml, ...r }) => r),
+}).split('<').join('\\u003c');
 
 const contact = {
   email: 'mailto:w3jin@uwaterloo.ca',
@@ -47,6 +62,10 @@ const contact = {
   linkedin: 'https://www.linkedin.com/in/william-jin-874b572a1',
   devpost: 'https://devpost.com/jinwilliam-jin',
 };
+const mirror = [
+  { heading: '01 — Experience', items: work },
+  { heading: '02 — Projects', items: projects },
+];
 ---
 <!DOCTYPE html>
 <html lang="en">
@@ -55,140 +74,60 @@ const contact = {
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <meta name="theme-color" content="#0b0c0e" />
 <title>William Jin — 3D</title>
-<meta name="description" content="William Jin — 3D mode. A WebGL drift through the work: experience as an orrery, projects as a galaxy." />
+<meta name="description" content="William Jin — 3D mode. A scroll-flown drift through the work: experience as a star system, projects as a galaxy." />
 <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@300..700&family=Geist+Mono:wght@300..600&display=swap" />
-<!-- unscoped: studio-content.ts injects the readouts / chips / SVG nodes at
-     runtime, so they never receive Astro's scope attribute — these rules must be
-     global to reach them (same reason index.astro uses is:global). -->
 <style is:global>
   :root{
     --ground:#0b0c0e; --ink:#e7e9ee; --ink2:#c2c6cd; --mute:#8b8f98; --faint:#4a4e57;
     --rule:rgba(231,233,238,.14); --amber:#d08a2e; --amber-rgb:208,138,46; --grant:#5fb98f; --grant-rgb:95,185,143;
-    --sans:'Geist',system-ui,sans-serif; --mono:'Geist Mono',ui-monospace,monospace;
-    --ease:cubic-bezier(.2,.7,.2,1);
+    --sans:'Geist',system-ui,sans-serif; --mono:'Geist Mono',ui-monospace,monospace; --ease:cubic-bezier(.2,.7,.2,1);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  html{scroll-behavior:smooth;overflow-x:clip}
+  html{overflow-x:clip}
   body{background:var(--ground);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
   .m{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
 
+  /* the WebGL world is fixed; the scroll-track gives the page its travel length */
   #studio-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;contain:strict}
+  .scroll-track{height:840vh;pointer-events:none}
   body.no-gl #studio-canvas{display:none}
-  /* a barely-there floor of ground colour so DOM text always has minimum contrast
-     even where the cosmos brightens behind it */
-  body.no-gl{background:radial-gradient(120% 90% at 50% 0%,#101218 0%,var(--ground) 60%)}
+  body.no-gl .scroll-track{display:none}
 
-  /* top bar — identity left, exit right */
+  /* top bar */
   .bar{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;justify-content:space-between;align-items:center;padding:22px clamp(20px,3vw,44px)}
   .bar .id{color:var(--ink);text-shadow:0 1px 14px rgba(0,0,0,.6)}
   .bar .id .sl{color:var(--amber)}
   .exit{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink);text-decoration:none;border:1px solid var(--rule);border-radius:999px;padding:9px 18px;background:rgba(11,12,14,.4);backdrop-filter:blur(6px);transition:border-color .25s,color .25s,box-shadow .25s,transform .25s}
   .exit:hover{border-color:var(--amber);color:var(--amber);transform:translateY(-2px);box-shadow:0 6px 18px rgba(var(--amber-rgb),.18)}
 
-  /* ── hero ── */
-  .scn{position:relative;z-index:1;min-height:100svh;display:flex;flex-direction:column;justify-content:flex-end;padding:0 clamp(20px,3vw,44px) clamp(28px,5vh,56px)}
-  .scn.first{justify-content:center;align-items:center;text-align:center}
-  .scn.first .greet{color:var(--amber)}
-  .scn.first h1{margin-top:18px;font-weight:480;font-size:clamp(34px,5.2vw,64px);letter-spacing:-.03em;line-height:1.05}
-  .scn.first .sub{margin-top:16px;color:var(--mute);font-size:14.5px;max-width:50ch;line-height:1.65}
+  /* intro — fixed hero that fades out as the drift begins */
+  .intro{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:0 24px;pointer-events:none;transition:opacity .6s var(--ease)}
+  .intro.gone{opacity:0}
+  .intro .greet{color:var(--amber)}
+  .intro h1{margin-top:18px;font-weight:480;font-size:clamp(34px,5.2vw,64px);letter-spacing:-.03em;line-height:1.05}
+  .intro .sub{margin-top:16px;color:var(--mute);font-size:14.5px;max-width:50ch;line-height:1.65}
+  .intro .hint{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);color:var(--faint)}
+  .intro .hint::after{content:"";display:block;width:1px;height:34px;margin:10px auto 0;background:linear-gradient(var(--faint),transparent);animation:hintPulse 2.6s var(--ease) infinite}
+  @keyframes hintPulse{0%,100%{opacity:.35;transform:scaleY(.7)}50%{opacity:1;transform:scaleY(1)}}
   .nogl-note{display:none;margin-top:18px;color:var(--faint)}
   body.no-gl .nogl-note{display:block}
-  .hint{position:absolute;left:50%;bottom:26px;transform:translateX(-50%);color:var(--faint)}
-  .hint::after{content:"";display:block;width:1px;height:34px;margin:10px auto 0;background:linear-gradient(var(--faint),transparent);animation:hintPulse 2.6s var(--ease) infinite}
-  @keyframes hintPulse{0%,100%{opacity:.35;transform:scaleY(.7)}50%{opacity:1;transform:scaleY(1)}}
 
-  /* ── station shell: a tall scroll range whose panel pins while you read it ── */
-  .station{position:relative;z-index:1;min-height:178svh}
-  .station.contact{min-height:150svh}
-  .panel{position:sticky;top:0;min-height:100svh;display:flex;flex-direction:column;justify-content:center;gap:clamp(16px,2.2vh,26px);max-width:1240px;margin:0 auto;padding:92px clamp(20px,4vw,64px) 60px}
+  /* contact dock — real clickable links, fade in near the end of the route */
+  .dock{position:fixed;left:50%;bottom:max(28px,5vh);transform:translate(-50%,16px);z-index:40;display:flex;flex-direction:column;align-items:center;gap:14px;opacity:0;pointer-events:none;transition:opacity .6s var(--ease),transform .6s var(--ease)}
+  .dock.show{opacity:1;transform:translate(-50%,0);pointer-events:auto}
+  .dock .dk-eyebrow{color:var(--amber)}
+  .dock .dk-links{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+  .dk-link{font-family:var(--mono);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;border:1px solid var(--rule);border-radius:999px;padding:12px 22px;background:rgba(11,12,14,.5);backdrop-filter:blur(7px);transition:border-color .25s,color .25s,transform .25s,box-shadow .25s}
+  .dk-link:hover{border-color:var(--amber);color:var(--amber);transform:translateY(-3px);box-shadow:0 10px 26px rgba(var(--amber-rgb),.18)}
 
-  /* panel header — big ghost numeral + title/sub */
-  .panel-head{display:flex;align-items:flex-start;gap:clamp(16px,2vw,26px)}
-  .panel-head .pnum{font-family:var(--mono);font-weight:300;font-size:clamp(44px,6vw,82px);line-height:.82;color:transparent;-webkit-text-stroke:1px var(--faint);letter-spacing:.01em;flex-shrink:0}
-  .panel-head .pttl{font-size:clamp(21px,2.4vw,31px);font-weight:480;letter-spacing:-.022em;line-height:1}
-  .panel-head .psub{margin-top:8px;color:var(--mute);font-size:13px;max-width:52ch;line-height:1.55}
+  /* scroll HUD */
+  .hud{position:fixed;left:18px;bottom:15px;z-index:40;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;pointer-events:none;display:flex;gap:8px}
+  .hud .hv{color:var(--mute)}
 
-  /* the two-column body: the diagram (open to the cosmos) + a glass readout */
-  .sys-grid{display:grid;grid-template-columns:1.04fr .96fr;gap:clamp(18px,3vw,52px);align-items:center}
-  .sys-stage{position:relative;width:100%;max-width:558px;aspect-ratio:1/1;justify-self:center}
-  .sys-svg{width:100%;height:100%;display:block;overflow:visible}
-  .sys-svg .plate{stroke:var(--rule);stroke-width:1;opacity:.55;vector-effect:non-scaling-stroke}
-  .sys-svg .cardinal{stroke:var(--faint);stroke-width:1;opacity:.55;vector-effect:non-scaling-stroke}
-  .sys-svg .orbit{stroke:rgba(231,233,238,.2);stroke-width:1;vector-effect:non-scaling-stroke}
-  .sys-svg .tick{stroke:var(--faint);stroke-width:1;opacity:.3;vector-effect:non-scaling-stroke}
-  .sys-svg .arm{stroke:var(--faint);stroke-width:1.2;opacity:.46;vector-effect:non-scaling-stroke;stroke-linejoin:round;stroke-linecap:round}
-  .sys-svg .dot{fill:var(--ink2);transition:fill .35s}
-  .sys-svg .dot.on{fill:var(--amber)}
-  .sys-svg .halo{filter:blur(3px)}
-  .sys-svg .star-core,.sys-svg .gcore{filter:drop-shadow(0 0 7px rgba(var(--amber-rgb),.75))}
-  .sys-svg .nnum{font-family:var(--mono);font-size:12px;letter-spacing:.02em;fill:var(--faint);paint-order:stroke;stroke:var(--ground);stroke-width:3px;stroke-linejoin:round;transition:fill .35s}
-  .sys-svg .nnum.on{fill:var(--amber);font-size:14px}
-
-  /* glass instrument readout */
-  .sys-readout{align-self:center;width:100%;max-height:76svh;overflow-y:auto;padding:24px clamp(20px,1.6vw,28px);border:1px solid var(--rule);border-radius:15px;background:rgba(12,13,16,.5);backdrop-filter:blur(8px) saturate(1.1);-webkit-backdrop-filter:blur(8px) saturate(1.1);scrollbar-width:thin;scrollbar-color:var(--faint) transparent}
-  .sys-readout::-webkit-scrollbar{width:6px}
-  .sys-readout::-webkit-scrollbar-thumb{background:var(--faint);border-radius:6px}
-  .ro-in{animation:roIn .5s var(--ease) both}
-  @keyframes roIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-  .ro-kind{color:var(--amber);opacity:.85;margin-bottom:11px}
-  .ro-title{font-size:clamp(19px,1.9vw,26px);font-weight:500;letter-spacing:-.02em;line-height:1.12}
-  .ro-meta{margin-top:8px;color:var(--mute);text-transform:none;letter-spacing:.02em;font-size:11.5px}
-  .ro-meta .dot{margin:0 8px;color:var(--faint)}
-  .ro-honors{display:flex;flex-wrap:wrap;gap:8px;margin-top:15px}
-  .ro-honors span{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;letter-spacing:.02em;padding:5px 11px;border-radius:999px;animation:roIn .5s var(--ease) both;animation-delay:calc(.05s + var(--ai)*.05s)}
-  .ro-honors .award{color:var(--amber);border:1px solid rgba(var(--amber-rgb),.42)}
-  .ro-honors .grant{color:var(--grant);border:1px solid rgba(var(--grant-rgb),.42)}
-  .ro-honors svg{width:13px;height:13px}
-  .ro-bul{list-style:none;margin-top:17px}
-  .rb{position:relative;padding-left:18px;margin-bottom:11px;font-size:13.5px;line-height:1.62;color:var(--ink2);animation:roIn .5s var(--ease) both;animation-delay:calc(.08s + var(--bi)*.05s)}
-  .rb::before{content:"–";position:absolute;left:0;color:var(--faint)}
-  .rb .rbold{color:var(--ink);font-weight:600}
-  .rb .rlink{color:var(--amber);text-decoration:none;border-bottom:1px solid rgba(var(--amber-rgb),.3)}
-  .ro-stack{display:flex;flex-wrap:wrap;column-gap:8px;row-gap:8px;margin-top:18px}
-  .chip{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:12px;color:var(--ink2);border:1px solid rgba(231,233,238,.22);border-radius:999px;padding:6px 11px;background:rgba(255,255,255,.045);transition:border-color .2s,color .2s}
-  .chip .ic{width:14px;height:14px;flex-shrink:0;background:var(--mute);-webkit-mask:var(--i) center/contain no-repeat;mask:var(--i) center/contain no-repeat;transition:background .2s}
-  .chip:hover{border-color:rgba(var(--amber-rgb),.5);color:var(--ink)}
-  .chip:hover .ic{background:var(--amber)}
-  .ro-links{display:flex;flex-wrap:wrap;gap:8px 16px;margin-top:18px}
-  .ro-link{font-family:var(--mono);font-size:12px;letter-spacing:.02em;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule);padding-bottom:2px;transition:color .2s,border-color .2s}
-  .ro-link:hover{color:var(--amber);border-color:var(--amber)}
-
-  /* footer of each panel: legend (all names) + counter/nav */
-  .sys-foot{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
-  .sys-legend{display:flex;flex-wrap:wrap;gap:7px 12px;flex:1;min-width:0}
-  .sys-leg{display:inline-flex;align-items:baseline;gap:7px;font-family:var(--mono);font-size:12px;letter-spacing:.01em;color:var(--mute);background:none;border:none;border-bottom:1px solid transparent;padding:3px 0;cursor:pointer;transition:color .2s,border-color .2s}
-  .sys-leg .ln{font-size:10px;color:var(--faint)}
-  .sys-leg:hover{color:var(--ink)}
-  .sys-leg.on{color:var(--amber);border-bottom-color:rgba(var(--amber-rgb),.5)}
-  .sys-leg.on .ln{color:var(--amber)}
-  .sys-nav{display:flex;align-items:center;gap:14px;flex-shrink:0}
-  .sys-nav button{width:31px;height:31px;display:grid;place-items:center;border:1px solid var(--rule);border-radius:50%;background:rgba(11,12,14,.35);color:var(--ink);font-size:15px;line-height:1;cursor:pointer;transition:border-color .2s,color .2s}
-  .sys-nav button:hover{border-color:var(--amber);color:var(--amber)}
-  .sys-count{white-space:nowrap;color:var(--mute)}
-
-  /* reveal — header / body / footer rise in when the station arrives */
-  .panel-head,.sys-grid,.sys-foot{opacity:0;transform:translateY(22px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
-  .panel.in .panel-head{opacity:1;transform:none}
-  .panel.in .sys-grid{opacity:1;transform:none;transition-delay:.09s}
-  .panel.in .sys-foot{opacity:1;transform:none;transition-delay:.18s}
-
-  /* ── contact ── */
-  .panel.contact-panel{align-items:center;text-align:center;gap:24px;opacity:0;transform:translateY(22px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
-  .panel.contact-panel.in{opacity:1;transform:none}
-  .contact-panel .c-eyebrow{color:var(--amber)}
-  .contact-panel h2{font-size:clamp(32px,5.4vw,66px);font-weight:300;letter-spacing:-.035em;line-height:1.04}
-  .contact-panel h2 b{font-weight:500}
-  .contact-panel .c-sub{color:var(--mute);max-width:48ch;line-height:1.62;font-size:14.5px}
-  .c-links{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;margin-top:6px}
-  .c-link{font-family:var(--mono);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);text-decoration:none;border:1px solid var(--rule);border-radius:999px;padding:13px 24px;background:rgba(11,12,14,.35);backdrop-filter:blur(6px);transition:border-color .25s,color .25s,transform .25s,box-shadow .25s}
-  .c-link:hover{border-color:var(--amber);color:var(--amber);transform:translateY(-3px);box-shadow:0 10px 26px rgba(var(--amber-rgb),.18)}
-  .c-where{margin-top:20px;color:var(--faint)}
-  .c-where .dot{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--grant);margin-right:7px;vertical-align:middle;box-shadow:0 0 8px var(--grant)}
-
-  /* letterbox — the film moment when crossing a station boundary */
+  /* letterbox region crossings */
   .lbox .lbar{position:fixed;left:0;width:100%;height:9vh;background:#06070a;z-index:60;transform:scaleY(0);transition:transform .55s cubic-bezier(.7,0,.3,1);pointer-events:none}
   .lbox .lbar.top{top:0;transform-origin:top center}
   .lbox .lbar.bot{bottom:0;transform-origin:bottom center}
@@ -196,10 +135,6 @@ const contact = {
   .lbox .card{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:61;font-family:var(--mono);font-size:12px;letter-spacing:.34em;text-transform:uppercase;color:var(--ink);opacity:0;transition:opacity .45s ease .12s;pointer-events:none;white-space:nowrap}
   .lbox.on .card{opacity:1}
   .lbox .card .ax{color:var(--amber)}
-
-  /* scroll readout HUD */
-  .hud{position:fixed;left:18px;bottom:15px;z-index:40;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;pointer-events:none;display:flex;gap:8px}
-  .hud .hv{color:var(--mute)}
 
   /* mode shutter — mirror of the paper site's */
   .shutter{position:fixed;left:0;top:-2vh;width:100%;height:104vh;z-index:200;pointer-events:none;visibility:hidden}
@@ -209,146 +144,122 @@ const contact = {
   @keyframes shCover{to{transform:translateY(0)}}
   @keyframes shReveal{to{transform:translateY(103%)}}
 
-  @media (max-width:880px){
-    /* drop the sticky pin: panels flow as normal full sections (the WebGL still
-       drifts on scroll), so tall readouts never clip inside a centred pin */
-    .station,.station.contact{min-height:auto}
-    .panel{position:static;min-height:auto;justify-content:flex-start;padding:96px clamp(20px,5vw,40px) 72px}
-    .panel.contact-panel{min-height:84svh;justify-content:center}
-    .sys-grid{grid-template-columns:1fr;gap:26px}
-    .sys-stage{max-width:330px;order:-1}
-    .sys-readout{max-height:none}
-  }
-  @media (max-width:760px){
-    .hud{display:none}
-    .panel-head .psub{font-size:12.5px}
-  }
+  /* DOM mirror — visually hidden (present for assistive tech + search), but the
+     full readable page when WebGL is unavailable */
+  .mirror{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);clip-path:inset(50%);white-space:nowrap;border:0}
+  body.no-gl .mirror{position:static;width:auto;height:auto;margin:0;overflow:visible;clip:auto;clip-path:none;white-space:normal;max-width:760px;padding:120px clamp(22px,5vw,40px) 120px}
+  body.no-gl .intro{position:static;opacity:1;min-height:78svh}
+  body.no-gl .mirror h2{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin:54px 0 22px}
+  body.no-gl .mr-item{padding:20px 0;border-top:1px solid var(--rule)}
+  body.no-gl .mr-item h3{font-size:21px;font-weight:500;letter-spacing:-.01em}
+  body.no-gl .mr-meta{font-family:var(--mono);font-size:11.5px;color:var(--mute);margin:6px 0 12px}
+  body.no-gl .mr-item ul{list-style:none}
+  body.no-gl .mr-item li{position:relative;padding-left:16px;margin-bottom:9px;font-size:14px;line-height:1.6;color:var(--ink2)}
+  body.no-gl .mr-item li::before{content:"–";position:absolute;left:0;color:var(--faint)}
+  body.no-gl .mr-item .rbold{color:var(--ink);font-weight:600}
+  body.no-gl .mr-item .rlink{color:var(--amber)}
+  body.no-gl .mr-stack{font-family:var(--mono);font-size:11.5px;color:var(--mute);margin-top:12px}
+  body.no-gl .mr-links{margin-top:10px;display:flex;flex-wrap:wrap;gap:14px}
+  body.no-gl .mr-links a{font-family:var(--mono);font-size:12px;color:var(--ink);text-decoration:none;border-bottom:1px solid var(--rule)}
+
+  @media (max-width:760px){ .hud{display:none} }
   @media (prefers-reduced-motion: reduce){
-    html{scroll-behavior:auto}
-    .panel-head,.sys-grid,.sys-foot,.panel.contact-panel{opacity:1!important;transform:none!important;transition:none}
-    .ro-in,.rb,.ro-honors span{animation:none}
-    .hint::after{animation:none}
+    .intro,.dock{transition:none}
+    .intro .hint::after{animation:none}
   }
 </style>
 </head>
 <body>
 <canvas id="studio-canvas" aria-hidden="true"></canvas>
+<div class="scroll-track" aria-hidden="true"></div>
 
 <div class="bar">
   <span class="m id"><span class="sl">//</span> william jin — 3d</span>
   <a class="exit" href="/">Exit</a>
 </div>
 
-<section class="scn first">
-  <div>
-    <div class="m greet">/ 3d mode — flight 002</div>
-    <h1>The other site.</h1>
-    <p class="sub">One continuous drift through the dust — past the rings, toward the beacon. Three stations on the route: the work as an orrery, the projects as a galaxy, and a way to reach me at the end.</p>
-    <p class="m nogl-note">webgl unavailable — static view</p>
-  </div>
+<div class="intro" id="intro">
+  <div class="m greet">/ 3d mode — flight 002</div>
+  <h1>The other site.</h1>
+  <p class="sub">Scroll to fly the route — past the star system of the work, through the galaxy of projects, to the beacon at the end. The text and the diagrams live out in the dark; you travel through them.</p>
+  <p class="m nogl-note">webgl unavailable — reading view below</p>
   <span class="m hint">scroll to drift</span>
-</section>
+</div>
 
-<!-- 01 — EXPERIENCE: the orrery -->
-<section class="station" id="st-work">
-  <div class="panel" id="sys-work">
-    <header class="panel-head">
-      <span class="pnum">01</span>
-      <div>
-        <div class="pttl">Experience</div>
-        <p class="psub">Four orbits, four roles — each world circling the work. The amber planet is in focus; tour them, or pick one.</p>
-      </div>
-    </header>
-    <div class="sys-grid">
-      <div class="sys-stage" aria-hidden="true"></div>
-      <div class="sys-readout" aria-live="polite"></div>
+<!-- the route's content, mirrored for assistive tech / search / no-webgl -->
+<main class="mirror" id="mirror">
+  {mirror.map((sec) => (
+    <section>
+      <h2>{sec.heading}</h2>
+      {sec.items.map((e) => (
+        <article class="mr-item">
+          <h3>{e.title}</h3>
+          <div class="mr-meta">{[e.role || e.subtitle, e.location, e.dateLabel].filter(Boolean).join(' · ')}</div>
+          <ul>{e.bulletsHtml.map((h) => <li set:html={h} />)}</ul>
+          {e.stack.length > 0 && <div class="mr-stack">{e.stack.join(' · ')}</div>}
+          {e.links.length > 0 && (
+            <div class="mr-links">{e.links.map((l) => <a href={l.href} target="_blank" rel="noreferrer">{l.label} ↗</a>)}</div>
+          )}
+        </article>
+      ))}
+    </section>
+  ))}
+  <section>
+    <h2>03 — Contact</h2>
+    <div class="mr-links">
+      <a href={contact.email}>Email ↗</a>
+      <a href={contact.github} target="_blank" rel="noreferrer">GitHub ↗</a>
+      <a href={contact.linkedin} target="_blank" rel="noreferrer">LinkedIn ↗</a>
+      <a href={contact.devpost} target="_blank" rel="noreferrer">Devpost ↗</a>
     </div>
-    <div class="sys-foot">
-      <div class="sys-legend" role="tablist" aria-label="experience"></div>
-      <div class="sys-nav"><button class="sys-prev" aria-label="previous">‹</button><span class="sys-count m"></span><button class="sys-next" aria-label="next">›</button></div>
-    </div>
+  </section>
+</main>
+
+<div class="dock" id="dock">
+  <span class="m dk-eyebrow">station 03 · contact</span>
+  <div class="dk-links">
+    <a class="dk-link" href={contact.email}>Email</a>
+    <a class="dk-link" href={contact.github} target="_blank" rel="noreferrer">GitHub</a>
+    <a class="dk-link" href={contact.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+    <a class="dk-link" href={contact.devpost} target="_blank" rel="noreferrer">Devpost</a>
   </div>
-</section>
+</div>
 
-<!-- 02 — PROJECTS: the galaxy -->
-<section class="station" id="st-proj">
-  <div class="panel" id="sys-projects">
-    <header class="panel-head">
-      <span class="pnum">02</span>
-      <div>
-        <div class="pttl">Projects</div>
-        <p class="psub">A spiral arm of what I've built — the newest rides the frontier, the earliest near the core. The lit star is in focus.</p>
-      </div>
-    </header>
-    <div class="sys-grid">
-      <div class="sys-stage" aria-hidden="true"></div>
-      <div class="sys-readout" aria-live="polite"></div>
-    </div>
-    <div class="sys-foot">
-      <div class="sys-legend" role="tablist" aria-label="projects"></div>
-      <div class="sys-nav"><button class="sys-prev" aria-label="previous">‹</button><span class="sys-count m"></span><button class="sys-next" aria-label="next">›</button></div>
-    </div>
-  </div>
-</section>
-
-<!-- 03 — CONTACT: the beacon -->
-<section class="station contact" id="st-contact">
-  <div class="panel contact-panel" data-reveal>
-    <div class="m c-eyebrow">station 03 · contact</div>
-    <h2>You reached the <b>beacon</b>.</h2>
-    <p class="c-sub">Second-year software engineering at Waterloo, building agentic systems and the web around them. If any of this resonates, the channel's open.</p>
-    <div class="c-links">
-      <a class="c-link" href={contact.email}>Email</a>
-      <a class="c-link" href={contact.github} target="_blank" rel="noreferrer">GitHub</a>
-      <a class="c-link" href={contact.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
-      <a class="c-link" href={contact.devpost} target="_blank" rel="noreferrer">Devpost</a>
-    </div>
-    <div class="m c-where"><span class="dot"></span>based in Waterloo, ON</div>
-  </div>
-</section>
-
-<div class="hud" aria-hidden="true"><span>scroll</span><span class="hv" id="hud-scroll">0%</span></div>
-
+<div class="hud" aria-hidden="true"><span>route</span><span class="hv" id="hud-scroll">0%</span></div>
 <div class="lbox" id="lbox" aria-hidden="true"><i class="lbar top"></i><i class="lbar bot"></i><span class="card" id="lbcard"></span></div>
-
 <div class="shutter" id="shutter" aria-hidden="true"><span class="sedge"></span></div>
 
-<script is:inline type="application/json" id="studio-data" set:html={studioJson}></script>
+<script is:inline type="application/json" id="studio-data" set:html={sceneJson}></script>
 <script>
-  // Bundled modules (Vite tree-shakes three.js). If the renderer can't be
-  // constructed, degrade to the static dark page — the content layer still runs.
-  import { initDriftScene } from '../scripts/drift-scene';
-  import { initStudioContent } from '../scripts/studio-content';
+  import { initStudioScene } from '../scripts/studio-scene';
   const c = document.getElementById('studio-canvas');
   if (c instanceof HTMLCanvasElement) {
-    try { initDriftScene(c); } catch { document.body.classList.add('no-gl'); }
+    try { initStudioScene(c); } catch (err) { console.error(err); document.body.classList.add('no-gl'); }
   } else {
     document.body.classList.add('no-gl');
   }
-  initStudioContent();
 </script>
 <script is:inline>
-  const hudScroll=document.getElementById('hud-scroll');
-  function updScroll(){const h=document.documentElement;const max=(h.scrollHeight-innerHeight)||1;hudScroll.textContent=Math.round(Math.max(0,Math.min(1,h.scrollTop/max))*100)+'%';}
-  addEventListener('scroll',updScroll,{passive:true}); updScroll();
+  const hud=document.getElementById('hud-scroll'), intro=document.getElementById('intro'), dock=document.getElementById('dock');
+  function onScroll(){
+    const h=document.documentElement, max=(h.scrollHeight-innerHeight)||1, p=Math.max(0,Math.min(1,h.scrollTop/max));
+    hud.textContent=Math.round(p*100)+'%';
+    intro.classList.toggle('gone', p>0.02);
+    dock.classList.toggle('show', p>0.9);
+  }
+  addEventListener('scroll',onScroll,{passive:true}); onScroll();
 
   // mode shutter — reveal on arrival from the paper site; cover on exit
   (()=>{
-    const sh=document.getElementById('shutter');
-    if(!sh)return;
+    const sh=document.getElementById('shutter'); if(!sh)return;
     const rm=matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if(!rm && sessionStorage.getItem('wj-transit')==='down'){
-      sh.classList.add('reveal');
-      sh.addEventListener('animationend',()=>sh.classList.remove('reveal'),{once:true});
-    }
+    if(!rm && sessionStorage.getItem('wj-transit')==='down'){ sh.classList.add('reveal'); sh.addEventListener('animationend',()=>sh.classList.remove('reveal'),{once:true}); }
     sessionStorage.removeItem('wj-transit');
     const exit=document.querySelector('a.exit');
     if(exit)exit.addEventListener('click',e=>{
       if(rm||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey||e.button)return;
-      e.preventDefault();
-      if(sh.classList.contains('cover'))return;
-      sessionStorage.setItem('wj-transit','up');
-      sh.classList.add('cover');
+      e.preventDefault(); if(sh.classList.contains('cover'))return;
+      sessionStorage.setItem('wj-transit','up'); sh.classList.add('cover');
       sh.addEventListener('animationend',()=>{location.href=exit.href;},{once:true});
     });
     addEventListener('pageshow',e=>{if(e.persisted)sh.classList.remove('cover','reveal');});
