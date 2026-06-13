@@ -55,8 +55,9 @@ const MOTE_N = 260;        // near dust motes (streaming tube)
 const BANK_N = 13;         // nebula banks, desktop
 const BANK_N_M = 7;        //   …mobile
 
-// ── hero flyby
-const PLANET_P = 0.60;     // progress of closest approach
+// ── hero flyby — peaks in the work→projects transition (a spectacle while
+// scrolling between stations), then recedes so the Projects readout sits clear.
+const PLANET_P = 0.50;     // progress of closest approach
 const PLANET_R = 11;
 const PLANET_OFF_X = 55;   // lateral offset from the path
 const PLANET_OFF_Y = 14;
@@ -66,10 +67,12 @@ const BEACON_Z = -290;
 
 // ── stations: boundary progress + title card. Crossing one triggers the
 // letterbox moment; look-at keyframes compose the camera per stretch.
+// p-values are the scroll-fraction centres of the pinned content stations in
+// 3d.astro (hero 100svh + two 178svh stations + a 150svh contact ≈ 0.27/0.62/0.95).
 const STATIONS = [
-  { p: 0.32, card: '01', name: 'WORK' },
-  { p: 0.64, card: '02', name: 'PLAY' },
-  { p: 0.96, card: '03', name: 'CONTACT' },
+  { p: 0.27, card: '01', name: 'EXPERIENCE' },
+  { p: 0.62, card: '02', name: 'PROJECTS' },
+  { p: 0.95, card: '03', name: 'CONTACT' },
 ];
 const LB_HOLD = 1500;      // ms the letterbox stays before retracting
 const FOCUS_ZONE = 0.06;   // |p - station| inside which focus racks near
@@ -78,9 +81,9 @@ const FOCUS_FAR = 44;      // cruising focus distance (world units)
 const FOCUS_NEAR = 16;     // station focus distance
 const LOOK_KEYS = [        // per-progress look-at bias: [p, lateral, vertical]
   [0.00, 0.0, 0.4],
-  [0.32, -2.5, -0.8],      // Work: bank left into the dust
-  [0.50, 2.0, 0.8],        // start leaning toward the planet side
-  [0.64, 3.5, 1.2],        // Play: the flyby
+  [0.27, -2.5, -0.8],      // Experience: bank left into the dust
+  [0.44, 3.2, 1.1],        // the flyby — lean into the ringed giant
+  [0.62, 0.6, 0.5],        // Projects: planet receding, settle forward
   [0.82, 0.0, 0.4],
   [1.00, 0.5, 1.6],        // Contact: lift toward the beacon
 ];
@@ -109,7 +112,7 @@ function rollOf(p: number): number {
 
 // Look-at weight toward the planet through the flyby window.
 function flybyW(p: number): number {
-  return ss(0.40, 0.54, p) * (1 - ss(0.68, 0.82, p)) * 0.6;
+  return ss(0.30, 0.44, p) * (1 - ss(0.56, 0.70, p)) * 0.6;
 }
 
 function lookBias(p: number): [number, number] {
