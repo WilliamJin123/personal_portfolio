@@ -81,12 +81,12 @@ const links = {
 
   header{padding:26px 0 16px;border-bottom:1px dashed var(--rule)}
   .hd{display:flex;justify-content:space-between;align-items:center}
-  .id{display:flex;align-items:center;gap:13px}
-  /* monogram — WJ initials (amber J), set in the mono face to match the
-     "William Jin" wordmark beside it */
-  .mark{width:30px;height:30px;border-radius:8px;background:var(--paper2);border:1px solid var(--rule);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:600;letter-spacing:.03em;color:var(--ink)}
-  .mark .mk-j{color:var(--amber)}
-  .id .nm{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+  .id{display:flex;align-items:center}
+  /* wordmark — the name is the mark; one amber full-stop is the only accent
+     (restraint over a boxed monogram, which read as template-y). */
+  .id .nm{font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink);text-decoration:none;transition:color .3s ease}
+  .id .nm .dot{color:var(--amber)}
+  .id .nm:hover{color:var(--ink)}
 
   nav{display:flex;gap:12px}
   .nl{position:relative;display:inline-block;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink);text-decoration:none;padding:9px 15px;border-radius:7px}
@@ -133,10 +133,14 @@ const links = {
   .int-grid{margin-top:34px;display:grid;grid-template-columns:1.7fr 1fr;gap:clamp(28px,4vw,64px);align-items:center}
   .int-grid>*{min-width:0}
   .int-vis{position:relative;aspect-ratio:1/1;width:100%;max-width:660px;justify-self:start}
+  /* a soft pool of calm under the instrument so the page's background mesh
+     recedes behind the hairlines — feathered to transparent, no panel edge */
+  .int-vis::before{content:"";position:absolute;inset:-4%;z-index:0;pointer-events:none;
+    background:radial-gradient(58% 58% at 50% 50%,var(--paper) 0%,var(--paper) 46%,rgba(236,238,241,0) 78%)}
   /* three hairline instrument diagrams, cross-faded one at a time (the active
      one mirrors the .live bullet). Shared grammar: ink hairlines, miter joins,
      faint guides, a single slow amber accent in motion — restraint over flash. */
-  .ifig{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity 1s ease}
+  .ifig{position:absolute;inset:0;z-index:1;width:100%;height:100%;opacity:0;transition:opacity 1s ease}
   .ifig.active{opacity:1}
   .ifig *{vector-effect:non-scaling-stroke}
   .ifig .hair{stroke:var(--ink2);stroke-width:1.1;stroke-linejoin:miter;stroke-linecap:square}
@@ -149,7 +153,6 @@ const links = {
   .ifig .trace,.ifig .g-path{stroke:var(--ink2);stroke-width:1.1;fill:none;opacity:.42;stroke-linejoin:miter}
   .ifig .floor{stroke:var(--faint);stroke-width:1;stroke-dasharray:2 6;opacity:.6}
   .ifig .tool-on{stroke:var(--amber);opacity:.85}
-  .ifig .g-gauge{stroke:var(--amber);stroke-width:1.6;fill:none;opacity:.7;stroke-dasharray:40 100;stroke-dashoffset:0}
   /* the single moving accent per figure — slow, low, never loud */
   .ifig .g-token{offset-path:path('M 300 157 A 128 128 0 1 1 299.99 157 Z');offset-distance:33%;offset-rotate:0deg;opacity:0}
   .ifig.active .g-token{opacity:.9;animation:wjOrbit 17s linear infinite}
@@ -400,8 +403,7 @@ const links = {
   <header>
     <div class="hd">
       <div class="id">
-        <span class="mark" aria-hidden="true">W<span class="mk-j">J</span></span>
-        <span class="nm">William Jin</span>
+        <a class="nm" href="/" aria-label="William Jin — home">William Jin<span class="dot">.</span></a>
       </div>
       <nav>
         <a class="nl" href={links.cv}><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">CV</span></a>
@@ -433,7 +435,6 @@ const links = {
              amber token orbiting; the act node fires a tool as the token passes,
              and a centre gauge fills as context accrues over each lap. -->
         <svg class="ifig" data-fig="0" viewBox="0 0 600 600" fill="none" preserveAspectRatio="xMidYMid meet">
-          <circle class="faint" cx="300" cy="285" r="206" opacity=".4"/>
           <!-- tool stations -->
           <text class="lbl" x="492" y="262" text-anchor="middle">tools</text>
           <path class="faint" d="M 411 349 L 484 341"/>
@@ -445,9 +446,8 @@ const links = {
           <path class="hair arrow" transform="translate(410.9 221) rotate(60)" d="M -8 -6 L 1 0 L -8 6"/>
           <path class="hair arrow" transform="translate(300 413) rotate(180)" d="M -8 -6 L 1 0 L -8 6"/>
           <path class="hair arrow" transform="translate(189.1 221) rotate(-60)" d="M -8 -6 L 1 0 L -8 6"/>
-          <!-- centre context gauge -->
+          <!-- centre: context accruing at the heart of the loop -->
           <circle class="faint" cx="300" cy="285" r="44" opacity=".55"/>
-          <circle class="g-gauge" cx="300" cy="285" r="44" pathLength="100"/>
           <text class="lbl tiny" x="300" y="289" text-anchor="middle">ctx</text>
           <!-- nodes -->
           <circle class="hair pap" cx="300" cy="157" r="6"/>
@@ -492,7 +492,7 @@ const links = {
         <!-- 03 MACHINE LEARNING · the descent: gradient descent steps across a
              loss landscape (nested level-sets) and settles into the minimum. -->
         <svg class="ifig" data-fig="2" viewBox="0 0 600 600" fill="none" preserveAspectRatio="xMidYMid meet">
-          <path class="faint" d="M 72 88 L 72 540 L 540 540" opacity=".5"/>
+          <path class="faint" d="M 72 88 L 72 540 L 540 540" opacity=".8"/>
           <text class="lbl" x="86" y="104">loss</text>
           <text class="lbl tiny" x="528" y="562" text-anchor="end">steps</text>
           <!-- irreducible-loss floor -->
@@ -705,7 +705,7 @@ const links = {
   let cux=innerWidth/2, cuy=innerHeight/2, ctx=cux, cty=cuy;
   if(curOn){
     addEventListener('pointermove',e=>{ctx=e.clientX;cty=e.clientY;},{passive:true});
-    const sel='a,button,.chips span,.lg,.nl,.pill a,.mark,.int-vis';
+    const sel='a,button,.chips span,.lg,.nl,.pill a,.int-vis';
     addEventListener('pointerover',e=>{if(e.target.closest&&e.target.closest(sel))cur.classList.add('lock');});
     addEventListener('pointerout',e=>{const t=e.target.closest&&e.target.closest(sel);const r=e.relatedTarget&&e.relatedTarget.closest&&e.relatedTarget.closest(sel);if(t&&!r)cur.classList.remove('lock');});
   }
