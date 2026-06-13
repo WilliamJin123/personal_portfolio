@@ -133,8 +133,38 @@ const links = {
   .int-title .sl{color:var(--amber)}
   .int-grid{margin-top:34px;display:grid;grid-template-columns:1.7fr 1fr;gap:clamp(28px,4vw,64px);align-items:center}
   .int-grid>*{min-width:0}
-  .int-vis{position:relative;aspect-ratio:1/1;width:100%;max-width:720px;justify-self:start}
-  .int-vis canvas{display:block;width:100%;height:100%}
+  .int-vis{position:relative;aspect-ratio:1/1;width:100%;max-width:660px;justify-self:start}
+  /* three hairline instrument diagrams, cross-faded one at a time (the active
+     one mirrors the .live bullet). Shared grammar: ink hairlines, miter joins,
+     faint guides, a single slow amber accent in motion — restraint over flash. */
+  .ifig{position:absolute;inset:0;width:100%;height:100%;opacity:0;transition:opacity 1s ease}
+  .ifig.active{opacity:1}
+  .ifig *{vector-effect:non-scaling-stroke}
+  .ifig .hair{stroke:var(--ink2);stroke-width:1.1;stroke-linejoin:miter;stroke-linecap:square}
+  .ifig .faint{stroke:var(--faint);stroke-width:1;stroke-linejoin:miter}
+  .ifig .pap{fill:var(--paper)}
+  .ifig .ambf{fill:var(--amber)}
+  .ifig text{fill:var(--faint);font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;text-transform:uppercase}
+  .ifig .tiny{font-size:10px;letter-spacing:.1em}
+  .ifig .lk{fill:var(--mute)}
+  .ifig .ctr{stroke:var(--faint);fill:none}
+  .ifig .c4{opacity:.26}.ifig .c3{opacity:.34}.ifig .c2{opacity:.44}.ifig .c1{opacity:.56}.ifig .c0{opacity:.72}
+  .ifig .trace,.ifig .g-path{stroke:var(--ink2);stroke-width:1.1;fill:none;opacity:.42;stroke-linejoin:miter}
+  .ifig .g-min{stroke:var(--amber);stroke-width:1.2;fill:none;opacity:.8}
+  .ifig .tool-on{stroke:var(--amber);opacity:.85}
+  .ifig .g-gauge{stroke:var(--amber);stroke-width:1.6;fill:none;opacity:.7;stroke-dasharray:40 100;stroke-dashoffset:0}
+  /* the single moving accent per figure — slow, low, never loud */
+  .ifig .g-token{offset-path:path('M 300 157 A 128 128 0 1 1 299.99 157 Z');offset-distance:33%;offset-rotate:0deg;opacity:0}
+  .ifig.active .g-token{opacity:.9;animation:wjOrbit 17s linear infinite}
+  @keyframes wjOrbit{from{offset-distance:0%}to{offset-distance:100%}}
+  .ifig .g-head{offset-path:path('M 150 70 L 150 130 L 230 130 L 230 250 L 300 250 L 300 370 L 360 370 L 360 490 L 300 490 L 440 490 L 440 370 L 440 250 L 440 130 L 440 82');offset-distance:100%;opacity:0}
+  .ifig.active .g-head{opacity:.9;animation:wjTrace 19s ease-in-out infinite}
+  @keyframes wjTrace{0%{offset-distance:0%;opacity:0}6%{opacity:.9}82%{offset-distance:100%;opacity:.9}90%,100%{offset-distance:100%;opacity:0}}
+  .ifig .g-step{offset-path:path('M 120 96 L 149 252 L 243 243 L 253 299 L 287 296 L 291 316 L 303 315 L 304 323 L 309 322 L 309 325');offset-distance:100%;opacity:0}
+  .ifig.active .g-step{opacity:.9;animation:wjDescend 18s ease-in-out infinite}
+  @keyframes wjDescend{0%{offset-distance:0%;opacity:0}6%{opacity:.9}26%{offset-distance:40%}43%{offset-distance:64%}54%{offset-distance:79%}61%{offset-distance:88%}68%{offset-distance:94%}76%{offset-distance:100%}88%{offset-distance:100%;opacity:.9}96%,100%{offset-distance:100%;opacity:0}}
+  .int-vis.paused .ifig *{animation-play-state:paused!important}
+  @media (prefers-reduced-motion:reduce){.ifig .g-token,.ifig .g-head,.ifig .g-step{animation:none!important}}
   .int-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:clamp(36px,5.5vh,64px)}
   .int-item{display:flex;align-items:flex-start;gap:18px;will-change:transform,opacity}
   .int-num{flex-shrink:0;font-size:11px;letter-spacing:.14em;color:var(--faint);padding-top:6px;transition:color .45s ease}
@@ -404,11 +434,92 @@ const links = {
   <div class="wrap">
     <div class="int-head"><span class="m int-title"><span class="sl">//</span> I'm interested in</span></div>
     <div class="int-grid">
-      <div class="int-vis"><canvas id="interests-canvas" aria-hidden="true"></canvas></div>
+      <div class="int-vis" aria-hidden="true">
+
+        <!-- 01 AGENTIC · the loop: a 3-phase cycle (reason→act→observe) with an
+             amber token orbiting; the act node fires a tool as the token passes,
+             and a centre gauge fills as context accrues over each lap. -->
+        <svg class="ifig" data-fig="0" viewBox="0 0 600 600" fill="none" preserveAspectRatio="xMidYMid meet">
+          <circle class="faint" cx="300" cy="285" r="206" opacity=".4"/>
+          <!-- tool stations -->
+          <text class="lbl" x="492" y="262" text-anchor="middle">tools</text>
+          <path class="faint" d="M 411 349 L 484 341"/>
+          <rect class="hair pap" x="476" y="289" width="16" height="16"/>
+          <rect class="hair tool-on pap" x="476" y="333" width="16" height="16"/>
+          <rect class="hair pap" x="476" y="377" width="16" height="16"/>
+          <!-- the cycle -->
+          <path class="hair" d="M 300 157 A 128 128 0 1 1 299.99 157 Z"/>
+          <path class="hair arrow" transform="translate(410.9 221) rotate(60)" d="M -8 -6 L 1 0 L -8 6"/>
+          <path class="hair arrow" transform="translate(300 413) rotate(180)" d="M -8 -6 L 1 0 L -8 6"/>
+          <path class="hair arrow" transform="translate(189.1 221) rotate(-60)" d="M -8 -6 L 1 0 L -8 6"/>
+          <!-- centre context gauge -->
+          <circle class="faint" cx="300" cy="285" r="44" opacity=".55"/>
+          <circle class="g-gauge" cx="300" cy="285" r="44" pathLength="100"/>
+          <text class="lbl tiny" x="300" y="289" text-anchor="middle">ctx</text>
+          <!-- nodes -->
+          <circle class="hair pap" cx="300" cy="157" r="6"/>
+          <circle class="hair pap" cx="410.9" cy="349" r="6"/>
+          <circle class="hair pap" cx="189.1" cy="349" r="6"/>
+          <text class="lbl lk" x="300" y="138" text-anchor="middle">reason</text>
+          <text class="lbl lk" x="410.9" y="376" text-anchor="middle">act</text>
+          <text class="lbl lk" x="189.1" y="376" text-anchor="middle">observe</text>
+          <!-- one quiet amber token, slowly orbiting -->
+          <circle class="g-token ambf" r="5"/>
+        </svg>
+
+        <!-- 02 FULL STACK · the trace: a request steps down through the lanes
+             (client→edge→server→data), commits at the store, and the response
+             climbs back up to paint a fresh line into the UI card. -->
+        <svg class="ifig" data-fig="1" viewBox="0 0 600 600" fill="none" preserveAspectRatio="xMidYMid meet">
+          <line class="faint" x1="72" y1="130" x2="528" y2="130"/>
+          <line class="faint" x1="72" y1="250" x2="528" y2="250"/>
+          <line class="faint" x1="72" y1="370" x2="528" y2="370"/>
+          <line class="faint" x1="72" y1="490" x2="528" y2="490"/>
+          <text class="lbl" x="72" y="118">client</text>
+          <text class="lbl" x="72" y="238">edge</text>
+          <text class="lbl" x="72" y="358">server</text>
+          <text class="lbl" x="72" y="478">data</text>
+          <text class="lbl tiny" x="528" y="118" text-anchor="end">01</text>
+          <text class="lbl tiny" x="528" y="238" text-anchor="end">02</text>
+          <text class="lbl tiny" x="528" y="358" text-anchor="end">03</text>
+          <text class="lbl tiny" x="528" y="478" text-anchor="end">04</text>
+          <!-- data store -->
+          <ellipse class="hair pap" cx="300" cy="476" rx="26" ry="7.5"/>
+          <path class="hair" d="M 274 476 L 274 504 A 26 7.5 0 0 0 326 504 L 326 476"/>
+          <!-- UI card the response paints into -->
+          <rect class="hair pap" x="406" y="58" width="74" height="48" rx="4"/>
+          <line class="faint" x1="416" y1="76" x2="470" y2="76"/>
+          <line class="faint" x1="416" y1="90" x2="452" y2="90"/>
+          <!-- the trace (static hairline) + one slow amber head -->
+          <path class="trace" d="M 150 70 L 150 130 L 230 130 L 230 250 L 300 250 L 300 370 L 360 370 L 360 490 L 300 490 L 440 490 L 440 370 L 440 250 L 440 130 L 440 82"/>
+          <circle class="g-head ambf" r="4.4"/>
+          <text class="lbl lk" x="150" y="58" text-anchor="middle">req</text>
+        </svg>
+
+        <!-- 03 MACHINE LEARNING · the descent: gradient descent steps across a
+             loss landscape (nested level-sets) and settles into the minimum. -->
+        <svg class="ifig" data-fig="2" viewBox="0 0 600 600" fill="none" preserveAspectRatio="xMidYMid meet">
+          <path class="faint" d="M 72 88 L 72 540 L 540 540" opacity=".5"/>
+          <text class="lbl" x="86" y="104">∇ loss</text>
+          <path class="ctr c4" d="M561.2 226.5 C562.9 228.8 567.9 235.5 571.0 240.3 C574.1 245.1 577.3 250.0 579.9 255.2 C582.6 260.4 585.1 265.9 587.0 271.6 C588.8 277.3 590.2 283.3 590.8 289.4 C591.4 295.6 591.4 302.1 590.6 308.6 C589.8 315.2 588.2 322.0 585.9 328.8 C583.7 335.5 580.6 342.5 577.0 349.3 C573.4 356.1 569.1 363.0 564.5 369.8 C559.9 376.6 554.7 383.3 549.4 390.0 C544.0 396.7 538.3 403.4 532.5 410.1 C526.6 416.8 520.6 423.4 514.3 430.2 C508.0 436.9 501.5 443.7 494.7 450.6 C487.9 457.4 480.9 464.4 473.4 471.2 C465.8 478.1 458.0 485.1 449.6 491.8 C441.1 498.5 432.2 505.2 422.8 511.4 C413.4 517.5 403.3 523.6 393.0 528.8 C382.6 534.0 371.7 538.8 360.7 542.6 C349.8 546.5 338.3 549.6 327.2 551.8 C316.1 553.9 304.8 555.1 294.1 555.4 C283.4 555.7 272.7 555.0 262.9 553.5 C253.1 552.1 243.7 549.6 235.1 546.7 C226.5 543.8 218.6 540.0 211.4 536.1 C204.2 532.2 197.7 527.7 191.7 523.3 C185.7 518.9 180.5 514.2 175.4 509.8 C170.3 505.4 165.8 500.9 161.3 496.7 C156.8 492.5 152.7 488.5 148.4 484.7 C144.1 480.9 139.9 477.3 135.7 473.9 C131.4 470.4 127.1 467.1 122.8 463.8 C118.5 460.5 114.1 457.4 109.8 454.0 C105.6 450.7 101.3 447.4 97.3 443.8 C93.2 440.3 89.3 436.6 85.6 432.7 C82.0 428.8 78.5 424.8 75.3 420.5 C72.1 416.3 69.2 411.8 66.4 407.2 C63.6 402.6 61.2 397.8 58.7 392.9 C56.3 387.9 54.1 382.8 51.9 377.5 C49.7 372.2 47.7 366.7 45.7 360.9 C43.7 355.2 41.8 349.2 40.2 342.9 C38.5 336.6 37.0 330.1 36.0 323.2 C35.0 316.3 34.1 309.1 34.2 301.6 C34.3 294.1 34.8 286.2 36.4 278.2 C38.0 270.2 40.3 261.9 43.8 253.7 C47.3 245.5 51.9 237.0 57.6 229.0 C63.2 220.9 70.1 212.9 77.9 205.4 C85.6 198.0 94.6 190.8 104.2 184.3 C113.7 177.9 124.3 171.9 135.1 166.8 C145.8 161.6 157.4 157.1 168.7 153.4 C180.1 149.6 191.9 146.6 203.3 144.1 C214.7 141.6 226.1 139.9 237.1 138.4 C248.0 136.9 258.8 136.0 269.1 135.2 C279.4 134.4 289.3 134.0 299.0 133.6 C308.7 133.1 318.0 132.8 327.1 132.5 C336.3 132.2 345.1 131.9 353.9 131.6 C362.7 131.4 371.4 131.1 379.9 131.0 C388.5 130.9 397.0 130.8 405.3 131.0 C413.7 131.3 422.0 131.7 429.9 132.5 C437.9 133.3 445.8 134.5 453.1 136.1 C460.5 137.7 467.7 139.7 474.2 142.2 C480.8 144.6 487.0 147.6 492.6 150.8 C498.3 154.0 503.4 157.7 508.1 161.5 C512.8 165.4 517.0 169.6 521.0 173.8 C524.9 178.0 528.4 182.4 531.9 186.7 C535.4 191.1 538.5 195.5 541.8 199.9 C545.0 204.3 548.2 208.7 551.4 213.1 C554.7 217.5 559.6 224.2 561.2 226.5 Z"/>
+          <path class="ctr c3" d="M502.8 249.8 C503.1 251.9 503.7 258.2 504.2 262.4 C504.7 266.6 505.3 270.7 505.8 274.8 C506.3 279.0 507.0 283.1 507.5 287.3 C507.9 291.5 508.5 295.8 508.7 300.2 C508.9 304.6 509.0 309.1 508.6 313.8 C508.2 318.4 507.5 323.2 506.3 328.0 C505.0 332.8 503.3 337.7 501.1 342.6 C498.8 347.5 496.0 352.5 492.7 357.3 C489.4 362.2 485.5 367.0 481.3 371.7 C477.1 376.3 472.4 380.9 467.6 385.3 C462.8 389.8 457.6 394.1 452.4 398.3 C447.2 402.5 441.8 406.6 436.3 410.8 C430.9 414.9 425.5 419.0 420.0 423.2 C414.4 427.3 408.9 431.5 403.2 435.9 C397.5 440.3 391.7 444.7 385.7 449.3 C379.6 453.8 373.4 458.6 366.8 463.2 C360.2 467.9 353.3 472.7 346.0 477.2 C338.7 481.8 331.1 486.4 323.1 490.5 C315.1 494.6 306.7 498.6 298.3 501.9 C289.8 505.2 280.9 508.1 272.3 510.2 C263.6 512.4 254.7 514.0 246.2 514.8 C237.8 515.6 229.3 515.7 221.5 515.1 C213.6 514.5 206.0 513.1 199.1 511.2 C192.2 509.3 185.7 506.7 179.9 503.8 C174.0 500.8 168.8 497.3 164.1 493.6 C159.4 489.9 155.3 485.7 151.6 481.6 C147.9 477.4 144.7 473.0 141.9 468.7 C139.0 464.3 136.6 459.8 134.4 455.4 C132.2 451.0 130.3 446.5 128.7 442.1 C127.1 437.6 125.8 433.2 124.7 428.8 C123.6 424.3 122.8 419.9 122.3 415.4 C121.9 410.9 121.7 406.4 121.9 401.9 C122.0 397.4 122.5 392.9 123.3 388.4 C124.1 383.9 125.3 379.4 126.6 375.0 C128.0 370.5 129.6 366.1 131.3 361.8 C133.0 357.4 134.9 353.2 136.6 349.0 C138.4 344.8 140.2 340.7 141.8 336.6 C143.3 332.5 144.8 328.5 146.0 324.3 C147.2 320.2 148.2 316.0 149.1 311.7 C149.9 307.3 150.5 302.9 151.2 298.1 C151.9 293.4 152.4 288.4 153.2 283.2 C154.1 277.9 154.9 272.4 156.4 266.7 C157.9 260.9 159.6 254.9 162.1 248.8 C164.6 242.7 167.6 236.3 171.4 230.2 C175.2 224.0 179.8 217.7 185.1 211.8 C190.4 205.9 196.5 200.0 203.1 194.8 C209.7 189.5 217.2 184.5 224.8 180.2 C232.5 175.8 240.8 172.0 249.2 168.7 C257.5 165.5 266.2 162.8 274.8 160.7 C283.4 158.5 292.1 157.0 300.5 155.9 C309.0 154.8 317.4 154.2 325.5 153.8 C333.6 153.5 341.5 153.6 349.1 153.8 C356.8 154.0 364.2 154.6 371.5 155.2 C378.7 155.8 385.8 156.6 392.6 157.6 C399.5 158.5 406.2 159.6 412.7 160.8 C419.2 162.1 425.5 163.5 431.6 165.1 C437.6 166.8 443.5 168.7 448.9 170.8 C454.4 173.0 459.6 175.5 464.3 178.3 C469.0 181.0 473.4 184.1 477.2 187.5 C481.0 190.9 484.3 194.6 487.1 198.4 C490.0 202.3 492.2 206.4 494.1 210.6 C496.1 214.8 497.4 219.3 498.6 223.6 C499.8 228.0 500.5 232.4 501.2 236.8 C501.9 241.2 502.6 247.6 502.8 249.8 Z"/>
+          <path class="ctr c2" d="M465.9 264.5 C465.5 266.4 464.4 272.2 463.5 275.9 C462.6 279.6 461.4 283.3 460.3 286.8 C459.2 290.4 458.1 293.9 457.0 297.3 C455.9 300.7 454.9 304.1 453.9 307.4 C452.8 310.7 451.9 314.0 450.9 317.3 C450.0 320.7 449.0 324.0 447.9 327.4 C446.7 330.8 445.6 334.2 444.1 337.6 C442.6 341.0 440.9 344.5 438.8 348.0 C436.8 351.4 434.4 354.9 431.7 358.3 C429.0 361.6 425.9 365.0 422.5 368.1 C419.2 371.3 415.4 374.4 411.5 377.2 C407.6 380.1 403.3 382.8 399.0 385.3 C394.8 387.9 390.3 390.2 385.8 392.5 C381.4 394.7 376.9 396.8 372.4 398.8 C368.0 400.9 363.6 402.9 359.2 404.9 C354.7 406.9 350.4 409.0 346.0 411.1 C341.6 413.2 337.2 415.4 332.6 417.8 C328.1 420.1 323.5 422.6 318.7 425.0 C313.9 427.5 308.9 430.2 303.7 432.7 C298.4 435.2 293.0 437.8 287.4 440.2 C281.7 442.6 275.8 444.9 269.9 446.9 C263.9 448.9 257.7 450.7 251.7 452.0 C245.6 453.4 239.4 454.4 233.4 455.0 C227.4 455.5 221.5 455.6 215.9 455.3 C210.3 455.0 204.9 454.2 199.9 453.0 C194.9 451.9 190.1 450.3 185.8 448.4 C181.5 446.5 177.6 444.2 174.0 441.7 C170.4 439.2 167.2 436.5 164.4 433.6 C161.5 430.6 159.0 427.5 156.8 424.3 C154.6 421.1 152.7 417.7 151.1 414.3 C149.6 410.8 148.3 407.2 147.4 403.6 C146.5 400.0 145.9 396.2 145.7 392.4 C145.5 388.6 145.7 384.7 146.4 380.8 C147.0 376.9 148.1 372.9 149.6 368.9 C151.1 364.9 153.1 360.9 155.4 357.0 C157.8 353.1 160.6 349.2 163.7 345.5 C166.7 341.7 170.2 338.1 173.8 334.6 C177.3 331.2 181.2 327.8 184.9 324.7 C188.6 321.6 192.4 318.6 196.0 315.8 C199.5 313.0 203.0 310.3 206.2 307.7 C209.4 305.0 212.4 302.5 215.1 299.9 C217.8 297.2 220.2 294.7 222.5 291.9 C224.8 289.1 226.7 286.2 228.8 283.1 C230.8 280.1 232.7 276.8 234.8 273.4 C236.9 269.9 238.9 266.2 241.4 262.5 C243.9 258.7 246.5 254.7 249.6 250.8 C252.7 246.9 256.1 242.9 260.0 239.0 C263.9 235.1 268.1 231.3 272.8 227.7 C277.4 224.2 282.4 220.8 287.6 217.8 C292.9 214.8 298.5 212.0 304.2 209.7 C309.8 207.3 315.7 205.3 321.6 203.7 C327.4 202.1 333.4 200.9 339.2 200.0 C345.0 199.0 350.9 198.5 356.5 198.1 C362.2 197.8 367.8 197.8 373.3 197.9 C378.8 198.1 384.2 198.5 389.4 199.0 C394.6 199.6 399.8 200.3 404.7 201.2 C409.7 202.2 414.5 203.3 419.2 204.6 C423.8 205.9 428.3 207.4 432.4 209.2 C436.6 211.0 440.6 212.9 444.1 215.2 C447.7 217.5 451.0 220.0 453.7 222.7 C456.5 225.5 458.9 228.5 460.8 231.8 C462.7 235.0 464.1 238.5 465.1 242.0 C466.0 245.6 466.5 249.4 466.6 253.1 C466.7 256.9 466.0 262.6 465.9 264.5 Z"/>
+          <path class="ctr c1" d="M425.6 280.6 C425.6 281.9 425.7 285.9 425.3 288.5 C424.8 291.2 423.9 294.0 422.9 296.7 C421.9 299.4 420.5 302.2 419.1 304.8 C417.7 307.4 416.0 310.1 414.4 312.6 C412.7 315.1 411.0 317.5 409.3 319.9 C407.7 322.3 406.0 324.6 404.4 326.9 C402.7 329.2 401.2 331.5 399.6 333.7 C398.0 335.9 396.5 338.2 394.9 340.4 C393.3 342.6 391.7 344.8 389.9 347.0 C388.2 349.2 386.4 351.4 384.4 353.6 C382.4 355.8 380.2 357.9 377.9 359.9 C375.5 362.0 373.0 364.0 370.3 365.8 C367.7 367.6 364.8 369.3 361.8 370.8 C358.9 372.4 355.8 373.8 352.7 375.0 C349.5 376.2 346.3 377.2 343.2 378.2 C340.0 379.1 336.9 379.8 333.8 380.5 C330.7 381.2 327.6 381.8 324.7 382.3 C321.7 382.9 318.8 383.4 315.9 383.9 C313.0 384.5 310.2 385.0 307.3 385.7 C304.5 386.3 301.6 386.9 298.7 387.7 C295.8 388.4 292.8 389.2 289.7 390.0 C286.6 390.8 283.5 391.6 280.2 392.4 C277.0 393.1 273.6 393.9 270.2 394.6 C266.8 395.2 263.3 395.8 259.9 396.2 C256.4 396.5 252.9 396.8 249.5 396.8 C246.1 396.8 242.7 396.7 239.5 396.3 C236.3 395.9 233.2 395.3 230.2 394.6 C227.3 393.8 224.5 392.8 221.9 391.7 C219.2 390.5 216.8 389.2 214.5 387.7 C212.2 386.3 210.1 384.7 208.1 383.0 C206.2 381.3 204.3 379.5 202.7 377.5 C201.0 375.6 199.5 373.6 198.2 371.5 C196.9 369.3 195.7 367.1 194.8 364.8 C193.9 362.5 193.1 360.0 192.7 357.5 C192.4 355.0 192.2 352.3 192.5 349.7 C192.8 347.0 193.4 344.2 194.4 341.4 C195.4 338.7 196.8 335.8 198.6 333.1 C200.4 330.3 202.7 327.5 205.2 324.9 C207.8 322.3 210.7 319.7 213.8 317.4 C216.9 315.0 220.4 312.8 223.9 310.7 C227.3 308.7 231.0 306.8 234.6 305.1 C238.1 303.4 241.8 301.9 245.2 300.5 C248.6 299.1 252.0 297.9 255.1 296.7 C258.2 295.5 261.2 294.4 264.0 293.2 C266.7 292.1 269.3 291.0 271.8 289.8 C274.2 288.6 276.5 287.3 278.8 286.0 C281.1 284.6 283.2 283.2 285.5 281.6 C287.8 280.1 290.0 278.5 292.3 276.8 C294.7 275.1 297.2 273.4 299.8 271.7 C302.4 269.9 305.1 268.2 308.0 266.6 C310.9 264.9 313.9 263.3 317.0 261.9 C320.1 260.4 323.4 259.1 326.7 257.9 C330.0 256.7 333.4 255.7 336.8 254.9 C340.2 254.0 343.6 253.3 347.0 252.8 C350.5 252.3 353.9 251.9 357.3 251.7 C360.7 251.4 364.1 251.3 367.5 251.3 C370.9 251.4 374.2 251.5 377.5 251.7 C380.9 252.0 384.2 252.4 387.4 252.9 C390.6 253.4 393.8 254.0 396.9 254.8 C399.9 255.6 402.9 256.6 405.7 257.7 C408.4 258.9 411.1 260.2 413.4 261.8 C415.7 263.3 417.9 265.1 419.6 267.0 C421.3 268.9 422.7 271.1 423.7 273.3 C424.7 275.6 425.3 279.4 425.6 280.6 Z"/>
+          <path class="ctr c0" d="M367.4 303.9 C367.7 304.4 369.0 305.9 369.4 307.0 C369.9 308.1 370.2 309.4 370.3 310.6 C370.3 311.9 370.2 313.2 369.8 314.6 C369.5 315.9 368.9 317.3 368.2 318.6 C367.6 320.0 366.7 321.3 365.7 322.7 C364.8 324.0 363.7 325.3 362.6 326.5 C361.6 327.8 360.4 329.0 359.3 330.2 C358.1 331.3 356.9 332.5 355.8 333.6 C354.6 334.7 353.5 335.8 352.4 336.9 C351.2 338.0 350.1 339.0 349.0 340.1 C347.8 341.2 346.7 342.2 345.5 343.2 C344.3 344.3 343.1 345.3 341.8 346.3 C340.5 347.3 339.2 348.3 337.7 349.2 C336.3 350.1 334.9 350.9 333.3 351.7 C331.8 352.5 330.2 353.2 328.6 353.8 C327.0 354.4 325.3 354.9 323.7 355.3 C322.1 355.7 320.4 356.0 318.8 356.3 C317.2 356.5 315.6 356.6 314.1 356.7 C312.5 356.8 311.0 356.8 309.6 356.8 C308.2 356.7 306.8 356.7 305.4 356.6 C304.0 356.6 302.7 356.5 301.4 356.4 C300.1 356.4 298.8 356.3 297.5 356.3 C296.2 356.2 294.9 356.2 293.6 356.2 C292.3 356.2 290.9 356.2 289.6 356.1 C288.2 356.1 286.9 356.1 285.5 356.0 C284.2 355.9 282.8 355.8 281.5 355.6 C280.1 355.4 278.8 355.2 277.5 354.9 C276.3 354.6 275.0 354.2 273.9 353.8 C272.7 353.3 271.6 352.8 270.6 352.2 C269.5 351.7 268.6 351.0 267.6 350.3 C266.7 349.7 265.8 348.9 265.0 348.2 C264.2 347.4 263.4 346.6 262.6 345.7 C261.9 344.9 261.1 344.0 260.4 343.1 C259.7 342.1 259.0 341.2 258.4 340.2 C257.8 339.1 257.2 338.1 256.7 337.0 C256.2 335.8 255.7 334.7 255.4 333.4 C255.1 332.2 254.9 330.9 254.9 329.6 C254.9 328.2 255.1 326.8 255.4 325.4 C255.8 324.0 256.4 322.6 257.2 321.2 C257.9 319.8 259.0 318.4 260.2 317.0 C261.4 315.7 262.8 314.4 264.4 313.2 C266.0 312.0 267.7 310.8 269.6 309.8 C271.4 308.8 273.4 307.9 275.3 307.1 C277.3 306.3 279.3 305.6 281.3 305.0 C283.2 304.5 285.2 304.0 287.1 303.6 C289.0 303.1 290.8 302.8 292.5 302.5 C294.2 302.2 295.9 302.0 297.5 301.7 C299.0 301.4 300.5 301.2 302.0 300.9 C303.4 300.6 304.8 300.4 306.2 300.1 C307.5 299.8 308.9 299.5 310.2 299.1 C311.5 298.8 312.8 298.5 314.2 298.2 C315.5 297.8 316.9 297.5 318.2 297.2 C319.6 296.9 320.9 296.6 322.3 296.4 C323.7 296.2 325.1 296.0 326.4 295.8 C327.8 295.7 329.2 295.6 330.6 295.5 C332.0 295.4 333.3 295.4 334.7 295.4 C336.1 295.4 337.5 295.5 338.9 295.6 C340.3 295.6 341.7 295.7 343.1 295.9 C344.5 296.0 345.9 296.1 347.4 296.3 C348.8 296.5 350.3 296.7 351.8 297.0 C353.3 297.3 354.8 297.6 356.2 298.0 C357.7 298.4 359.2 298.8 360.5 299.4 C361.9 299.9 363.2 300.6 364.3 301.3 C365.5 302.1 366.9 303.5 367.4 303.9 Z"/>
+          <!-- minimum -->
+          <path class="g-min" d="M 300 325 L 320 325 M 310 315 L 310 335"/>
+          <circle class="g-min" cx="310" cy="325" r="4.5"/>
+          <text class="lbl tiny lk" x="326" y="318">min</text>
+          <!-- the descent -->
+          <polyline class="g-path" pathLength="100" points="120,96 149,252 243,243 253,299 287,296 291,316 303,315 304,323 309,322 309,325"/>
+          <circle class="g-step ambf" r="4.8"/>
+        </svg>
+
+      </div>
       <ul class="int-list">
-        <li class="int-item" data-reveal><span class="int-num m">01</span><span class="int-row"><span class="int-name">Agentic Applications</span><span class="int-cap m">reason → call tool → observe · context accrues</span></span></li>
-        <li class="int-item" data-reveal><span class="int-num m">02</span><span class="int-row"><span class="int-name">Full Stack</span><span class="int-cap m">click → api → db commit → render</span></span></li>
-        <li class="int-item" data-reveal><span class="int-num m">03</span><span class="int-row"><span class="int-name">Machine Learning</span><span class="int-cap m">forward pass · backprop · loss ↓</span></span></li>
+        <li class="int-item" data-reveal><span class="int-num m">01</span><span class="int-row"><span class="int-name">Agentic Applications</span><span class="int-cap m">reason · act · observe — the loop</span></span></li>
+        <li class="int-item" data-reveal><span class="int-num m">02</span><span class="int-row"><span class="int-name">Full Stack</span><span class="int-cap m">client → server → data, and back</span></span></li>
+        <li class="int-item" data-reveal><span class="int-num m">03</span><span class="int-row"><span class="int-name">Machine Learning</span><span class="int-cap m">gradient descent into the minimum</span></span></li>
       </ul>
     </div>
   </div>
@@ -723,12 +834,12 @@ const links = {
 </script>
 
 <script>
-  // Bundled module (Vite tree-shakes three.js): mounts the hairline graph scene
-  // on the interests-canvas if it's present and a real <canvas>.
+  // Interests: cross-fade the three hairline SVG figures, synced to the bullets
+  // (all motion is CSS; this only swaps which figure is live + pauses off-screen).
   import { initInterestsGraph } from '../scripts/interests-graph';
   import { initBgTerrain } from '../scripts/bg-terrain';
-  const ic = document.getElementById('interests-canvas');
-  if (ic instanceof HTMLCanvasElement) initInterestsGraph(ic);
+  const iv = document.querySelector('.int-vis');
+  if (iv instanceof HTMLElement) initInterestsGraph(iv);
   const sc = document.getElementById('bg-canvas');
   if (sc instanceof HTMLCanvasElement) initBgTerrain(sc);
 </script>
