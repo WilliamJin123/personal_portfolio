@@ -5,9 +5,9 @@
 // a single slow amber accent in motion (the orbit / the trace / the descent) —
 // all of that motion lives in CSS. This module does only the orchestration:
 //
-//   01 Agentic Applications -> THE LOOP    (reason · act · observe, a token orbits)
-//   02 Full Stack           -> THE TRACE   (client→server→data and back)
-//   03 Machine Learning     -> THE DESCENT (gradient descent into the minimum)
+//   01 Agentic Applications -> THE LOOP   (reason · act · observe, a token orbits)
+//   02 Full Stack           -> THE TRACE  (client→server→data and back)
+//   03 Machine Learning     -> THE CURVE  (training loss decaying to its minimum)
 //
 // It shows one figure at a time, advancing on a slow dwell, lets a hovered
 // bullet snap its figure forward, mirrors the live figure onto the bullet list
