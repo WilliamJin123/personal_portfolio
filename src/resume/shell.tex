@@ -183,9 +183,11 @@
 % \award (trophy) and \grant ($) tag wins and funding on a project's second row.
 % One ink colour now — the icon, not colour, marks them (per review); kept bold.
 % \resumemain (sans body family), not \normalfont — \normalfont snaps back to the
-% serif default and the badges would clash with the sans body.
-\newcommand{\award}[1]{{\resumemain\textbf{\faTrophy~#1}}\hspace{7pt}}
-\newcommand{\grant}[1]{{\resumemain\textbf{\faUsd #1}}\hspace{7pt}}
+% serif default and the badges would clash with the sans body. Kept subtle (per
+% review): regular weight, no bold, and the trophy pictograph a notch smaller so
+% the solid glyph stops shouting over its label.
+\newcommand{\award}[1]{{\resumemain{\footnotesize\faTrophy}~#1}\hspace{7pt}}
+\newcommand{\grant}[1]{{\resumemain\faUsd #1}\hspace{7pt}}
 % \weblink: a small underlined link for an extra artifact (paper, live demo) that is
 % neither the title's repo nor the event's Devpost. Underlined, no icon (per review).
 \newcommand{\weblink}[2]{{\resumemain\footnotesize\reslink{#1}{#2}}\hspace{6pt}}
