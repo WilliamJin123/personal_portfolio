@@ -1,26 +1,29 @@
-// /3d — "The Drift" rebuilt as ONE diegetic scene. The content is not an
-// overlay: the text and the diagrams ARE the 3D world. We travel forward
-// through space and pass, in turn,
+// /3d — "The Drift" as ONE diegetic, navigable system. The content is not an
+// overlay: the text and the diagrams ARE the 3D world. Two systems hang in the
+// dark — the EXPERIENCE star (amber sun + tilted orbit rings, each role a body
+// in orbit) and the PROJECTS galaxy (a spiral you thread) — ending at the
+// CONTACT beacon. Three ways to move through them, by design (flight 003):
 //
-//   · the EXPERIENCE system — an amber star with tilted orbit rings; each role
-//     is a planet strung along the route, its dossier floating in space beside
-//     it (a billboarded canvas plane, graded by the same film stack);
-//   · the PROJECTS galaxy — a spiral of project-stars threaded by the path;
-//   · the CONTACT beacon — the end of the route.
+//   · SCROLL  flies one continuous, eased glide along the route — no per-point
+//     stops, no per-node turning; the camera just looks ahead and drifts.
+//   · DRAG    free-looks the view (yaw/pitch) so you can glance off the path
+//     and around a system; it eases back to forward when you let go.
+//   · CLICK a node  diverts the camera to frame it and fades its full dossier
+//     up to read; scroll / Esc / click-away releases back to the glide.
 //
-// Scroll drives a camera that flies the path; each body's text fades up as we
-// near it and fades behind us as we pass, so the field never clutters. All text
-// is rendered to high-DPI canvas textures (DoF is deliberately omitted so the
-// content stays sharp). Content comes from #studio-data — the same résumé
-// library the paper site reads. A hidden DOM mirror (owned by 3d.astro) carries
-// the same content for assistive tech, search, and the no-WebGL fallback.
+// Each node always wears a small title tag so the field stays legible while you
+// glide; the full dossier only opens on focus, so it never clutters. All text
+// is rendered to high-DPI canvas textures (no DoF — content stays sharp).
+// Content comes from #studio-data — the same résumé library the paper site
+// reads. A hidden DOM mirror (owned by 3d.astro) carries the same content for
+// assistive tech, search, and the no-WebGL fallback.
 
 import {
   Scene, PerspectiveCamera, WebGLRenderer,
   BufferGeometry, BufferAttribute,
   Mesh, ShaderMaterial, PlaneGeometry, SphereGeometry,
   Points, Group, LineLoop, LineBasicMaterial, LineSegments,
-  Color, Vector2, Vector3, BackSide, AdditiveBlending,
+  Color, Vector2, Vector3, BackSide, AdditiveBlending, Raycaster,
   CanvasTexture, MeshBasicMaterial, DoubleSide, SRGBColorSpace,
 } from 'three';
 import {
@@ -36,29 +39,40 @@ const COL = {
 const AMBER = new Color(0xd08a2e);
 const SUN_DIR = new Vector3(-0.5, 0.22, -0.84).normalize();
 
-// ── flight
-const CAM_START = 12;
-const STEP = 30;            // z between successive bodies
-const FIRST = -26;          // z of the first body
-const TAIL = 46;            // travel past the last body
-const LOOK_AHEAD = 24;
-const SCROLL_CHASE = 2.0;
-const SWAY = 0.12;
+// ── flight — the route is short and dense (the systems cluster, they don't
+// string out one-per-30-units the way the old fly-past did)
+const CAM_START = 14;
+const STEP = 18;            // z between successive bodies (was 30 — denser)
+const FIRST = -22;          // z of the first body
+const TAIL = 40;            // travel past the last body
+const LOOK_AHEAD = 22;
+const GLIDE_CHASE = 3.2;    // how fast the camera eases to its target pose / s
+const SWAY = 0.1;
+
+// ── free-look (drag)
+const YAW_MAX = 0.72;       // ~41°
+const PITCH_MAX = 0.46;     // ~26°
+const LOOK_SENS = 0.0026;   // radians per px dragged
+const LOOK_EASE = 9;        // view chases the drag target / s
+const RECENTER = 0.55;      // idle decay of the drag target / s (slow return)
 
 // ── label canvas
 let SS = 2;                 // supersample (lowered on mobile to bound texture memory)
 const DW = 1000;            // design width (px)
-const WORLD_W = 8.4;        // plane width (world units)
-const LABEL_LAT = 11;       // how far off the path each dossier floats (so we
-                            // glance at it, never fly through it)
-const NEAR_FULL = 18;       // distance (world) for full text opacity
-const NEAR_FADE = 40;       // distance beyond which text is gone
+const WORLD_W = 8.4;        // dossier plane width (world units)
+const TAG_W = 4.0;          // title-tag plane width (world units)
+const NEAR_FULL = 16;       // distance (world) for full tag opacity
+const NEAR_FADE = 52;       // distance beyond which a tag is gone
 
 const TAU = Math.PI * 2;
+const lerp = (a: number, b: number, t: number): number => a + (b - a) * t;
+const clamp = (x: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, x));
 const ss = (a: number, b: number, x: number): number => {
   const u = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return u * u * (3 - 2 * u);
 };
+// dt-based smoothing factor (frame-rate independent)
+const chase = (dt: number, rate: number): number => 1 - Math.exp(-dt * rate);
 
 const FBM2 = `
   float h21(vec2 p){return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);}
@@ -166,8 +180,8 @@ function makeLabel(item: Item, kind: 'experience' | 'projects' | 'contact', idx:
     // a soft dark scrim so the text holds against a bright nebula behind it
     const g = ctx.createLinearGradient(0, 0, 0, h);
     g.addColorStop(0, 'rgba(8,9,12,0.0)');
-    g.addColorStop(0.04, 'rgba(8,9,12,0.42)');
-    g.addColorStop(0.96, 'rgba(8,9,12,0.42)');
+    g.addColorStop(0.04, 'rgba(8,9,12,0.46)');
+    g.addColorStop(0.96, 'rgba(8,9,12,0.46)');
     g.addColorStop(1, 'rgba(8,9,12,0.0)');
     ctx.fillStyle = g;
     ctx.fillRect(-40, -16, DW + 80, h + 32);
@@ -177,6 +191,60 @@ function makeLabel(item: Item, kind: 'experience' | 'projects' | 'contact', idx:
     ctx.shadowBlur = 0;
     tex.needsUpdate = true;
     mesh.scale.set(WORLD_W, WORLD_W * (h / DW), 1);
+  };
+  redraw();
+  return { mesh, redraw, mat };
+}
+
+// ── title tag ─────────────────────────────────────────────────────────────────
+// The always-on, one-glance label that rides above each node so the system
+// reads while you glide (the full dossier only opens on click). Eyebrow + title.
+
+function makeTitleTag(item: Item, kind: 'experience' | 'projects', idx: number, aniso: number): {
+  mesh: Mesh; redraw: () => void; mat: MeshBasicMaterial;
+} {
+  const canvas = document.createElement('canvas');
+  const ctx = canvas.getContext('2d')!;
+  const tex = new CanvasTexture(canvas);
+  tex.anisotropy = aniso;
+  tex.colorSpace = SRGBColorSpace;
+  const mat = new MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, side: DoubleSide, opacity: 0 });
+  const mesh = new Mesh(new PlaneGeometry(1, 1), mat);
+  mesh.renderOrder = 11;
+
+  const TW = 760;
+  const f = (w: number, px: number, mono = false): string => `${w} ${px}px ${mono ? "'Geist Mono'" : "'Geist'"}, sans-serif`;
+  const eyebrow = `${String(idx + 1).padStart(2, '0')}  ·  ${kind === 'experience' ? 'experience' : 'project'}`;
+
+  // wrap the title across up to two lines; returns total height
+  const layout = (draw: boolean): number => {
+    ctx.textBaseline = 'top';
+    let y = 0;
+    if (draw) { ctx.fillStyle = COL.amber; ctx.font = f(500, 18, true); ctx.fillText(eyebrow, 0, y); }
+    y += 26;
+    ctx.font = f(600, 33);
+    const words = item.title.split(' ');
+    let line = '', lines = 0;
+    const flush = (): void => { if (draw) { ctx.fillStyle = COL.ink; ctx.fillText(line, 0, y); } y += 40; lines++; line = ''; };
+    for (const w of words) {
+      const test = line ? line + ' ' + w : w;
+      if (ctx.measureText(test).width > TW && line && lines < 1) { flush(); line = w; }
+      else line = test;
+    }
+    if (line) flush();
+    return y;
+  };
+
+  const redraw = (): void => {
+    const h = Math.ceil(layout(false));
+    canvas.width = TW * SS; canvas.height = h * SS;
+    ctx.setTransform(SS, 0, 0, SS, 0, 0);
+    ctx.clearRect(0, 0, TW, h);
+    ctx.shadowColor = 'rgba(0,0,0,0.85)'; ctx.shadowBlur = 9;
+    layout(true);
+    ctx.shadowBlur = 0;
+    tex.needsUpdate = true;
+    mesh.scale.set(TAG_W, TAG_W * (h / TW), 1);
   };
   redraw();
   return { mesh, redraw, mat };
@@ -199,7 +267,7 @@ export function initStudioScene(canvas: HTMLCanvasElement): void {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, mobile ? 1.5 : 2));
   const aniso = renderer.capabilities.getMaxAnisotropy();
 
-  // path meander (kept gentle so framing each body is predictable)
+  // path meander (kept gentle so the glide is predictable)
   const SX = Math.random() * 1000, SZ = Math.random() * 1000;
   const pathX = (z: number): number => 4.5 * Math.sin(z * 0.012 + SX) + 2.2 * Math.sin(z * 0.026 + SZ);
   const pathY = (z: number): number => 1.8 * Math.sin(z * 0.01 + SZ * 0.6);
@@ -276,10 +344,18 @@ export function initStudioScene(canvas: HTMLCanvasElement): void {
   }, false));
 
   // ── content placement ────────────────────────────────────────────────────
-  // a flat list of stops; each carries a body + a label, strung along the path.
-  interface Stop { z: number; bx: number; by: number; label: ReturnType<typeof makeLabel>; group: Group }
+  // a flat list of stops; each carries a body + a tag + a dossier, clustered
+  // toward its system (experience left, projects right) so the field reads as
+  // two constellations rather than a single corridor of beads.
+  interface Stop {
+    z: number; body: Vector3; pick: Mesh;
+    tag: ReturnType<typeof makeTitleTag>; tagGroup: Group;
+    label: ReturnType<typeof makeLabel>; group: Group;
+    bm: ShaderMaterial;
+  }
   const stops: Stop[] = [];
   const redraws: (() => void)[] = [];
+  const pickList: Mesh[] = [];
 
   const allItems: { item: Item; kind: 'experience' | 'projects'; idx: number; n: number }[] = [
     ...data.work.map((item, idx) => ({ item, kind: 'experience' as const, idx, n: data.work.length })),
@@ -308,7 +384,7 @@ export function initStudioScene(canvas: HTMLCanvasElement): void {
   }
 
   // PROJECTS galaxy — a sqrt-spaced spiral disc you thread through
-  const galCenter = new Vector3(10, -4, projStart - (data.projects.length - 1) * STEP / 2);
+  const galCenter = new Vector3(11, -4, projStart - (data.projects.length - 1) * STEP / 2);
   {
     const N = mobile ? 900 : 1800; const arms = 2; const wind = 2.4;
     const p = new Float32Array(N * 3), s = new Float32Array(N), ph = new Float32Array(N), c = new Float32Array(N * 3);
@@ -330,48 +406,80 @@ export function initStudioScene(canvas: HTMLCanvasElement): void {
     g.setAttribute('aCol', new BufferAttribute(c, 3));
     scene.add(new Points(g, starMat(true)));
     // core glow
-    scene.add(new Mesh(new SphereGeometry(3, 16, 16), new MeshBasicMaterial({ color: AMBER, transparent: true, opacity: 0.14 })));
-    (scene.children[scene.children.length - 1] as Mesh).position.copy(galCenter);
+    const core = new Mesh(new SphereGeometry(3, 16, 16), new MeshBasicMaterial({ color: AMBER, transparent: true, opacity: 0.14 }));
+    core.position.copy(galCenter); scene.add(core);
+  }
+
+  // near dust — a faint tube of motes around the route that visibly streams
+  // past as you glide (the traversal cue; world-space so the camera moves
+  // through it). Cheap, and lifts the detail toward the terrain-bg bar.
+  {
+    const M = mobile ? 170 : 320;
+    const zA = CAM_START, zB = FIRST - allItems.length * STEP - TAIL;
+    scene.add(starCloud(M, (i, p, s, ph, c) => {
+      const z = lerp(zA, zB, Math.random());
+      const a = Math.random() * TAU, rad = 3 + Math.random() * 16;
+      p[i * 3] = pathX(z) + Math.cos(a) * rad;
+      p[i * 3 + 1] = pathY(z) + Math.sin(a) * rad * 0.7;
+      p[i * 3 + 2] = z;
+      s[i] = 0.5 + Math.random() * 1.0; ph[i] = Math.random() * 50;
+      const l = 0.18 + Math.random() * 0.3;
+      c[i * 3] = 0.72 * l; c[i * 3 + 1] = 0.77 * l; c[i * 3 + 2] = 0.9 * l;
+    }, true));
   }
 
   // body marker shader (a glowing point that pulses faintly when near)
   const bodyMat = (): ShaderMaterial => new ShaderMaterial({
     uniforms: { uT: starTime, uK: { value: 0 }, uDpr: { value: renderer.getPixelRatio() }, uCol: { value: new Color(0xcdd3df) } },
     transparent: true, depthWrite: false, blending: AdditiveBlending,
-    vertexShader: `uniform float uT,uK,uDpr; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); gl_Position=projectionMatrix*mv; gl_PointSize=(7.0+5.0*uK+2.0*sin(uT*2.0))*uDpr*clamp(120.0/-mv.z,0.4,4.0); }`,
+    vertexShader: `uniform float uT,uK,uDpr; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); gl_Position=projectionMatrix*mv; gl_PointSize=(8.0+6.0*uK+2.0*sin(uT*2.0))*uDpr*clamp(120.0/-mv.z,0.4,4.2); }`,
     fragmentShader: `uniform float uK; uniform vec3 uCol; void main(){ float d=length(gl_PointCoord-0.5)*2.0; vec3 col=mix(uCol, vec3(0.95,0.62,0.2), uK*0.7); gl_FragColor=vec4(col, smoothstep(1.0,0.1,d)*(0.55+0.45*uK)); }`,
   });
 
-  // build each stop: body point + connector + floating label
+  // build each stop: body point + invisible pick sphere + connector + tag + dossier
   allItems.forEach((entry, i) => {
     const z = FIRST - i * STEP;
-    const side = i % 2 === 0 ? 1 : -1;
-    const lx = pathX(z) + side * LABEL_LAT;        // dossier floats off to the side
-    const ly = pathY(z) + (i % 3 - 1) * 1.2 + 0.8;
-    const bx = pathX(z) + side * (LABEL_LAT - 5);  // its star sits just inboard of the text
-    const by = ly - 1.4;
+    const sys = entry.kind === 'experience' ? expStarPos : galCenter;
+    const side = entry.kind === 'experience' ? -1 : 1;   // exp clusters left, projects right
+    // the node sits between the path centerline and its system, scattered so the
+    // cluster reads as a constellation (the camera no longer turns to each, so
+    // spread is free); z stays monotonic so the scroll order is preserved.
+    const bx = pathX(z) + side * (6.5 + (i % 3) * 1.6) + Math.sin(i * 1.7) * 1.4;
+    const by = pathY(z) + ((i % 3) - 1) * 2.4 + 0.4 * Math.cos(z * 0.5) + (side < 0 ? 1.2 : -1.0);
+    const body = new Vector3(bx, by, z);
 
-    // body marker
+    // visible glow marker
     const bg = new BufferGeometry();
     bg.setAttribute('position', new BufferAttribute(new Float32Array([bx, by, z]), 3));
     const bm = bodyMat();
-    const body = new Points(bg, bm); body.frustumCulled = false; scene.add(body);
+    const pts = new Points(bg, bm); pts.frustumCulled = false; scene.add(pts);
+
+    // invisible pick sphere (raycast target for click-to-focus)
+    const pick = new Mesh(new SphereGeometry(2.6, 12, 12), new MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
+    pick.position.copy(body); pick.userData.idx = i; pick.renderOrder = -2;
+    scene.add(pick); pickList.push(pick);
 
     // faint connector back to its system anchor
-    const anchor = entry.kind === 'experience' ? expStarPos : galCenter;
     const cg = new BufferGeometry();
-    cg.setAttribute('position', new BufferAttribute(new Float32Array([bx, by, z, anchor.x, anchor.y, anchor.z]), 3));
+    cg.setAttribute('position', new BufferAttribute(new Float32Array([bx, by, z, sys.x, sys.y, sys.z]), 3));
     scene.add(new LineSegments(cg, new LineBasicMaterial({ color: 0x8a90a0, transparent: true, opacity: 0.08 })));
 
+    // always-on title tag, riding just above the node
+    const tag = makeTitleTag(entry.item, entry.kind, entry.idx, aniso);
+    redraws.push(tag.redraw);
+    const tagGroup = new Group();
+    tagGroup.position.set(bx, by + 2.6, z);
+    tagGroup.add(tag.mesh); scene.add(tagGroup);
+    tag.mesh.userData.idx = i; pickList.push(tag.mesh);  // the title text is a click target too
+
+    // full dossier (hidden until this node is focused), floating beside the node
     const label = makeLabel(entry.item, entry.kind, entry.idx, entry.n, aniso);
     redraws.push(label.redraw);
     const group = new Group();
-    group.position.set(lx, ly, z);
-    group.add(label.mesh);
-    scene.add(group);
+    group.position.set(bx + side * 5.2, by - 0.6, z);
+    group.add(label.mesh); scene.add(group);
 
-    stops.push({ z, bx, by, label, group });
-    (group as unknown as { _body?: ShaderMaterial })._body = bm;
+    stops.push({ z, body, pick, tag, tagGroup, label, group, bm });
   });
 
   // CONTACT beacon at the end
@@ -407,22 +515,63 @@ export function initStudioScene(canvas: HTMLCanvasElement): void {
   // redraw labels once webfonts are ready (first paint may use fallback metrics)
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => redraws.forEach((r) => r()));
 
-  // ── travel
+  // ── travel + interaction ─────────────────────────────────────────────────
   const rawP = (): number => {
     const h = document.documentElement; const max = h.scrollHeight - window.innerHeight;
     return max > 0 ? Math.min(1, Math.max(0, h.scrollTop / max)) : 0;
   };
   const Z0 = CAM_START, Z1 = beaconZ - TAIL;
-  let pS = rawP();
-  let curX = 0, curY = 0, tgtX = 0, tgtY = 0;
-  window.addEventListener('pointermove', (e) => { tgtX = (e.clientX / window.innerWidth - 0.5) * 2; tgtY = (e.clientY / window.innerHeight - 0.5) * 2; }, { passive: true });
+
+  // free-look (drag) state
+  let yaw = 0, pitch = 0, tgtYaw = 0, tgtPitch = 0;
+  let dragging = false, moved = false, downX = 0, downY = 0, lastX = 0, lastY = 0;
+  // focus (click-to-read) state
+  let focusIdx = -1, focusK = 0, focusAtP = 0;
+  let interacted = false;
+  const markInteract = (): void => { if (!interacted) { interacted = true; document.body.classList.add('did-interact'); } };
+
+  const ray = new Raycaster();
+  const ndc = new Vector2();
+  const pickAt = (clientX: number, clientY: number): number => {
+    const r = canvas.getBoundingClientRect();
+    ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ndc, camera);
+    const hit = ray.intersectObjects(pickList, false)[0];
+    return hit ? (hit.object.userData.idx as number) : -1;
+  };
+
+  canvas.addEventListener('pointerdown', (e) => {
+    if (e.button !== 0) return;
+    dragging = true; moved = false; downX = lastX = e.clientX; downY = lastY = e.clientY;
+    canvas.setPointerCapture(e.pointerId); canvas.style.cursor = 'grabbing';
+  });
+  canvas.addEventListener('pointermove', (e) => {
+    if (!dragging) return;
+    const dx = e.clientX - lastX, dy = e.clientY - lastY; lastX = e.clientX; lastY = e.clientY;
+    if (Math.hypot(e.clientX - downX, e.clientY - downY) > 5) { moved = true; markInteract(); }
+    // drag right → look right; drag down → look down (signs applied at use site)
+    tgtYaw = clamp(tgtYaw + dx * LOOK_SENS, -YAW_MAX, YAW_MAX);
+    tgtPitch = clamp(tgtPitch + dy * LOOK_SENS, -PITCH_MAX, PITCH_MAX);
+  });
+  const endDrag = (e: PointerEvent): void => {
+    if (!dragging) return;
+    dragging = false; canvas.style.cursor = 'grab';
+    try { canvas.releasePointerCapture(e.pointerId); } catch { /* already released */ }
+    if (!moved) {                      // a click, not a drag → pick / release
+      const idx = pickAt(e.clientX, e.clientY);
+      focusIdx = idx; focusAtP = rawP(); if (idx >= 0) markInteract();
+    }
+  };
+  canvas.addEventListener('pointerup', endDrag);
+  canvas.addEventListener('pointercancel', endDrag);
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') focusIdx = -1; });
 
   // letterbox crossings (DOM owned by 3d.astro) at each region boundary
   const lbox = document.getElementById('lbox'); const lbcard = document.getElementById('lbcard');
-  let lbTimer = 0; let lastP = pS;
+  let lbTimer = 0; let lastP = rawP();
   const REGIONS = [
     { p: 0.04, card: '01', name: 'EXPERIENCE' },
-    { p: (Math.abs(Z0 - projStart) / Math.abs(Z0 - Z1)), card: '02', name: 'PROJECTS' },
+    { p: clamp(Math.abs(Z0 - projStart) / Math.abs(Z0 - Z1), 0.1, 0.9), card: '02', name: 'PROJECTS' },
     { p: 0.985, card: '03', name: 'CONTACT' },
   ];
   const letterbox = (p: number): void => {
@@ -437,61 +586,91 @@ export function initStudioScene(canvas: HTMLCanvasElement): void {
     lastP = p;
   };
 
-  const look = new Vector3();
-  const aim = new Vector3();
+  // eased camera state (smoothing both the glide and any focus diversions)
+  const camPos = new Vector3(pathX(Z0), pathY(Z0), Z0);
+  const camLook = new Vector3(pathX(Z0 - LOOK_AHEAD), pathY(Z0 - LOOK_AHEAD), Z0 - LOOK_AHEAD);
+  const dPos = new Vector3(), dLook = new Vector3(), dir = new Vector3(), right = new Vector3();
+  const UP = new Vector3(0, 1, 0);
   const tmp = new Vector3();
-  const pose = (p: number, t: number): void => {
-    const z = Z0 + (Z1 - Z0) * p;
-    const swX = SWAY * Math.sin(t * 0.43 + 1.7) * 0.6;
-    const swY = SWAY * (Math.sin(t * 0.5) + 0.55 * Math.sin(t * 1.13 + 2.1));
-    camera.position.set(pathX(z) + swX + curX * 0.5, pathY(z) + swY + curY * 0.35, z);
 
-    // look ahead down the path, but turn to face the nearest dossier so it
-    // frames up centred as we draw alongside it (then release as we pass)
+  const pose = (p: number, t: number, dt: number): void => {
+    const z = Z0 + (Z1 - Z0) * p;
+    const calm = 1 - focusK * 0.7;     // settle the handheld feel while reading
+    const swX = SWAY * Math.sin(t * 0.43 + 1.7) * 0.6 * calm;
+    const swY = SWAY * (Math.sin(t * 0.5) + 0.55 * Math.sin(t * 1.13 + 2.1)) * calm;
+
+    // glide pose — straight down the path, looking ahead (no per-node turning)
+    dPos.set(pathX(z) + swX, pathY(z) + swY, z);
     const lz = z - LOOK_AHEAD;
-    look.set(pathX(lz) + curX * 1.0, pathY(lz) + curY * 0.5, lz);
-    aim.set(0, 0, 0);
-    let wsum = 0;
-    for (const s of stops) {
-      const w = 1 - ss(0, 30, Math.abs(z - s.z));
-      if (w > 0.001) { aim.addScaledVector(s.group.position, w); wsum += w; }
+    dLook.set(pathX(lz), pathY(lz), lz);
+
+    // focus pose — pull alongside the focused node and frame its dossier
+    if (focusIdx >= 0) {
+      const s = stops[focusIdx];
+      tmp.copy(s.group.position);
+      dPos.lerp(new Vector3(lerp(pathX(s.z), tmp.x, 0.45), tmp.y + 1.6, s.z + 15.5), focusK);
+      dLook.lerp(tmp, focusK);
     }
-    if (wsum > 0.001) { aim.multiplyScalar(1 / wsum); look.lerp(aim, Math.min(0.9, wsum)); }
-    camera.lookAt(look);
-    camera.rotateZ(0.008 * Math.sin(t * 0.31));
+
+    // ease the real camera toward the desired pose (the smoothing that makes
+    // the flight buttery and the diversions glide instead of snap)
+    const f = chase(dt, GLIDE_CHASE);
+    camPos.lerp(dPos, f); camLook.lerp(dLook, f);
+
+    // apply free-look on top: rotate the view direction by yaw/pitch
+    dir.copy(camLook).sub(camPos).normalize();
+    dir.applyAxisAngle(UP, -yaw);                       // yaw>0 → look right
+    right.copy(dir).cross(UP).normalize();
+    dir.applyAxisAngle(right, -pitch);                  // pitch>0 → look down
+    camera.position.copy(camPos);
+    camera.lookAt(tmp.copy(camPos).add(dir));
+    camera.rotateZ(0.006 * Math.sin(t * 0.31) * calm);
 
     celestial.position.copy(camera.position);
 
-    // labels: billboard + proximity opacity; bodies brighten near the camera
-    for (const s of stops) {
-      const dist = camera.position.distanceTo(tmp.set(s.group.position.x, s.group.position.y, s.z));
-      // full when the body is ahead or alongside; fades out over ~14 units once behind
-      const op = ss(NEAR_FADE, NEAR_FULL, dist) * ss(-14, 0, z - s.z);
-      s.label.mat.opacity = Math.max(0, op);
+    // tags: billboard + proximity opacity (hidden on the focused node, whose
+    // full dossier is up). dossiers: only the focused one is visible.
+    for (let j = 0; j < stops.length; j++) {
+      const s = stops[j];
+      const dist = camera.position.distanceTo(s.body);
+      const near = ss(NEAR_FADE, NEAR_FULL, dist);
+      const isFocus = j === focusIdx ? focusK : 0;
+      s.tag.mat.opacity = Math.max(0, near * (1 - isFocus) * 0.92);
+      s.label.mat.opacity = isFocus;
+      s.tagGroup.quaternion.copy(camera.quaternion);
       s.group.quaternion.copy(camera.quaternion);
-      const bm = (s.group as unknown as { _body?: ShaderMaterial })._body;
-      if (bm) bm.uniforms.uK.value = ss(NEAR_FADE, NEAR_FULL, dist);
+      s.bm.uniforms.uK.value = Math.max(near * 0.7, isFocus);
     }
     beaconK.value = ss(0.6, 0.94, p);
   };
 
   let running = true;
   document.addEventListener('visibilitychange', () => { running = !document.hidden; });
+  canvas.style.cursor = 'grab';
 
   let t = 0, prev = 0;
   const frame = (now: number): void => {
     const dt = prev ? Math.min(0.05, (now - prev) / 1000) : 0; prev = now;
-    if (reduceMo.matches) { pose(rawP(), 0); composer.render(); return; }
     if (running) {
-      t += dt;
-      curX += (tgtX - curX) * 0.05; curY += (tgtY - curY) * 0.05;
-      pS += (rawP() - pS) * (1 - Math.exp(-dt * SCROLL_CHASE));
-      letterbox(pS); starTime.value = t;
-      pose(pS, t);
+      // reduced motion: the world doesn't drift on its own (no time advance, no
+      // ambient sway/twinkle, camera snaps to the scroll target), but scroll,
+      // drag-look and click-to-read still respond — it's the user that moves.
+      const rm = reduceMo.matches;
+      t += rm ? 0 : dt;
+      const p = rawP();
+      // scrolling releases a focus (the glide resumes)
+      if (focusIdx >= 0 && Math.abs(p - focusAtP) > 0.012) focusIdx = -1;
+      focusK = rm ? (focusIdx >= 0 ? 1 : 0) : focusK + chase(dt, 4) * ((focusIdx >= 0 ? 1 : 0) - focusK);
+      // free-look: chase the drag target, and decay it back to forward when idle
+      if (!dragging) { const r = chase(dt, RECENTER); tgtYaw -= tgtYaw * r; tgtPitch -= tgtPitch * r; }
+      const lf = rm ? 1 : chase(dt, LOOK_EASE);
+      yaw += (tgtYaw - yaw) * lf; pitch += (tgtPitch - pitch) * lf;
+      letterbox(p); starTime.value = t;
+      pose(p, t, rm ? 10 : dt);   // dt=10 → chase factor ≈1 → snap (no glide easing)
       composer.render();
     }
     requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
-  pose(pS, 0); composer.render();
+  pose(rawP(), 0, 10); composer.render();
 }

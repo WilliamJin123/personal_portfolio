@@ -90,8 +90,11 @@ const mirror = [
   body{background:var(--ground);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
   .m{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}
 
-  /* the WebGL world is fixed; the scroll-track gives the page its travel length */
-  #studio-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;contain:strict}
+  /* the WebGL world is fixed; the scroll-track gives the page its travel length.
+     the canvas takes pointer input now (drag to look, click a node to read);
+     touch-action:pan-y keeps vertical scroll = flight on touch while horizontal
+     drag yaws the view */
+  #studio-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;cursor:grab;touch-action:pan-y;contain:strict}
   .scroll-track{height:840vh;pointer-events:none}
   body.no-gl #studio-canvas{display:none}
   body.no-gl .scroll-track{display:none}
@@ -126,6 +129,14 @@ const mirror = [
   /* scroll HUD */
   .hud{position:fixed;left:18px;bottom:15px;z-index:40;font-family:var(--mono);font-size:10px;letter-spacing:.1em;color:var(--faint);text-transform:uppercase;pointer-events:none;display:flex;gap:8px}
   .hud .hv{color:var(--mute)}
+
+  /* controls legend — the three ways to move. fades in once the drift begins,
+     and retires for good after the first drag or click (body.did-interact) */
+  .controls{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:40;display:flex;gap:18px;font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);pointer-events:none;opacity:0;transition:opacity .6s var(--ease)}
+  .controls.show{opacity:1}
+  body.did-interact .controls,body.no-gl .controls{opacity:0}
+  .controls .k{color:var(--amber)}
+  @media (max-width:760px){ .controls{font-size:9.5px;gap:13px} }
 
   /* letterbox region crossings */
   .lbox .lbar{position:fixed;left:0;width:100%;height:9vh;background:#06070a;z-index:60;transform:scaleY(0);transition:transform .55s cubic-bezier(.7,0,.3,1);pointer-events:none}
@@ -179,9 +190,9 @@ const mirror = [
 </div>
 
 <div class="intro" id="intro">
-  <div class="m greet">/ 3d mode — flight 002</div>
+  <div class="m greet">/ 3d mode — flight 003</div>
   <h1>The other site.</h1>
-  <p class="sub">Scroll to fly the route — past the star system of the work, through the galaxy of projects, to the beacon at the end. The text and the diagrams live out in the dark; you travel through them.</p>
+  <p class="sub">Scroll to drift the route — the work as a star system, the projects as a galaxy, a beacon at the end. Drag to look around, and click any star to read it.</p>
   <p class="m nogl-note">webgl unavailable — reading view below</p>
   <span class="m hint">scroll to drift</span>
 </div>
@@ -226,6 +237,7 @@ const mirror = [
 </div>
 
 <div class="hud" aria-hidden="true"><span>route</span><span class="hv" id="hud-scroll">0%</span></div>
+<div class="controls" id="controls" aria-hidden="true"><span><span class="k">scroll</span> fly</span><span><span class="k">drag</span> look</span><span><span class="k">click</span> read</span></div>
 <div class="lbox" id="lbox" aria-hidden="true"><i class="lbar top"></i><i class="lbar bot"></i><span class="card" id="lbcard"></span></div>
 <div class="shutter" id="shutter" aria-hidden="true"><span class="sedge"></span></div>
 
@@ -240,11 +252,12 @@ const mirror = [
   }
 </script>
 <script is:inline>
-  const hud=document.getElementById('hud-scroll'), intro=document.getElementById('intro'), dock=document.getElementById('dock');
+  const hud=document.getElementById('hud-scroll'), intro=document.getElementById('intro'), dock=document.getElementById('dock'), controls=document.getElementById('controls');
   function onScroll(){
     const h=document.documentElement, max=(h.scrollHeight-innerHeight)||1, p=Math.max(0,Math.min(1,h.scrollTop/max));
     hud.textContent=Math.round(p*100)+'%';
     intro.classList.toggle('gone', p>0.02);
+    controls.classList.toggle('show', p>0.02 && p<0.9);
     dock.classList.toggle('show', p>0.9);
   }
   addEventListener('scroll',onScroll,{passive:true}); onScroll();
