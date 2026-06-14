@@ -89,7 +89,8 @@ export function initInterestsGraph(root: HTMLElement): void {
   root.classList.add('dot-on'); // reveal the spine + dot
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return; // hold shape 01, static
 
-  const SETTLE = 2600; // ms a shape holds its pure form
+  const SETTLE = 3300; // ms a shape holds its pure form (also the dot's full sweep
+  // of that shape — longer here calms the lap of the circle, which read too fast)
   const MORPH = 2400; // ms reshaping into the next
   const SEG = SETTLE + MORPH;
   const CYCLE = SEG * 3;

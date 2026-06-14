@@ -458,12 +458,13 @@ const links = {
              amber token orbiting; the act node fires a tool as the token passes,
              and a centre gauge fills as context accrues over each lap. -->
         <svg class="ifig" data-fig="0" viewBox="0 0 600 600" fill="none" preserveAspectRatio="xMidYMid meet">
-          <!-- tool stations -->
-          <text class="lbl" x="492" y="262" text-anchor="middle">tools</text>
-          <path class="faint" d="M 411 349 L 484 341"/>
-          <rect class="hair pap" x="476" y="289" width="16" height="16"/>
-          <rect class="hair tool-on pap" x="476" y="333" width="16" height="16"/>
-          <rect class="hair pap" x="476" y="377" width="16" height="16"/>
+          <!-- tool stations — the active (amber) tool centres on the act node, so
+               the call wire runs dead horizontal from node to tool. -->
+          <text class="lbl" x="484" y="270" text-anchor="middle">tools</text>
+          <path class="faint" d="M 417 349 L 476 349"/>
+          <rect class="hair pap" x="476" y="297" width="16" height="16"/>
+          <rect class="hair tool-on pap" x="476" y="341" width="16" height="16"/>
+          <rect class="hair pap" x="476" y="385" width="16" height="16"/>
           <!-- the cycle -->
           <path class="hair" data-dot="0" d="M 300 157 A 128 128 0 1 1 299.99 157 Z"/>
           <path class="hair arrow" transform="translate(410.9 221) rotate(60)" d="M -8 -6 L 1 0 L -8 6"/>
@@ -504,9 +505,14 @@ const links = {
           <rect class="hair pap" x="406" y="58" width="74" height="48" rx="4"/>
           <line class="faint" x1="416" y1="76" x2="470" y2="76"/>
           <line class="faint" x1="416" y1="90" x2="452" y2="90"/>
-          <!-- the trace (static hairline) — the travelling dot rides this path -->
-          <path class="trace" data-dot="1" d="M 150 70 L 150 130 L 230 130 L 230 250 L 300 250 L 300 370 L 360 370 L 360 490 L 300 490 L 440 490 L 440 370 L 440 250 L 440 130 L 440 82"/>
-          <text class="lbl lk" x="150" y="58" text-anchor="middle">req</text>
+          <!-- the trace (static hairline) — the travelling dot rides this path.
+               An even, symmetric staircase: the request steps DOWN through the four
+               lanes to commit at the centred store (the path's arc-length midpoint,
+               so it lines up with the circle's bottom / the loss minimum when these
+               shapes morph), then steps back UP to paint the UI card — descent on
+               the left, ascent on the right, every tread the same width. -->
+          <path class="trace" data-dot="1" d="M 132 70 L 132 130 L 188 130 L 188 250 L 244 250 L 244 370 L 300 370 L 300 490 L 356 490 L 356 370 L 412 370 L 412 250 L 468 250 L 468 130 L 468 82"/>
+          <text class="lbl lk" x="132" y="58" text-anchor="middle">req</text>
         </svg>
 
         <!-- 03 MACHINE LEARNING · the descent: gradient descent steps across a
