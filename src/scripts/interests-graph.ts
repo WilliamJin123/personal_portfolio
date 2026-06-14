@@ -56,11 +56,11 @@ export function initInterestsGraph(root: HTMLElement): void {
     dot.setAttribute('cy', p.y.toFixed(2));
   };
   const along = (pts: Pt[], u: number): Pt => {
-    const x = (((u % 1) + 1) % 1) * (N - 1);
+    const x = Math.max(0, Math.min(1, u)) * (N - 1); // u in [0,1] → first..last point, no wrap
     const i = Math.floor(x);
     const f = x - i;
     const a = pts[i];
-    const b = pts[i + 1] ?? pts[0];
+    const b = pts[i + 1] ?? pts[i];
     return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f };
   };
 
@@ -93,6 +93,15 @@ export function initInterestsGraph(root: HTMLElement): void {
   const MORPH = 2400; // ms reshaping into the next
   const SEG = SETTLE + MORPH;
   const CYCLE = SEG * 3;
+  // Per-shape sweep direction as [start,end] in u. Circle runs forward, the trace
+  // runs backward, the loss curve runs forward so it always descends. Giving
+  // neighbours opposite directions lets a morph HOLD their shared endpoint and let
+  // the reshaping carry the dot the short hop across — no path is retraced. Three
+  // shapes can't all alternate, so exactly one seam (loss→circle) still sweeps the
+  // line; that's the single unavoidable traverse, and it falls where the curve is
+  // balling up into the circle, so it reads as part of the morph.
+  const U0 = [0, 1, 0]; // sweep start per shape
+  const U1 = [1, 0, 1]; // sweep end per shape
 
   const blend: Pt[] = shapes[0].map((p) => ({ ...p })); // reused per-frame buffer
   let t = 0;
@@ -125,15 +134,16 @@ export function initInterestsGraph(root: HTMLElement): void {
       figs.forEach((fig, k) => { fig.style.opacity = w[k].toFixed(3); });
       setLive(m < 0.5 ? a : b);
 
-      // The dot completes each shape, THEN the morph carries it onward. During
-      // the SETTLE it sweeps the whole line 0→1 (eased in/out, so it glides the
-      // full shape and decelerates to rest at the end). During the MORPH it eases
-      // back 1→0 in lockstep with the reshaping (u = 1 − f), arriving exactly at
-      // the next shape's start as that shape finishes forming — so it rides the
-      // full circle, traverses the whole staircase, lands at the top-left of the
-      // loss curve and runs down it. Position and speed stay continuous at every
-      // seam (both ease to zero velocity there), so there is no teleport or jerk.
-      const u = within <= SETTLE ? easeMorph(within / SETTLE) : 1 - f;
+      // Dot path. SETTLE: sweep the current shape fully from U0[a]→U1[a], eased so
+      // it glides the whole line and rests at the end. MORPH: ease from this
+      // shape's end U1[a] to the next shape's start U0[b] — equal at every seam but
+      // loss→circle, so the dot simply holds while the shape reshapes under it
+      // (the short hop), and only that one seam actually travels the line. u stays
+      // in [0,1] and both phases reach zero velocity at the seams, so it's smooth.
+      const u =
+        within <= SETTLE
+          ? U0[a] + (U1[a] - U0[a]) * easeMorph(within / SETTLE)
+          : U1[a] + (U0[b] - U1[a]) * f;
       place(along(blend, u));
     }
     requestAnimationFrame(frame);

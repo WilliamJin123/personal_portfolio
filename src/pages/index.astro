@@ -232,13 +232,19 @@ const links = {
   /* work experience + projects — chronological timeline with a big sticky
      title at its left so the section announces itself. */
   .work{padding:60px 0 110px;border-top:1px solid var(--rule)}
-  .work-body{display:grid;grid-template-columns:minmax(120px,150px) minmax(0,780px);gap:clamp(18px,2.4vw,34px);justify-content:center}
+  /* symmetric 3-col grid: an empty mirror column on the right balances the title
+     on the left, so the timeline sits dead-centre on the page; it shrinks below
+     780 on narrower screens, then the rule below stacks it. */
+  .work-body{display:grid;grid-template-columns:240px minmax(0,780px) 240px;gap:0 clamp(18px,2.4vw,34px);justify-content:center;align-items:start}
+  .work-side{grid-column:1;justify-self:end}
   .work-side .in{position:sticky;top:110px;padding-top:8px}
-  .wt{font-size:clamp(22px,2.4vw,28px);font-weight:600;letter-spacing:-.02em;line-height:1.14;color:var(--ink)}
+  .wtl{grid-column:2}
+  .wt{font-size:clamp(28px,3.3vw,42px);font-weight:600;letter-spacing:-.022em;line-height:1.12;color:var(--ink)}
   .wt .l{display:block}
   .wt .sl,.wt .plus{color:var(--amber)}
-  @media (max-width:900px){
+  @media (max-width:1024px){
     .work-body{display:block}
+    .work-side{justify-self:auto}
     .work-side .in{position:static;margin-bottom:26px}
     .wt .l{display:inline}
     .wt{font-size:clamp(28px,6vw,40px)}
