@@ -360,7 +360,7 @@ const authored: ResumeEntry[] = [
     id: 'solana-sdk',
     section: 'projects',
     title: 'Solana Swift SDK',
-    grants: ['Solana Foundation Grant'],
+    grants: ['10K Solana Foundation Grant'],
     dateLabel: 'Oct 2025 - Nov 2025',
     links: [{ label: 'repo', href: 'https://github.com/The-SolShare-Team' }],
     bullets: [

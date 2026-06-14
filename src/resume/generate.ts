@@ -43,31 +43,48 @@ function subheading(e: ResumeEntry, ids: string[]): string {
 
 function project(e: ResumeEntry, ids: string[]): string {
   const links = e.links ?? [];
-  const primary = links[0];
-  const name = primary
-    ? `{\\href{${escapeLatexUrl(primary.href)}}{\\textcolor{black}{${escapeLatex(e.title)}~\\raisebox{0.1em}{\\scalebox{0.8}{\\faExternalLink}}}}}`
-    : `{${escapeLatex(e.title)}}`;
+  const repo = links.find((l) => /github\.com/i.test(l.href));
+  const showcase = links.find((l) => !/github\.com/i.test(l.href)); // devpost / live demo / paper
+  const extras = links.filter((l) => l !== repo && l !== showcase);
+
+  // Title -> the GitHub repo when there is one (consistent across every project),
+  // else its first link, else plain. The underline is the only link affordance.
+  const titleHref = repo?.href ?? links[0]?.href;
+  const title = titleHref
+    ? `\\textbf{\\reslink{${escapeLatexUrl(titleHref)}}{${escapeLatex(e.title)}}}`
+    : `\\textbf{${escapeLatex(e.title)}}`;
+
+  // Event/context sits inline after the title. A real event name (a hackathon)
+  // links to its Devpost/showcase; a generic label ("Personal Project") stays
+  // plain text and the showcase, if any, trails as a small labelled link instead.
+  const generic = /personal project|research project/i.test(e.subtitle ?? '');
+  const context = e.subtitle
+    ? showcase && !generic
+      ? `\\reslink{${escapeLatexUrl(showcase.href)}}{${escapeLatex(e.subtitle)}}`
+      : escapeLatex(e.subtitle)
+    : '';
+  const trailing = [...(showcase && (generic || !e.subtitle) ? [showcase] : []), ...extras].map(
+    (l) => `\\weblink{${escapeLatexUrl(l.href)}}{${escapeLatex(l.label)}}`,
+  );
+  const left = [title, context ? `| ${context}` : '', trailing.join(' ')]
+    .filter(Boolean)
+    .join(' ');
+
+  // Awards (trophy) + grants ($) share a compact second row; empty if the project
+  // has neither. The leading \\ lives here so a badge-less project is a single row.
   const badges = [
     ...(e.awards ?? []).map((a) => `\\award{${escapeLatex(a)}}`),
     ...(e.grants ?? []).map((g) => `\\grant{${escapeLatex(g)}}`),
-  ];
-  const context = [
-    e.subtitle ? escapeLatex(e.subtitle) : '',
-    ...links.slice(1).map((l) =>
-      /github\.com/i.test(l.href)
-        ? `\\repolink{${escapeLatexUrl(l.href)}}{${escapeLatex(l.label)}}`
-        : `\\weblink{${escapeLatexUrl(l.href)}}{${escapeLatex(l.label)}}`,
-    ),
-  ].filter(Boolean);
-  // Awards/grants sit on their own line; the event/subtitle + any extra links wrap below.
-  const subtitle = [badges.join(' '), context.join(' ')]
-    .filter(Boolean)
-    .join(badges.length && context.length ? ' \\newline ' : ' ');
+  ].join(' ');
+  const badgeRow = badges
+    ? `\\\\ \\multicolumn{2}{@{}p{0.97\\textwidth}@{}}{\\small ${badges}}`
+    : '';
+
   return [
     '  \\resumeProject',
-    `  ${name}`,
-    `  {${subtitle}}`,
-    `  {${escapeLatex(e.dateLabel)}}{}`,
+    `  {${left}}`,
+    `  {${escapeLatex(e.dateLabel)}}`,
+    `  {${badgeRow}}`,
     items(e, ids),
   ].join('\n');
 }
@@ -90,16 +107,20 @@ function renderSection(lib: ResumeLibrary, sel: Selection, kind: ResumeEntry['se
 }
 
 function header(p: Profile): string {
+  // LinkedIn + GitHub as matching square brand badges (per review: make the two a
+  // consistent set rather than one boxed "in" and one bare octocat).
   const iconCmd = (i?: string) =>
     i === 'linkedin'
-      ? '\\socialicon{\\faLinkedin} '
+      ? '\\socialicon{\\faLinkedinSquare} '
       : i === 'github'
-        ? '\\socialicon{\\faGithub} '
+        ? '\\socialicon{\\faGithubSquare} '
         : '';
   const contacts = [
     p.phone,
-    p.email ? `\\href{mailto:${escapeLatexUrl(p.email)}}{${escapeLatex(p.email)}}` : undefined,
-    ...p.links.map((l) => `${iconCmd(l.icon)}\\href{${escapeLatexUrl(l.href)}}{${escapeLatex(l.label)}}`),
+    p.email ? `\\reslink{mailto:${escapeLatexUrl(p.email)}}{${escapeLatex(p.email)}}` : undefined,
+    ...p.links.map(
+      (l) => `${iconCmd(l.icon)}\\reslink{${escapeLatexUrl(l.href)}}{${escapeLatex(l.label)}}`,
+    ),
   ]
     .filter((x): x is string => Boolean(x))
     .join(' | \n    ');
@@ -114,23 +135,25 @@ function header(p: Profile): string {
     `    ${contacts}`,
     '    }',
     '\\end{center}',
-    '\\vspace{-6mm}',
+    '\\vspace{-2.5mm}',
   ].join('\n');
 }
 
 function skillsBlock(groups: SkillGroup[]): string {
+  // Comma-separated, tight: category label bold at body size (same size as the
+  // items, per review — differentiate by weight, not size), rows packed close.
   const rows = groups
     .map(
       (g) =>
-        `  \\item \\makebox[85pt][l]{\\fontsize{12pt}{12pt}\\selectfont \\textbf{${escapeLatex(
-          g.category,
-        )}:}}\n        ${g.items.map((s) => `\\skilltag{${escapeLatex(s)}}`).join(' ')}`,
+        `  \\item {\\normalfont\\textbf{${escapeLatex(g.category)}:}}~ ${g.items
+          .map((s) => escapeLatex(s))
+          .join(', ')}`,
     )
     .join('\n');
   return [
     '\\section{\\textbf{Skills}}',
     '\\vspace{-0.4mm}',
-    '\\begin{itemize}[leftmargin=*, itemsep=1mm, rightmargin=2ex, label={}]',
+    '\\begin{itemize}[leftmargin=*, itemsep=0.2mm, rightmargin=2ex, label={}]',
     rows,
     '\\end{itemize}',
     '\\vspace{-3.5mm}',

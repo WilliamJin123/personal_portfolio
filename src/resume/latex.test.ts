@@ -16,9 +16,9 @@ test('bold token -> \\textbf with escaped content', () => {
   expect(tokensToLatex([{ type: 'bold', value: '72%' }])).toBe('\\textbf{72\\%}');
 });
 
-test('link token -> \\href, href left raw', () => {
+test('link token -> \\reslink, href left raw', () => {
   expect(tokensToLatex([{ type: 'link', label: 'GH', href: 'https://x/y' }])).toBe(
-    '\\href{https://x/y}{GH}',
+    '\\reslink{https://x/y}{GH}',
   );
 });
 

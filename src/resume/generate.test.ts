@@ -20,7 +20,7 @@ test('body emits the right macros per section, in order', () => {
   const body = generateBody(lib, defaultSelection(lib));
   expect(body).toContain('\\resumeSubheading');
   expect(body).toContain('\\resumeProject');
-  expect(body).toContain('\\href{https://github.com/x/sol}'); // project link
+  expect(body).toContain('\\reslink{https://github.com/x/sol}'); // project title -> repo
   expect(body.indexOf('Experience')).toBeLessThan(body.indexOf('Projects'));
   expect(body.indexOf('Projects')).toBeLessThan(body.indexOf('Education'));
 });

@@ -34,7 +34,7 @@ export function tokensToLatex(tokens: Token[]): string {
     .map((t) => {
       if (t.type === 'text') return escapeLatex(t.value);
       if (t.type === 'bold') return `\\textbf{${escapeLatex(t.value)}}`;
-      return `\\href{${escapeLatexUrl(t.href)}}{${escapeLatex(t.label)}}`;
+      return `\\reslink{${escapeLatexUrl(t.href)}}{${escapeLatex(t.label)}}`;
     })
     .join('');
 }
