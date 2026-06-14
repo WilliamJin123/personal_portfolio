@@ -137,11 +137,13 @@ const links = {
      recedes behind the hairlines — feathered to transparent, no panel edge */
   .int-vis::before{content:"";position:absolute;inset:-4%;z-index:0;pointer-events:none;
     background:radial-gradient(58% 58% at 50% 50%,var(--paper) 0%,var(--paper) 46%,rgba(236,238,241,0) 78%)}
-  /* three hairline instrument diagrams, cross-faded one at a time (the active
-     one mirrors the .live bullet). Shared grammar: ink hairlines, miter joins,
-     faint guides, a single slow amber accent in motion — restraint over flash. */
-  .ifig{position:absolute;inset:0;z-index:1;width:100%;height:100%;opacity:0;transition:opacity 1s ease}
-  .ifig.active{opacity:1}
+  /* three hairline instrument diagrams, used now only for their DECORATIONS
+     (labels, guides, ornaments). JS fades each .ifig per phase — full while its
+     shape is settled, dim during a morph. The actual line is the .spine below,
+     which continuously reshapes from one diagram into the next; the original
+     spine paths (data-dot) are kept only as invisible sampling sources. */
+  .ifig{position:absolute;inset:0;z-index:1;width:100%;height:100%;opacity:0}
+  .ifig [data-dot]{stroke:none!important;fill:none!important}
   .ifig *{vector-effect:non-scaling-stroke}
   .ifig .hair{stroke:var(--ink2);stroke-width:1.1;stroke-linejoin:miter;stroke-linecap:square}
   .ifig .faint{stroke:var(--faint);stroke-width:1;stroke-linejoin:miter}
@@ -153,10 +155,13 @@ const links = {
   .ifig .trace,.ifig .g-path{stroke:var(--ink2);stroke-width:1.1;fill:none;opacity:.42;stroke-linejoin:miter}
   .ifig .floor{stroke:var(--faint);stroke-width:1;stroke-dasharray:2 6;opacity:.6}
   .ifig .tool-on{stroke:var(--amber);opacity:.85}
-  /* the single travelling accent — one amber dot (JS-driven) threads all three
-     figures, gliding from one path's end into the next as the figures cross-fade.
-     It sits above the linework and stays fully opaque through every fade. */
+  /* the morphing line + its dot, in one overlay above the decorations. JS
+     rebuilds .spine every frame as a point-for-point blend between the three
+     diagram shapes — a circle becomes the stack-trace becomes the loss curve and
+     back — and the amber dot rides this single, ever-present line. */
   .idot{position:absolute;inset:0;z-index:3;width:100%;height:100%;pointer-events:none}
+  .spine{fill:none;stroke:var(--ink2);stroke-width:1.2;stroke-linejoin:round;stroke-linecap:round;vector-effect:non-scaling-stroke;opacity:0;transition:opacity .6s ease}
+  .int-vis.dot-on .spine{opacity:.72}
   .idot-c{fill:var(--amber);opacity:0;filter:drop-shadow(0 0 5px rgba(var(--amber-rgb),.55));transition:opacity .9s ease}
   .int-vis.dot-on .idot-c{opacity:.95}
   .int-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:clamp(36px,5.5vh,64px)}
@@ -493,11 +498,12 @@ const links = {
           <path class="g-path" data-dot="2" d="M104 132 C105.5 136.1 109.9 148.6 112.8 156.4 C115.7 164.3 118.6 171.8 121.5 179.1 C124.4 186.4 127.4 193.4 130.3 200.1 C133.2 206.9 136.1 213.3 139 219.6 C141.9 225.9 144.9 231.9 147.8 237.7 C150.7 243.5 153.6 249.1 156.5 254.5 C159.4 259.9 162.4 265.1 165.3 270.1 C168.2 275.1 171.1 279.9 174 284.5 C176.9 289.1 179.9 293.6 182.8 297.9 C185.7 302.2 188.6 306.3 191.5 310.3 C194.4 314.3 197.4 318.2 200.3 321.9 C203.2 325.6 206.1 329.2 209 332.6 C211.9 336 214.9 339.3 217.8 342.5 C220.7 345.7 223.6 348.7 226.5 351.7 C229.4 354.7 232.4 357.6 235.3 360.3 C238.2 363.1 241.1 365.7 244 368.2 C246.9 370.8 249.9 373.2 252.8 375.6 C255.7 378 258.6 380.2 261.5 382.4 C264.4 384.6 267.4 386.7 270.3 388.7 C273.2 390.7 276.1 392.7 279 394.6 C281.9 396.5 284.9 398.3 287.8 400 C290.7 401.8 293.6 403.5 296.5 405.1 C299.4 406.7 302.4 408.3 305.3 409.8 C308.2 411.3 311.1 412.7 314 414.1 C316.9 415.5 319.9 416.9 322.8 418.2 C325.7 419.5 328.6 420.7 331.5 421.9 C334.4 423.1 337.4 424.3 340.3 425.4 C343.2 426.5 346.1 427.6 349 428.6 C351.9 429.6 354.9 430.6 357.8 431.6 C360.7 432.6 363.6 433.5 366.5 434.4 C369.4 435.3 372.4 436.1 375.3 436.9 C378.2 437.7 381.1 438.5 384 439.3 C386.9 440.1 389.9 440.9 392.8 441.6 C395.7 442.3 398.6 443 401.5 443.6 C404.4 444.3 407.4 444.9 410.3 445.5 C413.2 446.1 416.1 446.7 419 447.3 C421.9 447.9 424.9 448.4 427.8 448.9 C430.7 449.4 433.6 449.9 436.5 450.4 C439.4 450.9 442.4 451.4 445.3 451.9 C448.2 452.4 451.1 452.8 454 453.2 C456.9 453.6 459.9 454 462.8 454.4 C465.7 454.8 468.6 455.1 471.5 455.5 C474.4 455.9 477.4 456.3 480.3 456.6 C483.2 456.9 486.1 457.2 489 457.5 C491.9 457.8 494.9 458.1 497.8 458.4 C500.7 458.7 503.6 459 506.5 459.3 C509.4 459.6 512.4 459.8 515.3 460 C518.2 460.3 522.6 460.7 524 460.8"/>
         </svg>
 
-        <!-- the single travelling accent — one amber dot threads all three
-             figures (orbit → trace → descent → loop). JS positions it; the
-             figures cross-fade to whichever path it is currently on. It sits
-             above the figures and stays fully visible through every fade. -->
+        <!-- the morphing line + its dot. JS rebuilds the .spine each frame as a
+             point-for-point blend between the three diagram shapes (circle →
+             stack-trace → loss curve → …), so the diagrams literally flow into one
+             another; the amber dot rides this single, ever-present line. -->
         <svg class="idot" viewBox="0 0 600 600" fill="none" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <path class="spine" d="M0 0"/>
           <circle class="idot-c" r="5"/>
         </svg>
 
