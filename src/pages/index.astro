@@ -107,6 +107,24 @@ const links = {
   @keyframes nlTrace{0%,74%,96%,100%{stroke-dashoffset:1}82%,88%{stroke-dashoffset:0}}
   @keyframes nlDot{0%,72%,100%{opacity:.45;box-shadow:0 0 0 0 rgba(var(--amber-rgb),0)}80%{opacity:1;box-shadow:0 0 0 4px rgba(var(--amber-rgb),.16)}90%{opacity:1;box-shadow:0 0 0 0 rgba(var(--amber-rgb),0)}}
   @media (prefers-reduced-motion:reduce){.nl-3d .bd rect,.nl-3d .t::before{animation:none}.nl-3d .t::before{opacity:1}}
+  /* 3D entry parked while the second site is built: inert + dimmed, no beckon,
+     and a little hand-pinned sign that hangs lopsided off the corner. */
+  .nl-3d.wip{cursor:default}
+  .nl-3d.wip .t{color:var(--mute)}
+  .nl-3d.wip .t::before{animation:none;background:var(--mute);opacity:.55;box-shadow:none}
+  .nl-3d.wip .bd rect{animation:none;stroke-dashoffset:1}
+  .nl-3d.wip:hover .fillbg{transform:scaleY(0)}      /* don't pretend to be a door */
+  .nl-3d.wip:hover .bd rect{stroke-dashoffset:1}
+  .nl-3d.wip:hover .t,.nl-3d.wip:hover .t::before{color:var(--mute);background:var(--mute)}
+  .wip-tag{position:absolute;top:100%;right:6px;margin-top:11px;z-index:6;pointer-events:none;
+    font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;color:var(--amber);white-space:nowrap;
+    padding:4px 8px 4px 9px;border:1px solid rgba(var(--amber-rgb),.45);border-radius:3px;background:var(--paper);
+    box-shadow:0 5px 14px rgba(0,0,0,.16);transform:rotate(-7deg);transform-origin:13px -8px}
+  .wip-tag::before{content:"";position:absolute;top:-8px;left:11px;width:5px;height:5px;border-radius:50%;
+    background:var(--amber);box-shadow:0 0 0 2.5px var(--paper)}   /* the nail it hangs from */
+  .wip-tag::after{content:"";position:absolute;top:-7px;left:13px;width:1px;height:9px;
+    background:rgba(var(--amber-rgb),.55);transform:rotate(7deg);transform-origin:top}   /* the thread */
+  @media (prefers-reduced-motion:reduce){.wip-tag{transform:rotate(-7deg)}}
 
   .hero{padding:104px 0 120px}
   /* entrance — the lead copy rises in once on load, line by line (the Will
@@ -214,9 +232,9 @@ const links = {
   /* work experience + projects — chronological timeline with a big sticky
      title at its left so the section announces itself. */
   .work{padding:60px 0 110px;border-top:1px solid var(--rule)}
-  .work-body{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,760px);gap:clamp(24px,4vw,64px);justify-content:center}
+  .work-body{display:grid;grid-template-columns:minmax(120px,150px) minmax(0,780px);gap:clamp(18px,2.4vw,34px);justify-content:center}
   .work-side .in{position:sticky;top:110px;padding-top:8px}
-  .wt{font-size:clamp(34px,4.2vw,56px);font-weight:600;letter-spacing:-.025em;line-height:1.12;color:var(--ink)}
+  .wt{font-size:clamp(22px,2.4vw,28px);font-weight:600;letter-spacing:-.02em;line-height:1.14;color:var(--ink)}
   .wt .l{display:block}
   .wt .sl,.wt .plus{color:var(--amber)}
   @media (max-width:900px){
@@ -252,7 +270,7 @@ const links = {
 
   /* timeline — a centered, dated spine. Each entry expands its detail in
      place (multiple can be open at once; the first is open by default). */
-  .wtl{max-width:760px;margin:0 auto}
+  .wtl{max-width:780px;margin:0 auto}
   .tl-yr{font-family:var(--mono);font-size:12px;letter-spacing:.16em;color:var(--mute);padding-left:112px;margin:22px 0 6px}
   .tl-yr:first-child{margin-top:0}
   .tl-row{position:relative;display:grid;grid-template-columns:112px 1fr}
@@ -410,7 +428,7 @@ const links = {
         <a class="nl" href={links.mail}><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">Mail</span></a>
         <a class="nl" href={links.linkedin} target="_blank" rel="noreferrer"><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">LinkedIn</span></a>
         <a class="nl" href={links.devpost} target="_blank" rel="noreferrer"><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">Devpost</span></a>
-        <a class="nl nl-3d" href={links.mode3d}><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">Enter 3D</span></a>
+        <span class="nl nl-3d wip" role="link" aria-disabled="true" aria-label="Enter 3D — in progress"><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">Enter 3D</span><span class="wip-tag">in progress</span></span>
       </nav>
     </div>
   </header>
@@ -493,7 +511,7 @@ const links = {
           <text class="lbl tiny" x="528" y="562" text-anchor="end">steps</text>
           <!-- irreducible-loss floor -->
           <line class="floor" x1="104" y1="470" x2="528" y2="470"/>
-          <text class="lbl tiny lk" x="528" y="462" text-anchor="end">min</text>
+          <text class="lbl tiny lk" x="528" y="487" text-anchor="end">min</text>
           <!-- training loss decaying to its minimum; the travelling dot rides it down -->
           <path class="g-path" data-dot="2" d="M104 132 C105.5 136.1 109.9 148.6 112.8 156.4 C115.7 164.3 118.6 171.8 121.5 179.1 C124.4 186.4 127.4 193.4 130.3 200.1 C133.2 206.9 136.1 213.3 139 219.6 C141.9 225.9 144.9 231.9 147.8 237.7 C150.7 243.5 153.6 249.1 156.5 254.5 C159.4 259.9 162.4 265.1 165.3 270.1 C168.2 275.1 171.1 279.9 174 284.5 C176.9 289.1 179.9 293.6 182.8 297.9 C185.7 302.2 188.6 306.3 191.5 310.3 C194.4 314.3 197.4 318.2 200.3 321.9 C203.2 325.6 206.1 329.2 209 332.6 C211.9 336 214.9 339.3 217.8 342.5 C220.7 345.7 223.6 348.7 226.5 351.7 C229.4 354.7 232.4 357.6 235.3 360.3 C238.2 363.1 241.1 365.7 244 368.2 C246.9 370.8 249.9 373.2 252.8 375.6 C255.7 378 258.6 380.2 261.5 382.4 C264.4 384.6 267.4 386.7 270.3 388.7 C273.2 390.7 276.1 392.7 279 394.6 C281.9 396.5 284.9 398.3 287.8 400 C290.7 401.8 293.6 403.5 296.5 405.1 C299.4 406.7 302.4 408.3 305.3 409.8 C308.2 411.3 311.1 412.7 314 414.1 C316.9 415.5 319.9 416.9 322.8 418.2 C325.7 419.5 328.6 420.7 331.5 421.9 C334.4 423.1 337.4 424.3 340.3 425.4 C343.2 426.5 346.1 427.6 349 428.6 C351.9 429.6 354.9 430.6 357.8 431.6 C360.7 432.6 363.6 433.5 366.5 434.4 C369.4 435.3 372.4 436.1 375.3 436.9 C378.2 437.7 381.1 438.5 384 439.3 C386.9 440.1 389.9 440.9 392.8 441.6 C395.7 442.3 398.6 443 401.5 443.6 C404.4 444.3 407.4 444.9 410.3 445.5 C413.2 446.1 416.1 446.7 419 447.3 C421.9 447.9 424.9 448.4 427.8 448.9 C430.7 449.4 433.6 449.9 436.5 450.4 C439.4 450.9 442.4 451.4 445.3 451.9 C448.2 452.4 451.1 452.8 454 453.2 C456.9 453.6 459.9 454 462.8 454.4 C465.7 454.8 468.6 455.1 471.5 455.5 C474.4 455.9 477.4 456.3 480.3 456.6 C483.2 456.9 486.1 457.2 489 457.5 C491.9 457.8 494.9 458.1 497.8 458.4 C500.7 458.7 503.6 459 506.5 459.3 C509.4 459.6 512.4 459.8 515.3 460 C518.2 460.3 522.6 460.7 524 460.8"/>
         </svg>

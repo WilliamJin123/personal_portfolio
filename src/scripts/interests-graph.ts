@@ -93,7 +93,6 @@ export function initInterestsGraph(root: HTMLElement): void {
   const MORPH = 2400; // ms reshaping into the next
   const SEG = SETTLE + MORPH;
   const CYCLE = SEG * 3;
-  const SWEEP = 11000; // ms for one full there-and-back sweep of the line
 
   const blend: Pt[] = shapes[0].map((p) => ({ ...p })); // reused per-frame buffer
   let t = 0;
@@ -126,9 +125,15 @@ export function initInterestsGraph(root: HTMLElement): void {
       figs.forEach((fig, k) => { fig.style.opacity = w[k].toFixed(3); });
       setLive(m < 0.5 ? a : b);
 
-      // the dot sweeps the line and back on a smooth cosine, so its motion stays
-      // continuous on these open shapes with no teleport at the ends.
-      const u = (1 - Math.cos((2 * Math.PI * t) / SWEEP)) / 2;
+      // The dot completes each shape, THEN the morph carries it onward. During
+      // the SETTLE it sweeps the whole line 0→1 (eased in/out, so it glides the
+      // full shape and decelerates to rest at the end). During the MORPH it eases
+      // back 1→0 in lockstep with the reshaping (u = 1 − f), arriving exactly at
+      // the next shape's start as that shape finishes forming — so it rides the
+      // full circle, traverses the whole staircase, lands at the top-left of the
+      // loss curve and runs down it. Position and speed stay continuous at every
+      // seam (both ease to zero velocity there), so there is no teleport or jerk.
+      const u = within <= SETTLE ? easeMorph(within / SETTLE) : 1 - f;
       place(along(blend, u));
     }
     requestAnimationFrame(frame);
