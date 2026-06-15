@@ -454,16 +454,27 @@ const links = {
     <div class="int-grid">
       <div class="int-vis" aria-hidden="true">
 
-        <!-- 01 AGENTIC · the loop. An LLM core runs a reason → act → observe
-             cycle; on "act" it calls the active (amber) tool along the level wire,
-             observes the result, and loops again — the amber token rides the ring. -->
+        <!-- 01 AGENTIC · the loop. An LLM core runs reason → act → observe in
+             order (stations numbered); on "act" it calls the active (amber) tool
+             and reads its result back, then loops. -->
         <svg class="ifig" data-fig="0" viewBox="0 0 600 600" fill="none" preserveAspectRatio="xMidYMid meet">
-          <!-- tool rack — the active (amber) tool centres on the act node. -->
-          <text class="lbl" x="484" y="276" text-anchor="middle">tools</text>
-          <path class="faint" d="M 417 349 L 476 349"/>
-          <rect class="hair pap" x="476" y="297" width="16" height="16"/>
-          <rect class="hair tool-on pap" x="476" y="341" width="16" height="16"/>
-          <rect class="hair pap" x="476" y="385" width="16" height="16"/>
+          <!-- tool rack — callable tools as little cards, each with a signature
+               line; the active one (amber) is the call in flight. -->
+          <text class="lbl" x="487" y="296" text-anchor="middle">tools</text>
+          <rect class="hair pap" x="470" y="306" width="34" height="22" rx="3"/>
+          <line class="faint" x1="477" y1="314" x2="497" y2="314"/>
+          <line class="faint" x1="477" y1="320" x2="490" y2="320"/>
+          <rect class="hair tool-on pap" x="470" y="338" width="34" height="22" rx="3"/>
+          <line class="tool-on" x1="477" y1="346" x2="497" y2="346"/>
+          <line class="tool-on" x1="477" y1="352" x2="490" y2="352"/>
+          <rect class="hair pap" x="470" y="370" width="34" height="22" rx="3"/>
+          <line class="faint" x1="477" y1="378" x2="497" y2="378"/>
+          <line class="faint" x1="477" y1="384" x2="490" y2="384"/>
+          <!-- act calls the active tool (amber, out) and reads the result (faint, back) -->
+          <path class="tool-on" d="M 419 344 L 465 344"/>
+          <path class="tool-on" d="M 465 344 L 458 341 M 465 344 L 458 347"/>
+          <path class="faint" d="M 466 354 L 422 354"/>
+          <path class="faint" d="M 422 354 L 429 351 M 422 354 L 429 357"/>
           <!-- the cycle + its flow arrows -->
           <path class="hair" data-dot="0" d="M 300 157 A 128 128 0 1 1 299.99 157 Z"/>
           <path class="hair arrow" transform="translate(410.9 221) rotate(60)" d="M -8 -6 L 1 0 L -8 6"/>
@@ -472,13 +483,13 @@ const links = {
           <!-- the LLM core the loop runs on -->
           <rect class="hair pap" x="258" y="261" width="84" height="48" rx="7"/>
           <text class="lbl lk" x="300" y="290" text-anchor="middle">LLM</text>
-          <!-- stations -->
+          <!-- stations, numbered in flow order -->
           <circle class="hair pap" cx="300" cy="157" r="6"/>
           <circle class="hair pap" cx="410.9" cy="349" r="6"/>
           <circle class="hair pap" cx="189.1" cy="349" r="6"/>
-          <text class="lbl lk" x="300" y="138" text-anchor="middle">reason</text>
-          <text class="lbl lk" x="410.9" y="376" text-anchor="middle">act</text>
-          <text class="lbl lk" x="189.1" y="376" text-anchor="middle">observe</text>
+          <text class="lbl lk" x="300" y="138" text-anchor="middle"><tspan fill="var(--amber)">1</tspan> reason</text>
+          <text class="lbl lk" x="410.9" y="376" text-anchor="middle"><tspan fill="var(--amber)">2</tspan> act</text>
+          <text class="lbl lk" x="189.1" y="376" text-anchor="middle"><tspan fill="var(--amber)">3</tspan> observe</text>
         </svg>
 
         <!-- 02 FULL STACK · the tiers. Three stacked layers — client, server,
