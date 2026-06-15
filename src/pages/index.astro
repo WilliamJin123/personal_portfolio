@@ -506,8 +506,10 @@ const links = {
           <text class="lbl" x="192" y="141">client</text>
           <text class="lbl" x="192" y="285">server</text>
           <text class="lbl" x="300" y="495" text-anchor="middle">database</text>
-          <!-- request down the left rail, response up the right rail -->
-          <path class="trace" data-dot="1" d="M 236 66 L 236 430 L 364 430 L 364 66"/>
+          <!-- request down the left rail, response up the right rail. Path runs
+               res-end → req-end so the dot (which sweeps u:1→0, kept that way so
+               the morph seams hold) rides it FORWARD: req down, across, res up. -->
+          <path class="trace" data-dot="1" d="M 364 66 L 364 430 L 236 430 L 236 66"/>
           <path class="hair arrow" transform="translate(236 206) rotate(90)" d="M -7 -5 L 1 0 L -7 5"/>
           <path class="hair arrow" transform="translate(364 206) rotate(-90)" d="M -7 -5 L 1 0 L -7 5"/>
           <text class="lbl lk" x="236" y="54" text-anchor="middle">req</text>
