@@ -17,18 +17,18 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'rag',
-        text: 'Developed a **Retrieval-Augmented Generation (RAG)** chatbot (10+ engineer team) for employees to query an internal regulation corpus, built on **Azure OpenAI**, **Azure AI Search**, and Container Apps',
+        text: 'Developed a **RAG** chatbot for employees to query an internal regulation corpus, built on **Azure OpenAI**, **AI Search**, and **Container Apps**',
+        tags: ['ai', 'rag', 'azure'],
+      },
+      {
+        id: 'chunking',
+        text: 'Redesigned the chunking pipeline to parse documents to **HTML** via **Azure Document Intelligence**, eliminating mid-chunk truncation and PDF formatting errors, improving retrieval accuracy **by 15%** and answer grounding **by 10%** over baseline across **300** test prompts',
         tags: ['ai', 'rag', 'azure'],
       },
       {
         id: 'ui',
-        text: 'Built front-end features in **TypeScript** — a **citation panel** and thumbs-up/down response analytics — to surface sources and capture user feedback for evaluation',
+        text: 'Built a **citation panel** and thumbs-up/down feedback loop in **TypeScript**, surfacing source documents and capturing user signals to evaluate response quality',
         tags: ['frontend', 'analytics'],
-      },
-      {
-        id: 'chunking',
-        text: 'Redesigned the chunking pipeline to parse documents to **HTML** via **Azure Document Intelligence**, eliminating mid-chunk truncation and PDF formatting errors, improving retrieval accuracy **15%** and answer grounding **10%** over baseline across **300** test prompts',
-        tags: ['ai', 'rag', 'azure'],
       },
     ],
   },
@@ -42,7 +42,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'scraper',
-        text: 'Developed a web scraper to automatically track citations of **7,000+** papers across 2,000+ journal websites in **Python** with **Selenium** and **Beautiful Soup**',
+        text: 'Built a web scraper with **Selenium**, **Beautiful Soup**, and **Python** to track citations of **7,000+** papers across **2,000+** journal sites, handling inconsistent page layouts across publishers',
         tags: ['python', 'scraping'],
       },
       {
@@ -53,7 +53,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'db',
-        text: 'Designed and deployed a **SQL Server** database to organize **5,000+** experimental fuel cell files',
+        text: 'Designed and deployed a **SQL Server** database organizing **5,000+** experimental fuel cell files for queryable results across experiments',
         tags: ['sql', 'data'],
       },
     ],
@@ -94,17 +94,17 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'intake',
-        text: "Built search functions and intake forms for Ontario's social assistance management system using **Java**",
+        text: "Built search functions and intake forms for Ontario's social assistance management system in **Java**",
         tags: ['java', 'fullstack'],
       },
       {
         id: 'sql',
-        text: 'Optimized **Oracle SQL** queries (**10x** faster) by eliminating redundant table joins and adding indexes',
+        text: 'Reduced **Oracle SQL** query latency **10x** by removing redundant joins and adding indexes',
         tags: ['sql', 'performance'],
       },
       {
         id: 'tests',
-        text: 'Wrote **JMockit** unit tests and debugged UI issues in **Curam** components',
+        text: 'Wrote **JMockit** unit tests and resolved UI defects in **Curam** components across the platform',
         tags: ['testing', 'java'],
       },
     ],
@@ -119,12 +119,12 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'dag',
-        text: 'Built **Tract**, a from-scratch git-style version-control engine for LLM context in **Python** — a content-addressed commit **DAG** with branching, three-way merge, and rebase',
+        text: 'Built a from-scratch git-style version-control engine for LLM context in **Python**, with a content-addressed commit **DAG** supporting branching, three-way merge, and rebase',
         tags: ['systems', 'python'],
       },
       {
         id: 'agent',
-        text: 'Drove the engine from an async agent loop exposing **28** LLM tools, with token-budget enforcement and auto-compression, on the **Anthropic SDK** and an OpenAI-compatible client',
+        text: 'Drove the engine from an async agent loop exposing **28** LLM tools, with token-budget enforcement and auto-compression, on the **Anthropic SDK** and an **OpenAI-compatible** client',
         tags: ['ai', 'agents', 'python'],
       },
       {
@@ -260,12 +260,12 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'agent',
-        text: 'Built an agentic AI video editor (**Next.js**, **TypeScript**, **Supabase**) where a **Gemini** agent edits a live timeline from natural language through **14** custom video and audio tools',
+        text: 'Built an agentic AI video editor (**Next.js**, **TypeScript**, **Supabase**) where a **Gemini** agent edits a live timeline from natural language through **14** custom video and audio tools — cut, trim, transitions, voiceover, and audio mixing',
         tags: ['ai', 'agents'],
       },
       {
         id: 'search',
-        text: 'Integrated **Twelve Labs** semantic search so the agent locates the exact clip segment matching a natural-language query and drops it on the timeline',
+        text: 'Engineered natural-language clip retrieval with **Twelve Labs** semantic search to surface the exact matching segment on the timeline',
         tags: ['ai', 'video'],
       },
       {
@@ -366,7 +366,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'sdk',
-        text: "Developed Solana's first official native **Swift SDK** enabling **iOS** apps to integrate multi-wallet functionality for leading wallet providers: Phantom, Backpack, and Solflare",
+        text: "Developed Solana's first official native **Swift SDK** enabling **iOS** apps to integrate multi-wallet functionality for leading wallet providers (Phantom, Backpack, and Solflare)",
         tags: ['swift', 'sdk'],
       },
       {

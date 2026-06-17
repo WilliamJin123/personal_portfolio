@@ -36,7 +36,7 @@ export interface Profile {
   name: string;
   phone?: string;
   email?: string;
-  links: { label: string; href: string; icon?: 'linkedin' | 'github' }[];
+  links: { label: string; href: string; icon?: 'linkedin' | 'github' | 'portfolio' }[];
 }
 
 export interface ResumeLibrary {

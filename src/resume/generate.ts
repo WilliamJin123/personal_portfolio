@@ -114,7 +114,9 @@ function header(p: Profile): string {
       ? '\\socialicon{\\faLinkedinSquare} '
       : i === 'github'
         ? '\\socialicon{\\faGithubSquare} '
-        : '';
+        : i === 'portfolio'
+          ? '\\wjicon{} '
+          : '';
   const contacts = [
     p.phone,
     p.email ? `\\reslink{mailto:${escapeLatexUrl(p.email)}}{${escapeLatex(p.email)}}` : undefined,
@@ -128,14 +130,17 @@ function header(p: Profile): string {
     '\\begin{center}',
     `    {\\Huge\\textbf{${escapeLatex(p.name)}}}`,
     '\\end{center}',
-    '\\vspace{-4.5mm}',
+    // Looser gap below the name (down from -4.5mm) drops the contact line a
+    // touch; the tighter gap below it (-4.5mm) absorbs the same amount so Skills
+    // and everything after keep their position.
+    '\\vspace{-2.5mm}',
     '',
     '\\begin{center}',
     '    \\small{',
     `    ${contacts}`,
     '    }',
     '\\end{center}',
-    '\\vspace{-2.5mm}',
+    '\\vspace{-4.5mm}',
   ].join('\n');
 }
 

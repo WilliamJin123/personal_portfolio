@@ -192,6 +192,28 @@
 % neither the title's repo nor the event's Devpost. Underlined, no icon (per review).
 \newcommand{\weblink}[2]{{\resumemain\footnotesize\reslink{#1}{#2}}\hspace{6pt}}
 
+% \wjicon: the site favicon (the "WJ" browser-tab monogram) redrawn in TikZ so the
+% portfolio link carries the same mark as the tab. Palette matches public/favicon.svg
+% but INVERTED — a solid dark ink square with the W in paper and the J in amber — so
+% it reads as a dark badge in the same set as the LinkedIn/GitHub squares rather than
+% a faint light box, while keeping the amber-J identity. \ttfamily is Latin Modern
+% Mono (bundled) — robust under XeTeX.
+%
+% \wjbadge draws it once at a fixed 12pt square with locked internal proportions;
+% \wjicon then runs that through the SAME wrapper \socialicon uses for the brand
+% glyphs — \raisebox{-0.05em}{\resizebox{!}{1em}{...}} — so it normalizes to the
+% exact size and baseline of the LinkedIn/GitHub badges automatically.
+\definecolor{wjpaper}{HTML}{ECEEF1}
+\definecolor{wjink}{HTML}{16181C}
+\definecolor{wjamber}{HTML}{BD741B}
+\newcommand{\wjbadge}{%
+  \begin{tikzpicture}
+    \node[rounded corners=2.4pt, fill=wjink, minimum size=12pt, inner sep=0pt]
+      {\ttfamily\bfseries\fontsize{7pt}{7pt}\selectfont
+       \textcolor{wjpaper}{WJ}};
+  \end{tikzpicture}}
+\newcommand{\wjicon}{\raisebox{-0.05em}{\resizebox{!}{1em}{\wjbadge}}}
+
 %%RESUME_BODY%%
 
 \end{document}
