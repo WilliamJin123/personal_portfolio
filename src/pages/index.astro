@@ -285,8 +285,8 @@ const links = {
   .tl-row{position:relative;display:grid;grid-template-columns:112px 1fr}
   .tl-row::before{content:"";position:absolute;left:96px;top:0;bottom:0;width:1px;background:var(--rule)}
   .tl-row:last-child::before{bottom:auto;height:26px}
-  .tl-mark{grid-column:1;grid-row:1;position:relative;display:flex;align-items:center;gap:8px;padding:12px 24px 0 0}
-  .tl-mon{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--mute);margin-left:auto}
+  .tl-mark{grid-column:1;grid-row:1;position:relative;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 24px 0 0}
+  .tl-mon{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--mute)}
   .tl-kind{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);background:rgba(var(--amber-rgb),.08);border:1px solid rgba(var(--amber-rgb),.42);border-radius:999px;padding:3px 9px}
   .tl-dot{position:absolute;left:91.5px;top:18px;width:9px;height:9px;border-radius:50%;background:var(--paper);border:1.6px solid var(--mute);box-sizing:border-box;z-index:1;transition:border-color .3s,background .3s,transform .3s}
   .tl-row.is-role .tl-dot{border-radius:2px}
@@ -823,7 +823,7 @@ const links = {
         if(tk!==curTerm){html+=`<div class="tl-yr">${t?`<span class="tl-term">${t.label}</span> ${t.year}`:''}</div>`;curTerm=tk;}
         const honor=(e.awards&&e.awards.length)?`<span class="tl-badge award" title="Award">${TROPHY}</span>`:((e.grants&&e.grants.length)?`<span class="tl-badge grant" title="Grant">${DOLLAR}</span>`:'');
         const meta=it.kind==='role'?[e.role,e.dateLabel].filter(Boolean).join(' · '):[e.subtitle,e.dateLabel].filter(Boolean).join(' · ');
-        html+=`<div class="tl-row${it.kind==='role'?' is-role':''}" data-i="${i}"><div class="tl-mark"><i class="tl-dot"></i><span class="tl-mon">${mon}</span>${it.kind==='role'?'<span class="tl-kind">work</span>':''}</div><button class="tl-head" aria-expanded="false"><span class="tl-title">${e.title}</span>${honor}<span class="tl-hmeta">${meta}</span><span class="tl-chev"></span></button><div class="tl-detail">${detailHTML(e)}</div></div>`;
+        html+=`<div class="tl-row${it.kind==='role'?' is-role':''}" data-i="${i}"><div class="tl-mark"><i class="tl-dot"></i>${honor}${it.kind==='role'?'<span class="tl-kind">work</span>':''}<span class="tl-mon">${mon}</span></div><button class="tl-head" aria-expanded="false"><span class="tl-title">${e.title}</span><span class="tl-hmeta">${meta}</span><span class="tl-chev"></span></button><div class="tl-detail">${detailHTML(e)}</div></div>`;
       });
       wtlEl.innerHTML=html;
     };
