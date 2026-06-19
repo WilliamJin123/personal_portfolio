@@ -64,7 +64,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'arch',
-        text: 'Designed a zero-dependency **hexagonal** core behind a repository port and an injected clock/ID seam, exercised by **143** passing **vitest** tests and wrapped in a TTY/pipe-aware **commander** CLI',
+        text: 'Designed a zero-dependency **hexagonal** core behind a repository port and an injected clock/ID seam, wrapped in a TTY/pipe-aware **commander** CLI',
         tags: ['architecture', 'testing'],
       },
     ],
