@@ -21,6 +21,19 @@ export const portfolioMedia: Record<string, PortfolioMedia> = {
   jindon: { stack: ['openjdk', 'oracle', { label: 'Cúram', icon: 'ibm' }], images: [] },
   weaccel: { stack: ['microsoftazure', 'python'], images: [] },
   // projects
+  hiya: {
+    stack: ['swift', 'supabase', 'postgresql', { label: 'AVFoundation', icon: 'apple' }],
+    images: [],
+  },
+  batch: {
+    stack: [
+      'typescript',
+      { label: 'Node', icon: 'nodedotjs' },
+      { label: 'Vitest', icon: 'vitest' },
+      { label: 'pnpm', icon: 'pnpm' },
+    ],
+    images: [],
+  },
   solshare: { stack: ['swift', 'firebase'], images: [] },
   stitch: {
     stack: [

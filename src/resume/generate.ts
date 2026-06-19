@@ -130,17 +130,17 @@ function header(p: Profile): string {
     '\\begin{center}',
     `    {\\Huge\\textbf{${escapeLatex(p.name)}}}`,
     '\\end{center}',
-    // Looser gap below the name (down from -4.5mm) drops the contact line a
-    // touch; the tighter gap below it (-4.5mm) absorbs the same amount so Skills
-    // and everything after keep their position.
-    '\\vspace{-2.5mm}',
+    // Looser gap below the name gives it breathing room (per review); the
+    // tighter gap below the contact line (-5.5mm) absorbs the same amount so
+    // Skills and everything after keep their position.
+    '\\vspace{-1mm}',
     '',
     '\\begin{center}',
     '    \\small{',
     `    ${contacts}`,
     '    }',
     '\\end{center}',
-    '\\vspace{-4.5mm}',
+    '\\vspace{-5.5mm}',
   ].join('\n');
 }
 

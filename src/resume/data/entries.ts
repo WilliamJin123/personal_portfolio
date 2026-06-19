@@ -8,6 +8,68 @@ import { byDateDesc } from './order';
 // listed first earlier in the array).
 const authored: ResumeEntry[] = [
   {
+    id: 'hiya',
+    section: 'projects',
+    include: false, // raw new side project — site timeline only, off the résumé for now
+    title: 'Hiya',
+    subtitle: 'Personal Project',
+    dateLabel: 'May 2026 - June 2026',
+    links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/Hiya' }],
+    bullets: [
+      {
+        id: 'app',
+        text: 'Built and shipped **Hiya**, a native **iOS** app (**SwiftUI**) that gamifies practicing social approaches (logging conversations, streaks, reminders, and challenges) on a **Supabase** Postgres backend with row-level security and anonymous-to-claimed auth',
+        tags: ['ios', 'swift', 'fullstack'],
+      },
+      {
+        id: 'synth',
+        text: 'Wrote a runtime **FM audio synthesizer** in **AVFoundation** that renders every sound from PCM buffers (closed-form integrals for pitch sweeps, zero-crossing-aligned seamless loops), shipping zero audio assets',
+        tags: ['audio', 'swift', 'systems'],
+      },
+      {
+        id: 'backend',
+        text: 'Designed the Postgres schema with **RLS** policies, a SECURITY DEFINER account-deletion **RPC**, and a recursion-safe trigger that chronologically reclassifies cold-vs-warm contacts',
+        tags: ['backend', 'database', 'sql'],
+      },
+      {
+        id: 'arch',
+        text: 'Architected protocol-seam **MVVM** so a **198-test** swift-testing suite drives the full app through an in-memory mock repository, fully decoupled from the network',
+        tags: ['architecture', 'testing'],
+      },
+    ],
+  },
+  {
+    id: 'batch',
+    section: 'projects',
+    include: false, // raw new side project — site timeline only, off the résumé for now
+    title: 'Batch',
+    subtitle: 'Personal Project',
+    dateLabel: 'June 2026',
+    links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/batch' }],
+    bullets: [
+      {
+        id: 'vcs',
+        text: 'Built **Batch**, a Git-style version-control engine for recipes in **TypeScript** — a versioned, forkable, diffable recipe model with immutable version chains and variants stored as materializable override-deltas',
+        tags: ['systems', 'typescript'],
+      },
+      {
+        id: 'merge',
+        text: 'Engineered a **three-way merge/rebase** engine for recipe variants that detects base-vs-both-changed conflicts, resolves variant-wins, and rewrites deltas so re-materialization is total and never throws',
+        tags: ['systems', 'typescript'],
+      },
+      {
+        id: 'macros',
+        text: 'Wrote a gram-canonical **macro/nutrition** calculator with a layered unit-conversion ladder (ingredient equivalences, mass table, volume-by-density) and per-version frozen snapshots that degrade to a partial basis instead of failing',
+        tags: ['backend', 'typescript'],
+      },
+      {
+        id: 'arch',
+        text: 'Designed a zero-dependency **hexagonal** core behind a repository port and an injected clock/ID seam, exercised by **143** passing **vitest** tests and wrapped in a TTY/pipe-aware **commander** CLI',
+        tags: ['architecture', 'testing'],
+      },
+    ],
+  },
+  {
     id: 'csc',
     section: 'experience',
     title: 'Correctional Service of Canada',
@@ -17,7 +79,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'rag',
-        text: 'Developed a **RAG** chatbot for employees to query an internal regulation corpus, built on **Azure OpenAI**, **AI Search**, and **Container Apps**',
+        text: 'Developed a **RAG** chatbot enabling tens of thousands of correctional officers to query an internal regulation corpus, built on **Azure OpenAI**, **AI Search**, and **Container Apps**',
         tags: ['ai', 'rag', 'azure'],
       },
       {
@@ -42,18 +104,18 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'scraper',
-        text: 'Built a web scraper with **Selenium**, **Beautiful Soup**, and **Python** to track citations of **7,000+** papers across **2,000+** journal sites, handling inconsistent page layouts across publishers',
+        text: 'Built a web scraper with **Selenium**, **Beautiful Soup**, and **Python** to track citations of **7,000+** papers across **2,000+** journal sites with inconsistent layouts, feeding a publication map used in public talks and faculty research meetings',
         tags: ['python', 'scraping'],
       },
       {
         id: 'map',
         default: false,
-        text: 'Created a publication map to visualize citation networks and communicate research impact',
+        text: 'Built the publication map — an interactive citation-network visualization the group used to communicate research impact',
         tags: ['dataviz'],
       },
       {
         id: 'db',
-        text: 'Designed and deployed a **SQL Server** database organizing **5,000+** experimental fuel cell files for queryable results across experiments',
+        text: 'Designed and deployed a **SQL Server** database organizing **5,000+** experimental fuel cell files, replacing manual lookup with queryable results across experiments',
         tags: ['sql', 'data'],
       },
     ],
@@ -94,7 +156,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'intake',
-        text: "Built search functions and intake forms for Ontario's social assistance management system in **Java**",
+        text: "Built search functions and intake forms for Ontario's province-wide social assistance management system in **Java**",
         tags: ['java', 'fullstack'],
       },
       {
@@ -119,7 +181,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'dag',
-        text: 'Built a from-scratch git-style version-control engine for LLM context in **Python**, with a content-addressed commit **DAG** supporting branching, three-way merge, and rebase',
+        text: 'Built a git-style version-control engine for LLM context in **Python**, with a content-addressed **SHA-256** commit **DAG** supporting branching, three-way merge, and rebase',
         tags: ['systems', 'python'],
       },
       {
@@ -260,7 +322,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'agent',
-        text: 'Built an agentic AI video editor (**Next.js**, **TypeScript**, **Supabase**) where a **Gemini** agent edits a live timeline from natural language through **14** custom video and audio tools — cut, trim, transitions, voiceover, and audio mixing',
+        text: 'Built an agentic AI video editor (**Next.js**, **TypeScript**, **Supabase**) where a **Gemini** agent edits a live timeline from natural language through **14** custom video and audio tools (cut, trim, transitions, voiceover, audio mixing)',
         tags: ['ai', 'agents'],
       },
       {

@@ -30,6 +30,39 @@ export function parseEndDate(label: string): EndDate | null {
   return { year, monthIndex, monthLabel: MONTH_LABELS[monthIndex] };
 }
 
+// Parse a dateLabel's START month: the FIRST "Mon YYYY" token — the start of a
+// range ("Jan 2026 - May 2026" -> Jan 2026) or the only date. Same spelling
+// tolerance as parseEndDate. The start month is what fixes a co-op term: a job
+// is named by the term it BEGINS in, so a "Jan 2026 - May 2026" term is Winter
+// 2026 (it just overran into May), not Spring.
+export function parseStartDate(label: string): EndDate | null {
+  const m = label.match(/([A-Za-z]{3,})\s+(\d{4})/);
+  if (!m) return null;
+  const monthIndex = MONTHS[m[1].slice(0, 3).toLowerCase()];
+  const year = Number(m[2]);
+  if (monthIndex === undefined || !Number.isFinite(year)) return null;
+  return { year, monthIndex, monthLabel: MONTH_LABELS[monthIndex] };
+}
+
+// UWaterloo academic terms — 4-month blocks named by their START month:
+// Winter = Jan–Apr, Spring = May–Aug, Fall = Sep–Dec. `key` (year*3 + index)
+// sorts terms chronologically; group the timeline on `key` so each term header
+// appears once and in order.
+const TERM_LABELS = ['Winter', 'Spring', 'Fall'] as const;
+export interface Term {
+  year: number;
+  index: number; // 0 = Winter, 1 = Spring, 2 = Fall
+  label: string; // "Winter"
+  key: number;   // year*3 + index, ascending in time
+}
+
+export function termOf(label: string): Term | null {
+  const d = parseStartDate(label);
+  if (!d) return null;
+  const index = Math.floor(d.monthIndex / 4); // 0..2
+  return { year: d.year, index, label: TERM_LABELS[index], key: d.year * 3 + index };
+}
+
 // Sortable integer (year*12 + monthIndex) from the end date. Unparseable labels
 // return -Infinity so they sort last under descending order.
 export function dateSortKey(label: string): number {
