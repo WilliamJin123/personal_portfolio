@@ -823,7 +823,7 @@ const links = {
         if(tk!==curTerm){html+=`<div class="tl-yr">${t?`<span class="tl-term">${t.label}</span> ${t.year}`:''}</div>`;curTerm=tk;}
         const honor=(e.awards&&e.awards.length)?`<span class="tl-badge award" title="Award">${TROPHY}</span>`:((e.grants&&e.grants.length)?`<span class="tl-badge grant" title="Grant">${DOLLAR}</span>`:'');
         const meta=it.kind==='role'?[e.role,e.dateLabel].filter(Boolean).join(' · '):[e.subtitle,e.dateLabel].filter(Boolean).join(' · ');
-        html+=`<div class="tl-row${it.kind==='role'?' is-role':''}" data-i="${i}"><div class="tl-mark"><i class="tl-dot"></i>${honor}${it.kind==='role'?'<span class="tl-kind">work</span>':''}<span class="tl-mon">${mon}</span></div><button class="tl-head" aria-expanded="false"><span class="tl-title">${e.title}</span><span class="tl-hmeta">${meta}</span><span class="tl-chev"></span></button><div class="tl-detail">${detailHTML(e)}</div></div>`;
+        html+=`<div class="tl-row${it.kind==='role'?' is-role':''}" data-i="${i}"><div class="tl-mark"><i class="tl-dot"></i>${honor}${it.kind==='role'?'<span class="tl-kind">work exp</span>':''}<span class="tl-mon">${mon}</span></div><button class="tl-head" aria-expanded="false"><span class="tl-title">${e.title}</span><span class="tl-hmeta">${meta}</span><span class="tl-chev"></span></button><div class="tl-detail">${detailHTML(e)}</div></div>`;
       });
       wtlEl.innerHTML=html;
     };
