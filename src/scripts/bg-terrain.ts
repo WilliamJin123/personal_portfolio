@@ -4,6 +4,13 @@
 // terrain. Random phase offsets each load so every session is a little
 // different.
 //
+// All height work lives on the GPU: the geometry (constant X/Z, flat Y) is
+// uploaded once, and the vertex shader evaluates the noise field from a time
+// + scroll uniform each frame. The CPU loop only nudges a couple of uniforms
+// and the camera — no per-frame vertex recompute, no buffer re-upload. (The
+// earlier version rebuilt all ~2.7k heights and re-streamed the whole
+// position buffer every frame, which stutters on integrated GPUs.)
+//
 // Edge treatment: per-vertex distance from the Y-axis is passed to a
 // fragment shader that fades alpha to 0 beyond a soft cutoff, so the mesh
 // has no visible boundary regardless of its extent. (LineBasicMaterial has
@@ -14,6 +21,11 @@
 // alpha as a vertex approaches the bottom of the height range, so dips glow
 // faintly from within and fade as the morph fills them back in. No extra
 // geometry, no chrome.
+//
+// Colour: uniforms are raw sRGB vec3s written straight to the framebuffer
+// (no three.js Color→linear round-trip), so the linework lands in the same
+// colour space as the CSS paper and renders consistently across displays
+// rather than darker/harsher on uncalibrated panels.
 //
 // Scroll inertia: the roll chases the real scroll position through an
 // exponential smoother, so the hills coast to a stop (both directions)
@@ -26,11 +38,14 @@ import {
   Scene, PerspectiveCamera, WebGLRenderer,
   BufferGeometry, BufferAttribute,
   LineSegments, ShaderMaterial,
-  Color,
+  Vector3,
 } from 'three';
 
-const INK = new Color(0x141820);
-const AMBER = new Color(0xbd741b);
+// Linework + basin glow, as raw sRGB (0–1). A soft slate rather than near-ink
+// keeps the mesh present but unobtrusive; a muted ochre (not full amber) keeps
+// the basin pools from reading as harsh warm blooms on punchy displays.
+const INK = new Vector3(0.20, 0.225, 0.27);
+const AMBER = new Vector3(0.66, 0.47, 0.21);
 
 // Mesh — stretched in Z so the terrain has a long runway ahead of the camera
 // before the shader fade takes it; X kept tighter since the camera is low and
@@ -70,17 +85,9 @@ const PHASES = [
   Math.random() * Math.PI * 2,
 ];
 
-// Layered harmonics: a mid-wavelength primary for the dominant shape, plus
-// two higher-frequency layers that break it up into many smaller hills and
-// dips rather than one big rolling swell.
-function noise(x: number, z: number, t: number): number {
-  return (
-    Math.sin(x * 0.58 + t * 0.28 + PHASES[0]) *
-      Math.cos(z * 0.52 - t * 0.20 + PHASES[1]) +
-    0.55 * Math.sin(x * 1.04 - z * 0.80 + t * 0.32 + PHASES[2]) +
-    0.30 * Math.cos(x * 0.46 + z * 1.22 + t * 0.18)
-  );
-}
+// Layered harmonics (the noise field itself) now live in the vertex shader —
+// see `terrain()` in the ShaderMaterial below. The phases are passed in as a
+// uniform so each session still gets its own terrain.
 
 export function initBgTerrain(canvas: HTMLCanvasElement): void {
   const reduceMo = matchMedia('(prefers-reduced-motion: reduce)');
@@ -90,7 +97,13 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
   camera.position.set(0, CAM_Y, CAM_Z);
   camera.lookAt(0, 0, LOOK_Z);
 
-  const renderer = new WebGLRenderer({ canvas, antialias: true, alpha: true });
+  // low-power: this is ambient chrome — keep it off the discrete GPU so it
+  // doesn't spin up fans / drain battery on laptops. depth+stencil off: a
+  // single transparent line mesh needs neither, saving a clear each frame.
+  const renderer = new WebGLRenderer({
+    canvas, antialias: true, alpha: true,
+    depth: false, stencil: false, powerPreference: 'low-power',
+  });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
 
   const xWorld = (xi: number): number => (xi / (GW - 1) - 0.5) * 2 * SCALE_X;
@@ -123,60 +136,49 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
     }
   }
 
-  const heights = new Float32Array(GW * GW);
-
-  function recomputeHeights(t: number, scrollOff: number): void {
-    for (let zi = 0; zi < GW; zi++) {
-      const z = zWorld(zi) + scrollOff;
-      for (let xi = 0; xi < GW; xi++) {
-        const x = xWorld(xi);
-        heights[zi * GW + xi] = noise(x, z, t) * HSCALE;
-      }
-    }
-  }
-
-  function updateY(): void {
-    let s = 0;
-    for (let zi = 0; zi < GW; zi++) {
-      for (let xi = 0; xi < GW - 1; xi++) {
-        positions[s + 1] = heights[zi * GW + xi];
-        positions[s + 4] = heights[zi * GW + (xi + 1)];
-        s += 6;
-      }
-    }
-    for (let xi = 0; xi < GW; xi++) {
-      for (let zi = 0; zi < GW - 1; zi++) {
-        positions[s + 1] = heights[zi * GW + xi];
-        positions[s + 4] = heights[(zi + 1) * GW + xi];
-        s += 6;
-      }
-    }
-  }
-
-  recomputeHeights(0, 0);
-  updateY();
-
   const geom = new BufferGeometry();
   geom.setAttribute('position', new BufferAttribute(positions, 3));
 
-  // Shader: fades per-vertex alpha to 0 beyond FADE_FAR so the mesh has no
-  // visible boundary (the "ends in the middle of the screen" problem).
+  // Time + scroll drive the noise field; the vertex shader does the height
+  // work for every vertex, so the CPU never touches the position buffer again.
+  const uTime = { value: 0 };
+  const uScroll = { value: 0 };
+
+  // Shader: the vertex stage evaluates the same layered sum-of-sines the CPU
+  // used to, then fades per-vertex alpha to 0 beyond FADE_FAR so the mesh has
+  // no visible boundary (the "ends in the middle of the screen" problem).
   const mat = new ShaderMaterial({
     uniforms: {
       uColor: { value: INK },
       uAmber: { value: AMBER },
-      uBaseAlpha: { value: 0.10 },
+      uBaseAlpha: { value: 0.075 },
       uFadeNear: { value: FADE_NEAR },
       uFadeFar: { value: FADE_FAR },
       uH: { value: HSCALE },
+      uTime,
+      uScroll,
+      uPhase: { value: new Vector3(PHASES[0], PHASES[1], PHASES[2]) },
     },
     vertexShader: `
+      uniform float uTime;
+      uniform float uScroll;
+      uniform float uH;
+      uniform vec3 uPhase;
       varying float vDist;
       varying float vY;
+      // Layered harmonics — identical field to the CPU version, now per-vertex
+      // on the GPU. Scroll shifts the Z sample so the terrain rolls forward;
+      // the fade distance still uses the true (unscrolled) world position.
+      float terrain(float x, float z, float t) {
+        return sin(x * 0.58 + t * 0.28 + uPhase.x) * cos(z * 0.52 - t * 0.20 + uPhase.y)
+             + 0.55 * sin(x * 1.04 - z * 0.80 + t * 0.32 + uPhase.z)
+             + 0.30 * cos(x * 0.46 + z * 1.22 + t * 0.18);
+      }
       void main() {
+        float y = terrain(position.x, position.z + uScroll, uTime) * uH;
         vDist = length(position.xz);
-        vY = position.y;
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        vY = y;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position.x, y, position.z, 1.0);
       }
     `,
     fragmentShader: `
@@ -190,22 +192,28 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
       varying float vY;
       void main() {
         float fade = 1.0 - smoothstep(uFadeNear, uFadeFar, vDist);
-        // ridges read crisper than valleys — depth without extra geometry
-        fade *= mix(0.68, 1.25, smoothstep(-uH, uH, vY));
-        // amber pools quietly in the deepest basins (the local minima)
+        // ridges read a touch crisper than valleys — depth without extra geometry
+        fade *= mix(0.72, 1.10, smoothstep(-uH, uH, vY));
+        // a quiet ochre warmth pools in the deepest basins (the local minima)
         float pool = 1.0 - smoothstep(-uH, -0.45 * uH, vY);
         pool *= pool;
-        vec3 col = mix(uColor, uAmber, pool * 0.85);
-        gl_FragColor = vec4(col, uBaseAlpha * fade * (1.0 + pool * 2.4));
+        vec3 col = mix(uColor, uAmber, pool * 0.70);
+        gl_FragColor = vec4(col, uBaseAlpha * fade * (1.0 + pool * 1.5));
       }
     `,
     transparent: true,
   });
   scene.add(new LineSegments(geom, mat));
 
+  // Size the drawing buffer to the layout viewport, not window.innerWidth —
+  // the latter can over-report (mobile URL-bar, pinch-zoom, device emulation),
+  // which would blow the buffer up to many millions of pixels for no visible
+  // gain. documentElement.clientWidth is the true CSS viewport the fixed
+  // canvas actually covers.
   const resize = (): void => {
-    const w = canvas.clientWidth || window.innerWidth;
-    const h = canvas.clientHeight || window.innerHeight;
+    const doc = document.documentElement;
+    const w = doc.clientWidth || window.innerWidth;
+    const h = doc.clientHeight || window.innerHeight;
     if (w < 2 || h < 2) return;
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
@@ -248,7 +256,6 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
     running = !document.hidden;
   });
 
-  const positionAttr = geom.getAttribute('position') as BufferAttribute;
   let t = 0;
   let prev = 0;
 
@@ -267,10 +274,9 @@ export function initBgTerrain(canvas: HTMLCanvasElement): void {
 
       scrollS += (scrollY - scrollS) * (1 - Math.exp(-dt * SCROLL_CHASE));
 
-      const scrollOff = scrollS * SCROLL_TO_NOISE;
-      recomputeHeights(t, scrollOff);
-      updateY();
-      positionAttr.needsUpdate = true;
+      // The GPU evaluates the field — we just hand it the clock and scroll.
+      uTime.value = t;
+      uScroll.value = scrollS * SCROLL_TO_NOISE;
 
       camera.position.set(curOffX * 0.95, CAM_Y + curOffY * 0.75, CAM_Z);
       camera.lookAt(curOffX * 0.45, curOffY * 0.22, LOOK_Z);

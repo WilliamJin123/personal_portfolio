@@ -873,12 +873,24 @@ const links = {
 <script>
   // Interests: cross-fade the three hairline SVG figures, synced to the bullets
   // (all motion is CSS; this only swaps which figure is live + pauses off-screen).
+  // Lightweight (SVG/DOM only) — load eagerly so the section is live immediately.
   import { initInterestsGraph } from '../scripts/interests-graph';
-  import { initBgTerrain } from '../scripts/bg-terrain';
   const iv = document.querySelector('.int-vis');
   if (iv instanceof HTMLElement) initInterestsGraph(iv);
+
+  // The ambient WebGL terrain is purely decorative and pulls in three.js
+  // (~125kb gzipped), so load it lazily — off the initial critical path —
+  // once the browser is idle. Content paints and becomes interactive first;
+  // the background fades in a beat later. Skipped under data-saver.
   const sc = document.getElementById('bg-canvas');
-  if (sc instanceof HTMLCanvasElement) initBgTerrain(sc);
+  const nav = navigator as Navigator & { connection?: { saveData?: boolean } };
+  if (sc instanceof HTMLCanvasElement && nav.connection?.saveData !== true) {
+    const start = (): void => {
+      void import('../scripts/bg-terrain').then((m) => m.initBgTerrain(sc));
+    };
+    if ('requestIdleCallback' in window) requestIdleCallback(start, { timeout: 1500 });
+    else setTimeout(start, 200);
+  }
 </script>
 </body>
 </html>
