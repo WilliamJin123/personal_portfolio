@@ -67,6 +67,11 @@ const authored: ResumeEntry[] = [
         text: 'Designed a zero-dependency **hexagonal** core behind a repository port and an injected clock/ID seam, wrapped in a TTY/pipe-aware **commander** CLI',
         tags: ['architecture', 'testing'],
       },
+      {
+        id: 'web',
+        text: 'Shipped a **Next.js**/**React** web reader on **Vercel** that visualizes a recipe\'s fork-and-merge history as an interactive **DAG** (deterministic **Dagre** layout), served from a git-backed JSON store baked into the build',
+        tags: ['frontend', 'typescript'],
+      },
     ],
   },
   {

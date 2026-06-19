@@ -28,9 +28,12 @@ export const portfolioMedia: Record<string, PortfolioMedia> = {
   batch: {
     stack: [
       'typescript',
+      { label: 'Next.js', icon: 'nextdotjs' },
+      'react',
       { label: 'Node', icon: 'nodedotjs' },
       { label: 'Vitest', icon: 'vitest' },
       { label: 'pnpm', icon: 'pnpm' },
+      { label: 'Vercel', icon: 'vercel' },
     ],
     images: [],
   },
