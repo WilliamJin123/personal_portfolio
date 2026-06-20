@@ -37,7 +37,7 @@ export const portfolioMedia: Record<string, PortfolioMedia> = {
     ],
     images: [],
   },
-  solshare: { stack: ['swift', 'firebase'], images: [] },
+  solshare: { stack: ['swift', { label: 'Cohere', icon: '/icons/cohere.svg' }, 'firebase'], images: [] },
   stitch: {
     stack: [
       { label: 'Next.js', icon: 'nextdotjs' },
