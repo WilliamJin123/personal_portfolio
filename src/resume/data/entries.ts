@@ -94,7 +94,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'ui',
-        text: 'Implemented a **citation panel** and thumbs-up/down feedback loop in **TypeScript**, surfacing source documents and capturing user signals to evaluate response quality',
+        text: 'Implemented a **citation panel** and thumbs-up/down feedback loop in **TypeScript**, letting officers verify answers against the source regulations and giving the team a per-response quality signal',
         tags: ['frontend', 'analytics'],
       },
     ],
@@ -109,7 +109,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'scraper',
-        text: 'Automated citation tracking for **7,000+** papers across **2,000+** journal sites with inconsistent layouts by building a **Selenium**/**Beautiful Soup** scraper in **Python**, feeding a publication map used in public talks and faculty research meetings',
+        text: 'Automated citation tracking for **7,000+** papers across **2,000+** journal sites with inconsistent layouts by building a **Selenium**/**Beautiful Soup** scraper in **Python**, feeding a publication map used in talks and faculty meetings',
         tags: ['python', 'scraping'],
       },
       {
@@ -191,7 +191,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'agent',
-        text: 'Drove the engine from an async agent loop exposing **28** LLM tools, with token-budget enforcement and auto-compression, on the **Anthropic SDK** and an **OpenAI-compatible** client',
+        text: 'Drove the engine from an async agent loop (**Anthropic SDK**, **OpenAI-compatible** client) exposing **28** LLM tools, with token-budget enforcement and auto-compression keeping long sessions inside the context window',
         tags: ['ai', 'agents', 'python'],
       },
       {
@@ -438,7 +438,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'crypto',
-        text: 'Implemented the wallet connect and signing flow as an **encrypted deeplink handshake** with per-session shared secrets between app and wallet',
+        text: "Implemented the wallet connect and signing flow as an **encrypted deeplink handshake** with per-session shared secrets, so apps never touch a user's private keys",
         tags: ['swift', 'crypto'],
       },
       {
@@ -474,7 +474,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'cohere',
-        text: "Extracted receipt data using Cohere's vision and reasoning models through a **self-critic** workflow",
+        text: 'Turned receipt photos into split-ready line items with **Cohere** vision and reasoning models in a **self-critic** loop that double-checks each extraction',
         tags: ['ai', 'llm'],
       },
       {
