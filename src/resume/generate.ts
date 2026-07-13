@@ -32,11 +32,15 @@ function items(entry: ResumeEntry, ids: string[]): string {
 }
 
 function subheading(e: ResumeEntry, ids: string[]): string {
+  // Location travels in the right-hand cell with the date ("Ottawa, ON (Remote)
+  // | Jan 2026 - May 2026") so every entry carries a visible, ATS-parseable
+  // location without adding a second heading line.
+  const when = [e.location, e.dateLabel].filter(Boolean).join(' | ');
   return [
     '  \\resumeSubheading',
     `      {${escapeLatex(e.title)}}`,
-    `      {${escapeLatex(e.location ?? '')}}`,
-    `      {${escapeLatex(e.role ?? '')}}{${escapeLatex(e.dateLabel)}}`,
+    '      {}',
+    `      {${escapeLatex(e.role ?? '')}}{${escapeLatex(when)}}`,
     items(e, ids),
   ].join('\n');
 }
@@ -70,14 +74,14 @@ function project(e: ResumeEntry, ids: string[]): string {
     .filter(Boolean)
     .join(' ');
 
-  // Awards (trophy) + grants ($) share a compact second row; empty if the project
-  // has neither. The leading \\ lives here so a badge-less project is a single row.
-  const badges = [
-    ...(e.awards ?? []).map((a) => `\\award{${escapeLatex(a)}}`),
-    ...(e.grants ?? []).map((g) => `\\grant{${escapeLatex(g)}}`),
-  ].join(' ');
-  const badgeRow = badges
-    ? `\\\\ \\multicolumn{2}{@{}p{0.97\\textwidth}@{}}{\\small ${badges}}`
+  // Awards/grants are plain text (icons extract as ATS garbage), rendered as one
+  // consistent italic sub-line under the heading for every project that has any.
+  // The leading \\ lives here so a badge-less project is a single row.
+  const badges = [...(e.awards ?? []), ...(e.grants ?? [])];
+  const badgeRow = badges.length
+    ? `\\\\ \\multicolumn{2}{@{}p{0.97\\textwidth}@{}}{\\small\\textit{${badges
+        .map((b) => escapeLatex(b))
+        .join('; ')}}}`
     : '';
 
   return [
@@ -107,21 +111,16 @@ function renderSection(lib: ResumeLibrary, sel: Selection, kind: ResumeEntry['se
 }
 
 function header(p: Profile): string {
-  // LinkedIn + GitHub as matching square brand badges (per review: make the two a
-  // consistent set rather than one boxed "in" and one bare octocat).
-  const iconCmd = (i?: string) =>
-    i === 'linkedin'
-      ? '\\socialicon{\\faLinkedinSquare} '
-      : i === 'github'
-        ? '\\socialicon{\\faGithubSquare} '
-        : i === 'portfolio'
-          ? '\\wjicon{} '
-          : '';
+  // Contact line: no icon glyphs (they extract as private-use garbage in ATS
+  // parsers). Links render as short labels ("linkedin", "github") with the full
+  // URL underneath as the hyperlink target — per William's preference over
+  // printing raw URLs.
   const contacts = [
+    p.location,
     p.phone,
     p.email ? `\\reslink{mailto:${escapeLatexUrl(p.email)}}{${escapeLatex(p.email)}}` : undefined,
     ...p.links.map(
-      (l) => `${iconCmd(l.icon)}\\reslink{${escapeLatexUrl(l.href)}}{${escapeLatex(l.label)}}`,
+      (l) => `\\reslink{${escapeLatexUrl(l.href)}}{${escapeLatex(l.label)}}`,
     ),
   ]
     .filter((x): x is string => Boolean(x))
@@ -166,13 +165,16 @@ function skillsBlock(groups: SkillGroup[]): string {
 }
 
 export function generateBody(lib: ResumeLibrary, sel: Selection): string {
-  const parts: string[] = [header(lib.profile), skillsBlock(lib.skills)];
+  // Section order: Education leads (current student — recruiters and ATS scans
+  // look for it up top), then Skills, Experience, Projects.
+  const parts: string[] = [header(lib.profile)];
+  const edu = renderSection(lib, sel, 'education');
+  if (edu.trim()) parts.push(sectionBlock('Education', edu));
+  parts.push(skillsBlock(lib.skills));
   const exp = renderSection(lib, sel, 'experience');
   if (exp.trim()) parts.push(sectionBlock('Experience', exp));
   const proj = renderSection(lib, sel, 'projects');
   if (proj.trim()) parts.push(sectionBlock('Projects', proj));
-  const edu = renderSection(lib, sel, 'education');
-  if (edu.trim()) parts.push(sectionBlock('Education', edu));
   return parts.join('\n\n');
 }
 

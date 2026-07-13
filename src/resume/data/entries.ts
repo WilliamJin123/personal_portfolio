@@ -78,13 +78,13 @@ const authored: ResumeEntry[] = [
     id: 'csc',
     section: 'experience',
     title: 'Correctional Service of Canada',
-    location: 'Ottawa, Ontario (Remote)',
+    location: 'Ottawa, ON (Remote)',
     role: 'AI Analyst',
     dateLabel: 'Jan 2026 - May 2026',
     bullets: [
       {
         id: 'rag',
-        text: 'Developed a **RAG** chatbot enabling tens of thousands of correctional officers to query an internal regulation corpus, built on **Azure OpenAI**, **AI Search**, and **Container Apps**',
+        text: 'Developed a **RAG** chatbot enabling thousands of correctional officers to query an internal regulation corpus, built on **Azure OpenAI**, **AI Search**, and **Container Apps**',
         tags: ['ai', 'rag', 'azure'],
       },
       {
@@ -94,7 +94,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'ui',
-        text: 'Built a **citation panel** and thumbs-up/down feedback loop in **TypeScript**, surfacing source documents and capturing user signals to evaluate response quality',
+        text: 'Implemented a **citation panel** and thumbs-up/down feedback loop in **TypeScript**, surfacing source documents and capturing user signals to evaluate response quality',
         tags: ['frontend', 'analytics'],
       },
     ],
@@ -102,14 +102,14 @@ const authored: ResumeEntry[] = [
   {
     id: 'ualberta',
     section: 'experience',
-    title: 'University of Alberta Energy Mechatronics Lab',
-    location: 'Edmonton, Alberta',
+    title: 'UAlberta Energy Mechatronics Lab',
+    location: 'Edmonton, AB',
     role: 'Python Developer',
     dateLabel: 'July 2025 - Sept 2025',
     bullets: [
       {
         id: 'scraper',
-        text: 'Built a web scraper with **Selenium**, **Beautiful Soup**, and **Python** to track citations of **7,000+** papers across **2,000+** journal sites with inconsistent layouts, feeding a publication map used in public talks and faculty research meetings',
+        text: 'Automated citation tracking for **7,000+** papers across **2,000+** journal sites with inconsistent layouts by building a **Selenium**/**Beautiful Soup** scraper in **Python**, feeding a publication map used in public talks and faculty research meetings',
         tags: ['python', 'scraping'],
       },
       {
@@ -130,7 +130,7 @@ const authored: ResumeEntry[] = [
     section: 'experience',
     include: false, // PD program (not validated employment) — excluded from the résumé; kept in the pool
     title: 'WE Accelerate Azure & AI Stream',
-    location: 'Waterloo, Ontario',
+    location: 'Waterloo, ON',
     role: 'Professional Development Participant',
     dateLabel: 'June 2025 - Aug 2025',
     bullets: [
@@ -155,7 +155,7 @@ const authored: ResumeEntry[] = [
     id: 'jindon',
     section: 'experience',
     title: 'Jindon International Ltd.',
-    location: 'Waterloo, Ontario',
+    location: 'Waterloo, ON',
     role: 'Full Stack Software Engineer',
     dateLabel: 'June 2025 - July 2025',
     bullets: [
@@ -186,7 +186,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'dag',
-        text: 'Built a git-style version-control engine for LLM context in **Python**, with a content-addressed **SHA-256** commit **DAG** supporting branching, three-way merge, and rebase',
+        text: 'Architected a git-style version-control engine for LLM context in **Python**, with a content-addressed **SHA-256** commit **DAG** supporting branching, three-way merge, and rebase',
         tags: ['systems', 'python'],
       },
       {
@@ -318,7 +318,7 @@ const authored: ResumeEntry[] = [
     section: 'projects',
     title: 'Stitch',
     subtitle: 'UofTHacks 13',
-    awards: ['Best Use of Gemini API'],
+    awards: ['Winner: Best Use of Gemini API'],
     dateLabel: 'Jan 2026',
     links: [
       { label: 'devpost', href: 'https://devpost.com/software/stitch-30p6ly' },
@@ -427,7 +427,7 @@ const authored: ResumeEntry[] = [
     id: 'solana-sdk',
     section: 'projects',
     title: 'Solana Swift SDK',
-    grants: ['40K Solana Foundation Grant'],
+    grants: ['US$40K Solana Foundation grant'],
     dateLabel: 'Oct 2025 - Nov 2025',
     links: [{ label: 'repo', href: 'https://github.com/The-SolShare-Team' }],
     bullets: [
@@ -438,7 +438,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'crypto',
-        text: 'Built the wallet connect and signing flow as an **encrypted deeplink handshake** with per-session shared secrets between app and wallet',
+        text: 'Implemented the wallet connect and signing flow as an **encrypted deeplink handshake** with per-session shared secrets between app and wallet',
         tags: ['swift', 'crypto'],
       },
       {
@@ -469,7 +469,7 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'ios',
-        text: 'Developed a bill-splitting **iOS** app in **Swift** that automates receipt parsing and payment processing',
+        text: 'Shipped a bill-splitting **iOS** app in **Swift** that automates receipt parsing and payment processing',
         tags: ['ios', 'swift'],
       },
       {
@@ -515,14 +515,23 @@ const authored: ResumeEntry[] = [
     id: 'uwaterloo',
     section: 'education',
     title: 'University of Waterloo',
-    location: 'Waterloo, Ontario',
+    location: 'Waterloo, ON',
     role: 'Bachelor of Software Engineering',
     dateLabel: 'Sept 2024 - May 2029',
     bullets: [
       { id: 'gpa', text: 'GPA: 3.7/4.0' },
+      // William's call (ATS review, July 2026): optionally swap the coursework
+      // bullet for an availability line, e.g.
+      //   'Seeking <FILL: e.g. Fall 2026 (Sept-Dec)> software engineering internship'
+      // Kept coursework for now.
+      //
+      // Courses kept by relevance (ATS keywords): CS 240 -> Data Structures &
+      // Data Management, CS 247 -> Software Design (ADTs), CS 348 -> Databases;
+      // Statistics kept for the AI/ML angle. MATH 239 + superseded first-year
+      // courses (Sequential Programs, Digital Computers, Data Abstraction) dropped.
       {
         id: 'courses',
-        text: 'Relevant Coursework: Data Abstraction and Implementation, Statistics, Sequential Programs, Digital Computers',
+        text: 'Relevant Coursework: Data Structures & Data Management, Software Design (ADTs), Databases, Statistics',
       },
     ],
   },

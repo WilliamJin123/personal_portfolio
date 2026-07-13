@@ -34,6 +34,7 @@ export interface SkillGroup {
 
 export interface Profile {
   name: string;
+  location?: string;     // header location, e.g. "Waterloo, ON" (ATS: recruiters filter on it)
   phone?: string;
   email?: string;
   links: { label: string; href: string; icon?: 'linkedin' | 'github' | 'portfolio' }[];
