@@ -131,14 +131,14 @@ function header(p: Profile): string {
     '\\end{center}',
     // Tight header: the name and contact line sit close so the content gets
     // the vertical room (and the bottom margin stays honest).
-    '\\vspace{-2.5mm}',
+    '\\vspace{-3.5mm}',
     '',
     '\\begin{center}',
     '    \\small{',
     `    ${contacts}`,
     '    }',
     '\\end{center}',
-    '\\vspace{-6.5mm}',
+    '\\vspace{-7mm}',
   ].join('\n');
 }
 
