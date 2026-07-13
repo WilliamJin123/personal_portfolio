@@ -129,17 +129,16 @@ function header(p: Profile): string {
     '\\begin{center}',
     `    {\\Huge\\textbf{${escapeLatex(p.name)}}}`,
     '\\end{center}',
-    // Looser gap below the name gives it breathing room (per review); the
-    // tighter gap below the contact line (-5.5mm) absorbs the same amount so
-    // Skills and everything after keep their position.
-    '\\vspace{-1mm}',
+    // Tight header: the name and contact line sit close so the content gets
+    // the vertical room (and the bottom margin stays honest).
+    '\\vspace{-2.5mm}',
     '',
     '\\begin{center}',
     '    \\small{',
     `    ${contacts}`,
     '    }',
     '\\end{center}',
-    '\\vspace{-5.5mm}',
+    '\\vspace{-6.5mm}',
   ].join('\n');
 }
 

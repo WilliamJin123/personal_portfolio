@@ -525,13 +525,14 @@ const authored: ResumeEntry[] = [
       //   'Seeking <FILL: e.g. Fall 2026 (Sept-Dec)> software engineering internship'
       // Kept coursework for now.
       //
-      // Courses kept by relevance (ATS keywords): CS 240 -> Data Structures &
-      // Data Management, CS 247 -> Software Design (ADTs), CS 348 -> Databases;
-      // Statistics kept for the AI/ML angle. MATH 239 + superseded first-year
-      // courses (Sequential Programs, Digital Computers, Data Abstraction) dropped.
+      // Courses kept by relevance (ATS keywords): CS 240 -> Data Structures,
+      // CS 247 -> Software Design (ADTs), CS 348 -> Databases; Digital Computers
+      // kept for systems/hardware breadth, Statistics for the AI/ML angle.
+      // Dropped as subsumed by the upper-year courses: Data Abstraction and
+      // Implementation, Sequential Programs. MATH 239 (combinatorics) left off.
       {
         id: 'courses',
-        text: 'Relevant Coursework: Data Structures & Data Management, Software Design (ADTs), Databases, Statistics',
+        text: 'Relevant Coursework: Data Structures, Software Design (ADTs), Databases, Digital Computers, Statistics',
       },
     ],
   },
