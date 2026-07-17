@@ -84,12 +84,15 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'rag',
-        text: 'Developed a **RAG** chatbot enabling thousands of correctional officers to query an internal regulation corpus, built on **Azure OpenAI**, **AI Search**, and **Container Apps**',
+        text: 'Developed an **AI** chatbot enabling thousands of correctional officers to query an internal regulation corpus, built on **Azure OpenAI**, **AI Search**, and **Container Apps**',
         tags: ['ai', 'rag', 'azure'],
       },
       {
         id: 'chunking',
-        text: 'Redesigned the chunking pipeline to parse documents to **HTML** via **Azure Document Intelligence**, eliminating mid-chunk truncation and PDF formatting errors, improving retrieval accuracy **by 15%** and answer grounding **by 10%** over baseline across **300** test prompts',
+        // Trimmed to two rendered lines (2026-07-17): the third-line straggler paid
+        // for the AI/ML skills row wrapping — cut "PDF formatting errors" + "over
+        // baseline", kept both metrics and the eval size.
+        text: 'Redesigned the chunking pipeline to parse documents to **HTML** via **Azure Document Intelligence**, eliminating mid-chunk truncation and improving retrieval accuracy **15%** and answer grounding **10%** across **300** test prompts',
         tags: ['ai', 'rag', 'azure'],
       },
       {
@@ -156,7 +159,7 @@ const authored: ResumeEntry[] = [
     section: 'experience',
     title: 'Jindon International Ltd.',
     location: 'Waterloo, ON',
-    role: 'Full Stack Software Engineer',
+    role: 'Java Developer',
     dateLabel: 'June 2025 - July 2025',
     bullets: [
       {
@@ -427,7 +430,7 @@ const authored: ResumeEntry[] = [
     id: 'solana-sdk',
     section: 'projects',
     title: 'Solana Swift SDK',
-    grants: ['US$40K Solana Foundation grant'],
+    grants: ['$40K USD Solana Foundation grant'],
     dateLabel: 'Oct 2025 - Nov 2025',
     links: [{ label: 'repo', href: 'https://github.com/The-SolShare-Team' }],
     bullets: [
