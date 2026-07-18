@@ -82,11 +82,14 @@ function project(e: ResumeEntry, ids: string[]): string {
 
   // Awards/grants are plain text (icons extract as ATS garbage), rendered as one
   // consistent italic sub-line under the heading for every project that has any.
+  // Each award is highlighted in full (reviewer, 2026-07-18: the wins are the
+  // differentiator) at \small SEMIBOLD — full bold sat right under the bold
+  // title and competed with it (William: "semi bold for the award section").
   // The leading \\ lives here so a badge-less project is a single row.
   const badges = [...(e.awards ?? []), ...(e.grants ?? [])];
   const badgeRow = badges.length
     ? `\\\\ \\multicolumn{2}{@{}p{0.97\\textwidth}@{}}{\\small\\textit{${badges
-        .map((b) => escapeLatex(b))
+        .map((b) => `{\\resumesemibold ${escapeLatex(b)}}`)
         .join('; ')}}}`
     : '';
 
@@ -117,27 +120,31 @@ function projectClassic(e: ResumeEntry, ids: string[]): string {
   const trailing = (e.links ?? [])
     .map((l) => `\\reslink{${escapeLatexUrl(l.href)}}{${escapeLatex(sourceName(l))}}`)
     .join(' · ');
-  const title = [`\\textbf{\\large ${escapeLatex(e.title)}}`, trailing ? `{\\footnotesize ${trailing}}` : '']
+  // "Title | Devpost · GitHub": the plain pipe matches the page's
+  // "Title | Role" grammar (the links used to float at \footnotesize with no
+  // separator and read as an afterthought); \small closes the size clash
+  // against the \large title.
+  const title = [`\\textbf{\\large ${escapeLatex(e.title)}}`, trailing ? `{\\small | ${trailing}}` : '']
     .filter(Boolean)
     .join('\\hspace{4pt}');
 
-  // The badge's leading token carries the weight — "Winner:", "1st Place:",
-  // "$40K USD" — so it renders bold inside the italic row; the wording itself
+  // Each award/grant is highlighted in full — "Winner: Best Use of Gemini
+  // API", not just the "Winner:" prefix (reviewer, 2026-07-18) — in SEMIBOLD:
+  // full bold competed with the bold title above (William: "semi bold for the
+  // award section"). The event in parens stays regular; the wording itself
   // stays plain in entries.ts (presentation, not content).
-  const boldBadge = (b: string): string => {
-    const m = b.match(/^([^:]+:|\$\S+ USD\b)\s*(.*)$/);
-    return m ? `\\textbf{${escapeLatex(m[1])}} ${escapeLatex(m[2])}` : escapeLatex(b);
-  };
   const badges = [...(e.awards ?? []), ...(e.grants ?? [])];
   const context = badges.length
-    ? `${badges.map(boldBadge).join('; ')}${e.subtitle ? ` (${escapeLatex(e.subtitle)})` : ''}`
+    ? `${badges.map((b) => `{\\resumesemibold ${escapeLatex(b)}}`).join('; ')}${e.subtitle ? ` (${escapeLatex(e.subtitle)})` : ''}`
     : e.subtitle
       ? escapeLatex(e.subtitle)
       : '';
   // The context row spans both columns: award lines run long, and inside the
   // l/r tabular* they would otherwise stretch the left column past the date.
+  // \small (one size under the body, matching the modern badge row): bold at
+  // a smaller size reads as a badge, and offsets the width the bold adds.
   const contextRow = context
-    ? `\\\\ \\multicolumn{2}{@{}p{0.97\\textwidth}@{}}{\\textit{${context}}}`
+    ? `\\\\ \\multicolumn{2}{@{}p{0.97\\textwidth}@{}}{\\small\\textit{${context}}}`
     : '';
 
   return [
@@ -211,8 +218,10 @@ function skillsBlock(groups: SkillGroup[]): string {
   const rows = groups
     .map(
       (g) =>
-        `  \\item {\\normalfont\\textbf{${escapeLatex(g.category)}:}}~ ${g.items
-          .map((s) => escapeLatex(s))
+        // No \normalfont here: it would reset the family to Latin Modern
+        // Roman (serif) — the labels must stay in the document's Heros.
+        `  \\item {\\textbf{${escapeLatex(g.category)}:}}~ ${g.items
+          .map((s) => `\\mbox{${escapeLatex(s)}}`)
           .join(', ')}`,
     )
     .join('\n');
@@ -226,8 +235,8 @@ function skillsBlock(groups: SkillGroup[]): string {
   ].join('\n');
 }
 
-// Classic skills table: a fixed-width label column ("Languages:" at 11pt; the
-// original was 12pt/85pt — 88pt fits "Cloud & Tools:") and bold space-separated
+// Classic skills table: a fixed-width bold label column ("Languages:" at 11pt;
+// the original was 12pt/85pt — 88pt fits "Cloud & Tools:") and space-separated
 // \skilltag items, vs the modern comma-separated line. The items sit in a
 // top-aligned \parbox so a row that overflows wraps under its own first item
 // (hanging indent), not back under the label column.
@@ -235,9 +244,9 @@ function skillsBlockClassic(groups: SkillGroup[]): string {
   const rows = groups
     .map(
       (g) =>
-        `  \\item \\makebox[88pt][l]{\\fontsize{11pt}{11pt}\\selectfont ${escapeLatex(
+        `  \\item \\makebox[88pt][l]{\\fontsize{11pt}{11pt}\\selectfont\\textbf{${escapeLatex(
           g.category,
-        )}:}%\n        \\parbox[t]{\\dimexpr\\linewidth-88pt\\relax}{\\raggedright ${g.items
+        )}:}}%\n        \\parbox[t]{\\dimexpr\\linewidth-88pt\\relax}{\\raggedright ${g.items
           .map((s) => `\\skilltag{${escapeLatex(s)}}`)
           .join(' ')}}`,
     )

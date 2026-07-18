@@ -153,22 +153,48 @@
 % under tectonic (the Type1 phv family silently loses bold once fontspec is
 % active). Ligatures={TeX, NoCommon} keeps -- mappings but disables ff/fi/fl
 % ligatures, whose U+FB00-class glyphs break ATS keyword matching.
+% Real bold face. A FakeBold-on-regular semibold was tried (1.5, then 2.5) and
+% read too faint in practice — the synthetic stroke renders weaker than it
+% measures. The heavy look that prompted the experiment was the all-bold
+% skills wall, which is solved by plain \skilltag items instead.
 \newfontfamily\resumemain{texgyreheros}[
-  Extension=.otf, UprightFont=*-regular, BoldFont=*-bold,
-  ItalicFont=*-italic, BoldItalicFont=*-bolditalic,
+  Extension=.otf, UprightFont=*-regular,
+  BoldFont=*-bold,
+  ItalicFont=*-italic,
+  BoldItalicFont=*-bolditalic,
   Ligatures={TeX, NoCommon}]
 
 \begin{document}
 \resumemain
+% Bold: \textbf renders in Helvetica Neue Bold (macOS system font) — a true
+% 700 drawn a touch lighter and narrower than TGH's own bold, which read too
+% heavy. HN Medium (500) was tried first and failed external review: at 10pt
+% it reads as no-bold-at-all (section titles, entry titles, and keyword
+% highlights all "disappeared"). Legible bold at this size needs ~700; the
+% lighter drawing is the concession to "not so heavy". HN is Apple's
+% Helvetica, so the texture blends with the Heros body.
+% NoCommon ligatures for the same ATS reason as the body face. Note: ties the
+% PDF build to macOS (tectonic embeds the face from the system .ttc).
+\newfontfamily\resumebold{Helvetica Neue Bold}[
+  ItalicFont={Helvetica Neue Bold Italic}, Ligatures=NoCommon]
+\renewcommand{\textbf}[1]{{\resumebold #1}}
+% Semibold (HN Medium, 500): one step down from \resumebold — used by the
+% award/grant rows (see generate.ts), which sit right under a bold title and
+% would compete with it at full weight. Too faint for body \textbf (tried).
+\newfontfamily\resumesemibold{Helvetica Neue Medium}[
+  ItalicFont={Helvetica Neue Medium Italic}, Ligatures=NoCommon]
 
-% \skilltag: one bold skill in the label-column Skills table, wide-gapped from
-% its neighbours — the classic design's signature row. Gap trimmed from the
-% original 5pt: today's longer rows (10 items) have to fit the line.
-\newcommand{\skilltag}[1]{{\textbf{#1}}\hspace{3.5pt}}
+% \skilltag: one skill in the label-column Skills table, wide-gapped from its
+% neighbours. Plain weight (William, 2026-07-17: all-bold rows read cluttered);
+% the bold moved to the category labels, matching the modern variant. Gap
+% trimmed from the original 5pt: today's longer rows have to fit the line.
+% \mbox: items are atomic — lines break BETWEEN skills, never inside one (the
+% AI/ML row used to split "LLM APIs" from its parenthetical).
+\newcommand{\skilltag}[1]{\mbox{#1}\hspace{3.5pt}}
 
-% Project links render inline via \reslink as footnotesize source names
-% ("Devpost · GitHub") — the ATS-safe stand-in for the old \faExternalLink*
-% icon; see projectClassic() in generate.ts.
+% Project links render inline via \reslink as \small source names behind a
+% plain pipe ("Title | Devpost · GitHub") — the ATS-safe stand-in for the old
+% \faExternalLink* icon; see projectClassic() in generate.ts.
 
 %%RESUME_BODY%%
 
