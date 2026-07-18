@@ -31,9 +31,15 @@ export const skills: SkillGroup[] = [
     items: [
       // scikit-learn + SciPy off (William, 2026-07-17: not confident enough
       // to defend them in an interview) — re-add per JD only if he says so.
-      'PyTorch', 'NumPy', 'Pandas', 'HuggingFace', 'Unsloth',
-      'LangChain', 'LangSmith', 'Agno',
-      'LLM APIs (Anthropic Claude, OpenAI, Gemini, Cohere, Cerebras, etc.)',
+      // Order (adversarial pass 2026-07-18): differentiators lead — row
+      // starts get read; NumPy/Pandas are table stakes, so they sit last
+      // before the APIs item. "Hugging Face" is the company's own spelling
+      // (two words) — an ATS matching a JD's "Hugging Face" never matched
+      // the one-word form. "etc." cut from the parenthetical: hand-waving
+      // that no matcher rewards.
+      'PyTorch', 'Hugging Face', 'Unsloth', 'LangChain', 'LangSmith',
+      'Agno', 'NumPy', 'Pandas',
+      'LLM APIs (Anthropic Claude, OpenAI, Gemini, Cohere, Cerebras)',
     ],
   },
   {
@@ -48,13 +54,23 @@ export const skills: SkillGroup[] = [
     // only verbatim "CSS") — it survives verbatim in the Stitch bullet.
     // MySQL (carousel-backed, on Angelina's skills too) joined once
     // plain-weight tags freed the width; Firebase tried and wrapped the line.
-    items: ['React', 'Next.js', 'SwiftUI', 'Tailwind CSS', 'Node.js', 'Express.js', 'PostgreSQL', 'MySQL', 'MongoDB'],
+    // Order (2026-07-18): web UI -> mobile UI -> server -> data; Tailwind
+    // used to sit after SwiftUI, splitting the web cluster mid-row.
+    items: ['React', 'Next.js', 'Tailwind CSS', 'SwiftUI', 'Node.js', 'Express.js', 'PostgreSQL', 'MySQL', 'MongoDB'],
   },
   {
     category: 'Cloud & Tools',
     // Claude Code: not carousel-backed but real — daily driver for this repo,
     // and tract ships a ClaudeCodeClient LLM backend (verified 2026-07-17).
-    items: ['Azure', 'GCP', 'Cloudflare', 'Vercel', 'Docker', 'Git', 'Linux', 'OpenTelemetry', 'Claude Code'],
+    // It stays HERE, not AI/ML (adversarial pass 2026-07-18): the AI/ML row
+    // is libraries you build AI with; Claude Code is a tool you build with,
+    // so it sits in the dev-tools cluster (Git, Linux, Claude Code).
+    // OpenTelemetry likewise belongs in this row (observability tooling is
+    // infra, not an AI library or a concept) but moved beside Docker —
+    // platforms (Azure..Vercel) -> runtime infra (Docker, OTel) -> dev tools.
+    // GCP: flagged 2026-07-18 — no audited project shows GCP infra (Gemini
+    // API calls aren't GCP); kept pending William's own evidence.
+    items: ['Azure', 'GCP', 'Cloudflare', 'Vercel', 'Docker', 'OpenTelemetry', 'Git', 'Linux', 'Claude Code'],
   },
   {
     category: 'Concepts',
