@@ -13,7 +13,7 @@ const authored: ResumeEntry[] = [
     include: false, // raw new side project — site timeline only, off the résumé for now
     title: 'Hiya',
     subtitle: 'Personal Project',
-    dateLabel: 'May 2026 - June 2026',
+    dateLabel: 'May 2026 – Jun 2026',
     links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/Hiya' }],
     bullets: [
       {
@@ -44,7 +44,7 @@ const authored: ResumeEntry[] = [
     include: false, // raw new side project — site timeline only, off the résumé for now
     title: 'Batch',
     subtitle: 'Personal Project',
-    dateLabel: 'June 2026',
+    dateLabel: 'Jun 2026',
     links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/batch' }],
     bullets: [
       {
@@ -80,7 +80,7 @@ const authored: ResumeEntry[] = [
     title: 'Correctional Service of Canada',
     location: 'Ottawa, ON (Remote)',
     role: 'AI Analyst',
-    dateLabel: 'Jan 2026 - May 2026',
+    dateLabel: 'Jan 2026 – May 2026',
     bullets: [
       {
         id: 'rag',
@@ -108,11 +108,17 @@ const authored: ResumeEntry[] = [
     title: 'UAlberta Energy Mechatronics Lab',
     location: 'Edmonton, AB',
     role: 'Python Developer',
-    dateLabel: 'July 2025 - Sept 2025',
+    dateLabel: 'Jul 2025 – Sep 2025',
     bullets: [
       {
         id: 'scraper',
-        text: 'Automated citation tracking for **7,000+** papers across **2,000+** journal sites with inconsistent layouts by building a **Selenium**/**Beautiful Soup** scraper in **Python**, feeding a publication map used in talks and faculty meetings',
+        // "hundreds of hours" = William's own description of the manual flow
+        // (per-paper Google Scholar deep search + following hyperlinks +
+        // fetching each author — can't average under ~2 min) × 7,000+ papers
+        // ≈ 230+ hrs; phrased as a floor, not a point estimate. Paid for by
+        // "with inconsistent layouts" and "talks and"→"faculty talks" to hold
+        // the two-line render in both PDFs.
+        text: 'Automated citation tracking for **7,000+** papers across **2,000+** journal sites with a **Selenium**/**Beautiful Soup** scraper in **Python**, replacing **hundreds of hours** of manual author lookups and feeding a publication map used in faculty talks',
         tags: ['python', 'scraping'],
       },
       {
@@ -135,7 +141,7 @@ const authored: ResumeEntry[] = [
     title: 'WE Accelerate Azure & AI Stream',
     location: 'Waterloo, ON',
     role: 'Professional Development Participant',
-    dateLabel: 'June 2025 - Aug 2025',
+    dateLabel: 'Jun 2025 – Aug 2025',
     bullets: [
       {
         id: 'chatbot',
@@ -160,22 +166,33 @@ const authored: ResumeEntry[] = [
     title: 'Jindon International Ltd.',
     location: 'Waterloo, ON',
     role: 'Java Developer',
-    dateLabel: 'June 2025 - July 2025',
+    dateLabel: 'Jun 2025 – Jul 2025',
     bullets: [
       {
         id: 'intake',
-        text: "Built search functions and intake forms for Ontario's province-wide social assistance management system in **Java**",
+        // ~1M = 2024-25 avg beneficiaries across Ontario Works + ODSP (972,979
+        // — Auditor General / Maytree public data); system scale, not personal
+        // impact, so it hangs off the system description. Swapped in for
+        // "province-wide" to keep the bullet one rendered line in both PDFs.
+        text: "Built search functions and intake forms in **Java** for Ontario's social assistance system serving **~1M** beneficiaries",
         tags: ['java', 'fullstack'],
       },
       {
         id: 'sql',
-        text: 'Reduced **Oracle SQL** query latency **10x** by removing redundant joins and adding indexes',
+        // "performance", not "latency" — reviewer correction (2026-07-18):
+        // the 10x was measured on overall query performance, latency is
+        // not the accurate word for what was optimized.
+        text: 'Optimized **Oracle SQL** query performance **10x** by removing redundant joins and adding indexes',
         tags: ['sql', 'performance'],
       },
       {
         id: 'tests',
         text: 'Wrote **JMockit** unit tests and resolved UI defects in **Curam** components across the platform',
         tags: ['testing', 'java'],
+        // Weakest of the three (both variants agree) — off the PDFs to pay for
+        // the skills Concepts row; still on the site viewer, which ignores
+        // `default`. Re-add per JD when testing experience is the ask.
+        default: false,
       },
     ],
   },
@@ -184,7 +201,7 @@ const authored: ResumeEntry[] = [
     section: 'projects',
     title: 'Tract',
     subtitle: 'Personal Project',
-    dateLabel: 'Feb 2026 - Mar 2026',
+    dateLabel: 'Feb 2026 – Mar 2026',
     links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/tract' }],
     bullets: [
       {
@@ -194,7 +211,7 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'agent',
-        text: 'Drove the engine from an async agent loop (**Anthropic SDK**, **OpenAI-compatible** client) exposing **28** LLM tools, with token-budget enforcement and auto-compression keeping long sessions inside the context window',
+        text: 'Drove the engine from an async agent loop (**Claude** via **Anthropic SDK**, **OpenAI-compatible** client) exposing **28** LLM tools, with token-budget enforcement and auto-compression keeping long sessions in context',
         tags: ['ai', 'agents', 'python'],
       },
       {
@@ -217,7 +234,7 @@ const authored: ResumeEntry[] = [
     include: false, // one-page trim: strongest solo build but unvalidated + 3 long bullets; top swap-in
     title: 'Swarm RAG',
     subtitle: 'Research Project',
-    dateLabel: 'Dec 2025 - Feb 2026',
+    dateLabel: 'Dec 2025 – Feb 2026',
     links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/swarm_rag' }],
     bullets: [
       {
@@ -286,7 +303,7 @@ const authored: ResumeEntry[] = [
     include: false, // one-page trim: full-stack + live demo; swap-in if you want a web/demo project
     title: 'VolleyClip',
     subtitle: 'Personal Project',
-    dateLabel: 'Jan 2026 - Feb 2026',
+    dateLabel: 'Jan 2026 – Feb 2026',
     links: [
       { label: 'live demo', href: 'https://volleyball-clipper.vercel.app' },
       { label: 'repo', href: 'https://github.com/WilliamJin123/volleyball-clipper' },
@@ -398,7 +415,7 @@ const authored: ResumeEntry[] = [
     include: false, // one-page trim: redundant with Swarm RAG (GraphRAG) + Solana SDK (same team)
     title: 'GraphRAG Codebase Agent',
     subtitle: 'Solana Swift SDK',
-    dateLabel: 'Nov 2025 - Dec 2025',
+    dateLabel: 'Nov 2025 – Dec 2025',
     links: [
       { label: 'chatbot', href: 'https://github.com/The-SolShare-Team/Docs_GraphRAG' },
       { label: 'coding agent', href: 'https://github.com/The-SolShare-Team/demo_app_agent' },
@@ -431,7 +448,7 @@ const authored: ResumeEntry[] = [
     section: 'projects',
     title: 'Solana Swift SDK',
     grants: ['$40K USD Solana Foundation grant'],
-    dateLabel: 'Oct 2025 - Nov 2025',
+    dateLabel: 'Oct 2025 – Nov 2025',
     links: [{ label: 'repo', href: 'https://github.com/The-SolShare-Team' }],
     bullets: [
       {
@@ -464,7 +481,7 @@ const authored: ResumeEntry[] = [
     title: 'SolShare',
     subtitle: 'Hack the North 2025',
     awards: ['1st Place: Cohere API Best Use', 'Solana Best Consumer Payment Experience'],
-    dateLabel: 'Sept 2025',
+    dateLabel: 'Sep 2025',
     links: [
       { label: 'devpost', href: 'https://devpost.com/software/solshare-cmxous' },
       { label: 'repo', href: 'https://github.com/orgs/HTN-2025/repositories' },
@@ -494,7 +511,7 @@ const authored: ResumeEntry[] = [
     include: false, // one-page trim: smallest project
     title: 'Email-Style LLM SFT',
     subtitle: 'Personal Project',
-    dateLabel: 'Sept 2025',
+    dateLabel: 'Sep 2025',
     links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/email-llm' }],
     bullets: [
       {
@@ -520,7 +537,7 @@ const authored: ResumeEntry[] = [
     title: 'University of Waterloo',
     location: 'Waterloo, ON',
     role: 'Bachelor of Software Engineering',
-    dateLabel: 'Sept 2024 - May 2029',
+    dateLabel: 'Sep 2024 – May 2029',
     bullets: [
       { id: 'gpa', text: 'GPA: 3.7/4.0' },
       // William's call (ATS review, July 2026): optionally swap the coursework

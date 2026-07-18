@@ -17,7 +17,7 @@ export interface ResumeEntry {
   section: ResumeSection;
   title: string;         // company / project / school
   role?: string;         // job title / degree
-  dateLabel: string;     // e.g. "July 2025 - Sept 2025"
+  dateLabel: string;     // e.g. "Jul 2025 – Sep 2025" (3-letter months, en dash)
   location?: string;
   subtitle?: string;     // projects: context line (event / grant / "Personal Project")
   awards?: string[];     // wins/honors — amber trophy badges (UI) + \award (LaTeX)
