@@ -12,7 +12,8 @@
     "check": "astro check",
     "test": "vitest run",
     "test:watch": "vitest",
-    "resume": "tsx scripts/build-resume.ts"
+    "resume": "tsx scripts/build-resume.ts",
+    "resume:keywords": "tsx scripts/resume-keywords.ts"
   },
   "dependencies": {
     "@astrojs/check": "^0.9.4",
