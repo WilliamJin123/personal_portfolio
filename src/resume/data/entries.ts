@@ -539,7 +539,12 @@ const authored: ResumeEntry[] = [
     role: 'Bachelor of Software Engineering',
     dateLabel: 'Sep 2024 – May 2029',
     bullets: [
-      { id: 'gpa', text: 'GPA: 3.7/4.0' },
+      // Transcript-checked 2026-07-20: report the Waterloo-native cumulative
+      // average (81.56 -> 82%). The former "GPA: 3.7/4.0" converted the
+      // average as a single grade (80-84 = A-); per-course charts (OMSAS)
+      // give a different number, so the percentage is the only form that's
+      // verifiable against the grade report co-op employers receive.
+      { id: 'gpa', text: 'Cumulative Average: 82%' },
       // William's call (ATS review, July 2026): optionally swap the coursework
       // bullet for an availability line, e.g.
       //   'Seeking <FILL: e.g. Fall 2026 (Sept-Dec)> software engineering internship'
