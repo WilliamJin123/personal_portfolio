@@ -1,0 +1,70 @@
+% Reusable cover-letter shell — same type system as the résumé shells
+% (TeX Gyre Heros body, Helvetica Neue Bold for the name; macOS-tied via the
+% system .ttc, exactly like shell.tex). First used for the SELECT application,
+% July 2026; the letter and résumé read as a matched set in a bundle.
+%
+% Workflow (no generator script — filled per application, by hand or Claude):
+%   1. Copy to out/cover-letter-<company>.tex. out/ is gitignored on purpose:
+%      the filled letter carries contact info (profile.ts PII rule) and the
+%      body says where you're applying — neither belongs in the public repo.
+%   2. Replace the %%LETTER_*%% markers:
+%        %%LETTER_CONTACT%% — from src/resume/data/profile.ts, in the form
+%          \href{mailto:EMAIL}{EMAIL} ~|~ PHONE ~|~ \href{https://SITE}{SITE} ~|~ \href{https://github.com/USER}{github.com/USER}
+%        %%LETTER_DATE%%    — e.g. July 20, 2026
+%        %%LETTER_BODY%%    — greeting through sign-off, plain paragraphs
+%   3. tectonic out/cover-letter-<company>.tex --outdir out
+%      Never filter tectonic's output: a silent HelveticaNeue.ttc load
+%      failure falls back to a taller face and reflows the page (see the
+%      résumé compile notes for the 2-page incident).
+%   4. Verify before sending: 1 page; pdffonts = HelveticaNeue-Bold +
+%      TeXGyreHeros-Regular; pdftotext extraction has zero em/en dashes,
+%      zero "--", zero private-use glyphs; brand spellings exact (DoiT-style).
+%
+% Prose bar (William, 2026-07-20): reads like a person wrote it — no em
+% dashes or double hyphens anywhere, no stock application phrases. Every
+% claim must trace to an entries.ts bullet at or below that bullet's
+% strength; no invented narrative color.
+\documentclass[letterpaper,11pt]{article}
+\usepackage[left=2.4cm, top=2.2cm, right=2.4cm, bottom=2.4cm]{geometry}
+\usepackage{fontspec}
+\usepackage{ragged2e}
+\usepackage[hidelinks]{hyperref}
+\urlstyle{same}
+
+\newfontfamily\lettermain{texgyreheros}[
+  Extension=.otf, UprightFont=*-regular,
+  BoldFont=*-bold,
+  ItalicFont=*-italic,
+  BoldItalicFont=*-bolditalic,
+  Ligatures={TeX, NoCommon}]
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.85em}
+\pagestyle{empty}
+
+\begin{document}
+\lettermain
+\fontsize{10.5pt}{14.5pt}\selectfont
+% Ragged right like the résumé (hyphenation-aware via ragged2e); a justified
+% setting hyphenated the opening line. The default 2em rag stretch left lines
+% overfull, so it's widened — and the register must be set BEFORE
+% \RaggedRight, which copies it by value.
+\setlength{\RaggedRightRightskip}{0pt plus 4em}
+\RaggedRight
+
+\newfontfamily\letterbold{Helvetica Neue Bold}[Ligatures=NoCommon]
+
+{\letterbold\fontsize{16pt}{18pt}\selectfont William Jin}\\[3pt]
+{\fontsize{9.5pt}{12pt}\selectfont
+%%LETTER_CONTACT%%
+}
+
+\vspace{4pt}
+\hrule height 0.6pt
+\vspace{12pt}
+
+%%LETTER_DATE%%
+
+%%LETTER_BODY%%
+
+\end{document}
