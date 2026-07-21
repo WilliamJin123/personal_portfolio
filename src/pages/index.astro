@@ -48,7 +48,9 @@ const workJson = JSON.stringify(workData).split('<').join('\\u003c');
 // Contact links — single source of truth for the header nav + the footer pill.
 // External links get target/rel at the call sites; mail uses a mailto: URL.
 const links = {
-  cv: '#', // TODO: wire to the hosted résumé PDF once it's published
+  // Served from public/resume.pdf — the phone-free web variant that
+  // `npm run resume` compiles and copies there on every rebuild.
+  cv: '/resume.pdf',
   github: 'https://github.com/WilliamJin123',
   mail: 'mailto:w3jin@uwaterloo.ca',
   linkedin: 'https://www.linkedin.com/in/william-jin-874b572a1',
@@ -432,7 +434,7 @@ const links = {
         <a class="nm" href="/" aria-label="William Jin — home">William Jin<span class="dot">.</span></a>
       </div>
       <nav>
-        <a class="nl" href={links.cv}><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">CV</span></a>
+        <a class="nl" href={links.cv} target="_blank"><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">CV</span></a>
         <a class="nl" href={links.github} target="_blank" rel="noreferrer"><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">GitHub</span></a>
         <a class="nl" href={links.mail}><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">Mail</span></a>
         <a class="nl" href={links.linkedin} target="_blank" rel="noreferrer"><span class="fillbg"></span><svg class="bd"><rect x="0" y="0" width="100%" height="100%" rx="7" pathLength="1"/></svg><span class="t">LinkedIn</span></a>
@@ -649,7 +651,7 @@ const links = {
   <footer>
     <div class="cta-line m">// let's talk</div>
     <div class="pill" data-par="0.05" data-reveal>
-      <a class="mega" href={links.cv}>Download CV</a>
+      <a class="mega" href={links.cv} target="_blank">Download CV</a>
       <a href={links.mail}>Email</a>
       <a href={links.github} target="_blank" rel="noreferrer">GitHub</a>
     </div>
