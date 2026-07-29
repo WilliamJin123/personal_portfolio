@@ -6,6 +6,27 @@ import { byDateDesc } from './order';
 // public viewer and the generated résumé. The sort is stable, so entries that
 // end in the same month keep their authored order here (place the one you want
 // listed first earlier in the array).
+//
+// ---------------------------------------------------------------------------
+// BOLD CONVENTION (changed 2026-07-26, external review: "do not bold random
+// words ... only bold metrics")
+//
+// **bold** marks NUMBERS ONLY — the outcome metrics a recruiter scans for
+// (10x, 15%, 200+ hours, 5,000+ files). Technology names are NOT bolded.
+//
+// Why: the page had roughly thirty bold spans on it, nearly all of them tool
+// names, and emphasis that lands on a third of the words is not emphasis. The
+// eye had nowhere to stop. Bold buys nothing with an ATS either (a parser reads
+// the text, not the weight), so it was spending the page's only visual currency
+// on the one audience that cannot see it. Restricted to digits, the numbers
+// pop off the page from across a desk, which is exactly the six-second scan.
+// Bold the OUTCOME, not the input: on a bullet carrying both a result and an
+// eval size, the result is bold and the sample size stays plain.
+//
+// The include:false swap-in pool below (Hiya, Batch, Swarm RAG, KAN-CPPN,
+// VolleyClip, RLM++, GraphRAG Agent, Email-Style LLM SFT) still carries the OLD
+// all-tech bolding. Anything promoted onto the page needs the same pass first.
+// ---------------------------------------------------------------------------
 const authored: ResumeEntry[] = [
   {
     id: 'hiya',
@@ -79,25 +100,71 @@ const authored: ResumeEntry[] = [
     section: 'experience',
     title: 'Correctional Service of Canada',
     location: 'Ottawa, ON (Remote)',
-    role: 'AI Analyst',
+    // "Software Engineer Intern" across all three Experience entries (William,
+    // 2026-07-28, taking the reviewer's note). The recorded titles were AI
+    // Analyst / Python Developer / Java Developer, which read as
+    // language-contractor labels rather than engineering ones and gave a
+    // recruiter three unrelated strings to pattern-match instead of one.
+    // FLAGGED AND OVERRULED: job titles are the only claim on this page a third
+    // party can verify independently (offer letter, WaterlooWorks record,
+    // reference call), and CSC is federal. William's call, made with that on
+    // the table. If any offer letter uses a closer real title, prefer it.
+    role: 'Software Engineer Intern',
     dateLabel: 'Jan 2026 – May 2026',
     bullets: [
       {
         id: 'rag',
-        text: 'Developed an **AI** chatbot enabling thousands of correctional officers to query an internal regulation corpus, built on **Azure OpenAI**, **AI Search**, and **Container Apps**',
+        // 220+ = the count of CSC's published policy instruments, tallied
+        // 2026-07-26 off canada.ca's Commissioner's Directives index: 157
+        // top-level instruments (CD/GL/ISD/FD, including sub-numbered ones like
+        // 566-1..566-15 and 705-1..705-8) plus 62 nested Guidelines plus 2 other
+        // standards documents. Policy Bulletins are amendment notices, not
+        // policy, and are NOT in the count. ASSUMES the corpus he indexed was
+        // the published CD/GL set — if it also carried unpublished internal SOPs
+        // the real number is higher, and if it was a subset it is lower.
+        // Diction pass 2026-07-26: "giving ... search across" made "search" a
+        // flat noun and buried the action. "letting thousands of officers
+        // query" names who does what.
+        // 17,000+ (William, 2026-07-28) closes the reviewer's "specify
+        // 'thousands' into a quantifiable metric" note. It is CSC's total staff
+        // count, which is the deployment scope, so the noun is "officers and
+        // staff" and not "officers" alone — correctional officers are a subset
+        // of that headcount, and claiming 17,000 of them would be false. The
+        // phrasing also keeps "officer" live for the feedback bullet below.
+        text: 'Built a chatbot on Azure OpenAI and AI Search, letting **17,000+** officers and staff query **220+** policy directives',
         tags: ['ai', 'rag', 'azure'],
       },
       {
         id: 'chunking',
-        // Trimmed to two rendered lines (2026-07-17): the third-line straggler paid
-        // for the AI/ML skills row wrapping — cut "PDF formatting errors" + "over
-        // baseline", kept both metrics and the eval size.
-        text: 'Redesigned the chunking pipeline to parse documents to **HTML** via **Azure Document Intelligence**, eliminating mid-chunk truncation and improving retrieval accuracy **15%** and answer grounding **10%** across **300** test prompts',
+        // Result-first (2026-07-26, reviewer: "maybe try leading w/ result").
+        // Also de-jargoned: "mid-chunk truncation" was the reviewer's example of
+        // a phrase that stops a recruiter cold, and "Azure Document
+        // Intelligence" collapsed to "Azure" on his note — the product name is
+        // meaningless outside the Azure org, the platform name is not.
+        // 300 stays plain: it is the sample size, not the outcome, and three
+        // bold numbers in one bullet is three places for the eye to stop.
+        // Diction pass 2026-07-26: bare "grounding" is an RAG term of art and
+        // reads as a dangling noun to anyone else — "answer grounding" says
+        // what is grounded. "retrieval accuracy" → "search accuracy" on the
+        // same logic (and it echoes "query" in the bullet above); the width
+        // that swap frees is what pays for "answer".
+        // "structured" spent on width: adding "answer" pushed the line past
+        // capacity and orphaned "Azure" onto a row of its own. Of the two,
+        // "answer" earns more — "structured" is implied by parsing a PDF to
+        // HTML at all, whereas bare "grounding" leaves a reader guessing.
+        text: 'Raised search accuracy **15%** and answer grounding **10%** on 300 prompts by re-parsing PDFs to HTML on Azure',
         tags: ['ai', 'rag', 'azure'],
       },
       {
         id: 'ui',
-        text: 'Implemented a **citation panel** and thumbs-up/down feedback loop in **TypeScript**, letting officers verify answers against the source regulations and giving the team a per-response quality signal',
+        // "thumbs-up/down feedback loop" was the reviewer's "sounds too casual".
+        // Same mechanism, named the way the team would write it up.
+        // Diction pass 2026-07-26 (William: "track quality is a bit ambiguous").
+        // It was — "quality" of what, tracked how, by whom. Both halves now say
+        // what the thing does instead of what it was for: the panel links an
+        // answer to its source, the rating flow logs what officers said about
+        // it. The purpose reads off the mechanism without being asserted.
+        text: 'Added a TypeScript citation panel linking each answer to its source, plus a rating flow logging officer feedback',
         tags: ['frontend', 'analytics'],
       },
     ],
@@ -107,29 +174,58 @@ const authored: ResumeEntry[] = [
     section: 'experience',
     title: 'UAlberta Energy Mechatronics Lab',
     location: 'Edmonton, AB',
-    role: 'Python Developer',
+    role: 'Software Engineer Intern', // see the CSC entry for the reasoning + the flag
     dateLabel: 'Jul 2025 – Sep 2025',
     bullets: [
       {
         id: 'scraper',
-        // "hundreds of hours" = William's own description of the manual flow
-        // (per-paper Google Scholar deep search + following hyperlinks +
-        // fetching each author — can't average under ~2 min) × 7,000+ papers
-        // ≈ 230+ hrs; phrased as a floor, not a point estimate. Paid for by
-        // "with inconsistent layouts" and "talks and"→"faculty talks" to hold
-        // the two-line render in both PDFs.
-        text: 'Automated citation tracking for **7,000+** papers across **2,000+** journal sites with a **Selenium**/**Beautiful Soup** scraper in **Python**, replacing **hundreds of hours** of manual author lookups and feeding a publication map used in faculty talks',
+        // "200+ hours" (2026-07-26) is NOT an invented number — it is a
+        // conservative floor on William's own arithmetic, kept here so he can
+        // reconstruct it live in an interview: the manual flow he replaced was a
+        // per-paper Google Scholar deep search, following hyperlinks, then
+        // fetching each author, which cannot average under ~2 min; × 7,000+
+        // papers ≈ 230 hrs. He previously wrote this as "hundreds of hours".
+        // The reviewer wanted a figure and wanted it to LEAD, on the grounds
+        // that 7,000 papers / 2,000 sites are counts of inputs (unimpressive on
+        // their own) while the hours are the thing that was actually saved.
+        // 2,000+ journal sites dropped on the same note; 7,000+ stays, plain,
+        // as the scale the number rests on.
+        text: 'Cut **200+ hours** of manual author lookups by automating citation tracking for 7,000+ papers with a Selenium scraper',
         tags: ['python', 'scraping'],
       },
       {
         id: 'map',
-        default: false,
-        text: 'Built the publication map — an interactive citation-network visualization the group used to communicate research impact',
+        // Promoted to a rendered bullet 2026-07-26 (reviewer: "add a third
+        // point if possible"). It was already written and already true; it was
+        // sitting out purely on the old line budget.
+        // Folium per William 2026-07-26. It is the natural fit for the rest of
+        // the stack: a Python library that emits an interactive Leaflet map, and
+        // the standard choice for a choropleth in a research setting. He could
+        // not name it from memory, so if the repo says Plotly or GeoPandas
+        // instead, this is a one-word change.
+        // "choropleth", not "citation-network visualization" — the earlier
+        // wording described the wrong kind of chart entirely.
+        // Diction pass 2026-07-26: "the resulting publication map" leaned on
+        // the bullet above to mean anything, and "for lab talks" trailed off
+        // the end as an afterthought. "Mapped the results" carries the same
+        // link without the pointer word.
+        text: 'Mapped the results as a Folium choropleth shading regions by citation density, used in lab research talks',
         tags: ['dataviz'],
       },
       {
         id: 'db',
-        text: 'Designed and deployed a **SQL Server** database organizing **5,000+** experimental fuel cell files, replacing manual lookup with queryable results across experiments',
+        // One line (reviewer: "shorten into 1 line, everything after comma is a
+        // little fluff"). "replacing manual file search" survives because it is
+        // the Z in did-X-using-Y-achieving-Z; what got cut was the padding
+        // around it ("organizing" → the database made them queryable, "across
+        // experiments" → implied).
+        // Diction pass 2026-07-26: "experimental fuel cell files" parses two
+        // ways (experimental cells? experimental files?) — it is files from
+        // fuel cell experiments, so "fuel cell experiment files". "Deployed"
+        // described the last step of the job; "Consolidated" describes the
+        // job. "manual file search" → "manual folder search", which is what
+        // the researchers were actually doing.
+        text: 'Consolidated **5,000+** fuel cell experiment files into a SQL Server database, replacing manual folder search',
         tags: ['sql', 'data'],
       },
     ],
@@ -165,16 +261,23 @@ const authored: ResumeEntry[] = [
     section: 'experience',
     title: 'Jindon International Ltd.',
     location: 'Waterloo, ON',
-    role: 'Java Developer',
+    role: 'Software Engineer Intern', // see the CSC entry for the reasoning + the flag
     dateLabel: 'Jun 2025 – Jul 2025',
     bullets: [
       {
         id: 'intake',
         // ~1M = 2024-25 avg beneficiaries across Ontario Works + ODSP (972,979
         // — Auditor General / Maytree public data); system scale, not personal
-        // impact, so it hangs off the system description. Swapped in for
-        // "province-wide" to keep the bullet one rendered line in both PDFs.
-        text: "Built search functions and intake forms in **Java** for Ontario's social assistance system serving **~1M** beneficiaries",
+        // impact, so it hangs off the system description.
+        // "Ontario's social assistance system" → "a government benefits
+        // platform" (2026-07-26, reviewer: "replace with a general term"). The
+        // proper noun told a recruiter outside Ontario nothing; the general term
+        // conveys the two things that actually signal — public sector, and a
+        // system with a million people on it.
+        // Diction pass 2026-07-26: "search features" is a placeholder phrase —
+        // it says a feature existed, not what it searched. "case search" names
+        // it and matches the case-management system the third bullet cites.
+        text: 'Built case search and intake forms in Java for a government benefits platform serving **~1M** users',
         tags: ['java', 'fullstack'],
       },
       {
@@ -182,17 +285,23 @@ const authored: ResumeEntry[] = [
         // "performance", not "latency" — reviewer correction (2026-07-18):
         // the 10x was measured on overall query performance, latency is
         // not the accurate word for what was optimized.
-        text: 'Optimized **Oracle SQL** query performance **10x** by removing redundant joins and adding indexes',
+        text: 'Optimized Oracle SQL query performance **10x** by eliminating redundant joins and adding targeted indexes',
         tags: ['sql', 'performance'],
       },
       {
         id: 'tests',
-        text: 'Wrote **JMockit** unit tests and resolved UI defects in **Curam** components across the platform',
+        // Promoted 2026-07-26: with WE Accelerate off the classic page, Jindon
+        // can carry three bullets, and a two-bullet entry next to two
+        // three-bullet ones reads as the thin one. "Curam" dropped by the
+        // reviewer's own rule about naming things recruiters have never heard
+        // of — it is IBM's govtech case-management platform, which is exactly
+        // what the bullet now says in words anyone can parse.
+        // Diction pass 2026-07-26: the old order let "across the platform's
+        // case-management components" modify the defects when it modifies the
+        // tests. "modules" over "components", which in a Java codebase means
+        // something narrower than intended.
+        text: "Wrote JMockit unit tests across the platform's case-management modules and fixed defects in its UI",
         tags: ['testing', 'java'],
-        // Weakest of the three (both variants agree) — off the PDFs to pay for
-        // the skills Concepts row; still on the site viewer, which ignores
-        // `default`. Re-add per JD when testing experience is the ask.
-        default: false,
       },
     ],
   },
@@ -204,14 +313,42 @@ const authored: ResumeEntry[] = [
     dateLabel: 'Feb 2026 – Mar 2026',
     links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/tract' }],
     bullets: [
+      // Tract renders on the modern one-pager only (classicSelection drops it),
+      // but the modern one-pager IS the published /resume.pdf — so these two get
+      // the same 2026-07-26 pass as the classic page: numbers-only bold, and no
+      // parenthetical tool inventory.
+      //
+      // One-line pass 2026-07-28. These were the only wrapped bullets on either
+      // variant: two bullets at two rendered lines each, on the document served
+      // at williamjin.dev/resume.pdf. Tract never got the reviewer's "shorten
+      // into 1 line" treatment because he only ever saw the classic page, which
+      // does not carry Tract. Both are now one line, and `storage` is promoted
+      // so the entry runs three bullets like every other project (four rendered
+      // lines before, three now).
       {
         id: 'dag',
-        text: 'Architected a git-style version-control engine for LLM context in **Python**, with a content-addressed **SHA-256** commit **DAG** supporting branching, three-way merge, and rebase',
+        // "content-addressed SHA-256" spent on width. Of the two halves it was
+        // the cheaper: "git-style version-control engine" already implies
+        // content addressing to a reader who would care about the hash, whereas
+        // three-way merge and rebase on an LLM context is the claim nothing
+        // else on the page makes. The colon replaces ", with a ... supporting",
+        // which was six words of connective tissue.
+        text: 'Architected a git-style version-control engine for LLM context in Python: branching, three-way merge, and rebase',
         tags: ['systems', 'python'],
       },
       {
         id: 'agent',
-        text: 'Drove the engine from an async agent loop (**Claude** via **Anthropic SDK**, **OpenAI-compatible** client) exposing **28** LLM tools, with token-budget enforcement and auto-compression keeping long sessions in context',
+        // Closing clause ("keeping long sessions in context") cut for width.
+        // It stated the purpose of the two mechanisms named right before it,
+        // which a reader infers from "token-budget enforcement" and
+        // "auto-compression" without being told.
+        // "token-budget enforcement" -> "token budgeting" on a second pass: the
+        // first rewrite still wrapped at 115 rendered characters even though the
+        // 116-character Stitch bullet fits, because this line's glyph mix (LLM,
+        // W, the bold 28) runs wider than the count suggests. Character count is
+        // a proxy, not a ruler — always recompile. The verb form is also less
+        // nouny than the compound it replaces.
+        text: 'Wrapped the engine in an async agent loop exposing **28** LLM tools, with token budgeting and auto-compression',
         tags: ['ai', 'agents', 'python'],
       },
       {
@@ -222,8 +359,15 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'storage',
-        default: false,
-        text: 'Persisted the object store in **SQLite** (**SQLAlchemy**, auto-migrating schema), backed by a property-based and end-to-end **pytest** suite',
+        // Promoted 2026-07-28 (see the block comment above). It is the bullet
+        // that answers the reviewer's standing project rule — "how the backend
+        // works, how its hosted" — for the one project that never got it, and
+        // it is the only one of the two bench bullets that describes
+        // persistence rather than more agent behaviour.
+        // Re-bolded to the numbers-only convention (SQLite/SQLAlchemy/pytest
+        // were carrying the old all-tech bolding, per the file header) and the
+        // parenthetical unpacked: "auto-migrating schema" cut for width.
+        text: 'Persisted the object store in SQLite via SQLAlchemy, backed by a property-based and end-to-end pytest suite',
         tags: ['backend', 'database'],
       },
     ],
@@ -347,12 +491,18 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'agent',
-        text: 'Built an agentic AI video editor (**Next.js**, **TypeScript**, **Supabase**) where a **Gemini** agent edits a live timeline from natural language through **14** custom video and audio tools (cut, trim, transitions, voiceover, audio mixing)',
+        // "too casual" (2026-07-26). The casual part was the trailing
+        // parenthetical inventory — "(cut, trim, transitions, voiceover, audio
+        // mixing)" reads like a feature list off a Devpost page. Named the
+        // mechanism instead: 14 tool calls against a live timeline.
+        text: 'Built an agentic video editor in Next.js where a Gemini agent drives a live timeline through **14** custom editing tools',
         tags: ['ai', 'agents'],
       },
       {
         id: 'search',
-        text: 'Engineered natural-language clip retrieval with **Twelve Labs** semantic search to surface the exact matching segment on the timeline',
+        // One line, and says what it resolves TO (timestamps) rather than the
+        // vaguer "surface the exact matching segment".
+        text: 'Implemented natural-language clip retrieval with Twelve Labs, resolving each query to exact in-clip timestamps',
         tags: ['ai', 'video'],
       },
       {
@@ -369,9 +519,34 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'ui',
-        default: false,
-        text: 'Built a custom **React 19** timeline editor where AI and manual edits share a single undo/redo history',
+        // Promoted 2026-07-26. The reviewer's note on Stitch was "be more
+        // technical, don't just describe the product (how the backend works, how
+        // its hosted)" — of the three bench bullets this is the only one that
+        // describes ARCHITECTURE rather than another feature, and the shared
+        // undo/redo history across an AI and a human editing the same document
+        // is the genuinely hard part of the build.
+        // "Designed", not "Built" (diction pass 2026-07-26) — the entry's first
+        // bullet already opens on "Built", and the claim here is the design
+        // decision (one history, two writers), not the construction.
+        text: 'Designed a React 19 timeline where agent and manual edits share a single undo/redo history',
         tags: ['frontend', 'react'],
+      },
+      {
+        id: 'infra',
+        // Added 2026-07-26 for the reviewer's "how the backend works, how its
+        // hosted". Written from a repo audit, NOT from memory: William thought
+        // Stitch used Cloudflare buckets, but package.json has no Cloudflare or
+        // S3 dependency at all — storage is Supabase (raw-video / raw-audio
+        // buckets, getPublicUrl in src/app/api/upload/route.ts), Postgres is
+        // Supabase via Prisma (@prisma/adapter-pg), and the FFmpeg work runs in
+        // Next.js API routes (src/app/api/export/route.ts, src/lib/*).
+        // Cloudflare R2 is VOLLEYCLIP's stack, not this one.
+        // Diction pass 2026-07-28: "Backed it with" put the pronoun three
+        // bullets away from its antecedent. "the editor" resolves on the spot
+        // and costs nothing, paid for by dropping "finished" (a cut is the
+        // finished thing).
+        text: 'Backed the editor with Supabase Postgres and storage buckets, exporting cuts through FFmpeg in Next.js API routes',
+        tags: ['backend', 'infra'],
       },
     ],
   },
@@ -453,19 +628,66 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'sdk',
-        text: "Developed Solana's first official native **Swift SDK** enabling **iOS** apps to integrate multi-wallet functionality for leading wallet providers (Phantom, Backpack, and Solflare)",
+        // "for leading wallet providers (Phantom, Backpack, and Solflare)" cut
+        // on the reviewer's note. It was the marketing half of the sentence:
+        // "leading" is a claim the résumé cannot support, and the three wallet
+        // names mean nothing to a screener outside crypto while eating most of
+        // the line. What replaced it says what the SDK actually gives you.
+        text: "Developed Solana's first official native Swift SDK, a typed iOS client for multi-wallet connection and signing",
         tags: ['swift', 'sdk'],
       },
       {
         id: 'crypto',
-        text: "Implemented the wallet connect and signing flow as an **encrypted deeplink handshake** with per-session shared secrets, so apps never touch a user's private keys",
+        // "talk about how, not what" (Kevin, 2026-07-26). Primitives read off
+        // the repo: Deeplink/Operations/Connect.swift generates an ephemeral
+        // keypair with SaltBox.keyPair(), then SaltBox.before() (NaCl
+        // crypto_box_beforenm = X25519 ECDH) derives the per-session shared
+        // secret; responses open as XSalsa20-Poly1305 secretboxes with nonces
+        // from SecRandomCopyBytes. Library is TweetNaCl via
+        // bitmark-inc/tweetnacl-swiftwrap, alongside the team's own Salkt.swift.
+        //
+        // CAVEAT ON RECORD: William's 5 commits on that repo do not touch
+        // Connect.swift. He reviewed this and chose to keep the bullet on the
+        // basis that he was "tangentially responsible" and can defend it in an
+        // interview (2026-07-26). His call, documented here so nobody
+        // re-litigates it. See [[solshare-sdk-true-story]] for the full split.
+        // Diction pass 2026-07-26: "connect" was a noun borrowed from
+        // wallet-adapter jargon; "connection" is the English word. The closing
+        // clause was also loose to the point of being wrong — the app DOES
+        // hold a private key, the ephemeral X25519 one it generates per
+        // session. What it never gets is the wallet's, which is the actual
+        // security property.
+        // Diction pass 2026-07-28: the bullet used to open "Built connection
+        // and signing on ...", repeating the exact phrase that closes the
+        // bullet above it. Two adjacent bullets stuttering on the same four
+        // words reads as filler. "Secured each wallet session" also names the
+        // real unit the handshake operates on (SaltBox.before() derives one
+        // shared secret per session), so the fix buys precision, not just
+        // variety.
+        text: "Secured each wallet session with an X25519 deeplink handshake in TweetNaCl, so the app never sees a wallet key",
         tags: ['swift', 'crypto'],
       },
       {
         id: 'arch',
+        // DEMOTED AGAIN 2026-07-26, same day it was promoted. Repo audit
+        // (github.com/The-SolShare-Team/SolanaWalletAdapterKit) shows the
+        // protocol-oriented wallet layer and the Phantom polyfill live in
+        // Deeplink/DeeplinkWallet.swift and Deeplink/Wallets/*.swift, and
+        // William's five commits on that repo touch none of them. Not his to
+        // claim in the first person. See the `docs` bullet below.
         default: false,
-        text: "Architected a protocol-oriented wallet layer so new wallets plug in via conformance, polyfilling Phantom's deprecated sign-and-send over the **RPC** client",
+        text: "Architected a protocol-oriented wallet layer so new wallets plug in by conformance, polyfilling Phantom's deprecated sign-and-send over the RPC client",
         tags: ['swift', 'architecture'],
+      },
+      {
+        id: 'graphrag',
+        // Replaces `arch` on the page. This IS his: Docs_GraphRAG is 18 commits
+        // out of 18 and demo_app_agent is 5 out of 5, both solo. It is also the
+        // most technically interesting thing he did on the grant, and it keeps
+        // the entry's third bullet at implementation depth without borrowing
+        // anyone else's work to get there.
+        text: 'Layered a GraphRAG documentation agent over the SDK, indexing **600+** Swift symbols into a FalkorDB code graph',
+        tags: ['ai', 'graphrag', 'python'],
       },
       {
         id: 'ship',
@@ -489,18 +711,30 @@ const authored: ResumeEntry[] = [
     bullets: [
       {
         id: 'ios',
-        text: 'Shipped a bill-splitting **iOS** app in **Swift** that automates receipt parsing and payment processing',
+        // "and settles payment" cut 2026-07-26: the third bullet now says how
+        // settlement works (on-chain, Solana transfer), so this was the vague
+        // version of a claim made properly twelve words later.
+        text: 'Shipped a bill-splitting iOS app in Swift that turns a receipt photo into per-person totals',
         tags: ['ios', 'swift'],
       },
       {
         id: 'cohere',
-        text: 'Turned receipt photos into split-ready line items with **Cohere** vision and reasoning models in a **self-critic** loop that double-checks each extraction',
+        text: 'Parsed receipts into line items with Cohere vision models in a self-critic loop that re-checks each extraction',
         tags: ['ai', 'llm'],
       },
       {
         id: 'backend',
-        default: false,
-        text: 'Built the backend using **Firebase Cloud Functions** and **Firestore** and the frontend using **SwiftUI**',
+        // Promoted 2026-07-26 — this is the fix for the reviewer's "projects
+        // need more description than 1 point" on SolShare (the classic variant
+        // was rendering it with a single bullet) and for "how the backend works,
+        // how its hosted". Rewritten from a flat tool inventory ("built the
+        // backend using X and Y and the frontend using Z") into what the
+        // architecture does.
+        // Payment rail confirmed by William 2026-07-26: settlement really did
+        // run on-chain, which is why the entry won "Solana Best Consumer
+        // Payment Experience". That belongs in the bullet and is a far stronger
+        // close than stopping at Firestore.
+        text: "Built the backend on Firebase Cloud Functions and Firestore, settling each share on-chain as a Solana transfer",
         tags: ['firebase', 'swiftui'],
       },
     ],
@@ -536,10 +770,34 @@ const authored: ResumeEntry[] = [
     section: 'education',
     title: 'University of Waterloo',
     location: 'Waterloo, ON',
-    role: 'Bachelor of Software Engineering',
+    // "with Honours" → ", Honours" (2026-07-26): the longer form overran the
+    // modern shell's heading row by 2.75pt, and since \extracolsep{\fill} has
+    // no negative range the degree collided with "Waterloo, ON" on the
+    // published /resume.pdf. The comma form is also how Waterloo writes it on
+    // the transcript. Watch this row if the degree line ever grows again —
+    // tectonic reports it as "Overfull \hbox ... in alignment".
+    role: 'Bachelor of Software Engineering, Honours',
     dateLabel: 'Sep 2024 – May 2029',
     bullets: [
-      { id: 'gpa', text: 'GPA: 3.7/4.0' },
+      // GPA off the page 2026-07-26 (reviewer: "remove gpa"). 3.7/4.0 is a
+      // perfectly good Waterloo SE average, but printing it invites a
+      // comparison against a number the reader has already decided is the bar,
+      // and omitting it is the norm — nobody reads a missing GPA as a red flag
+      // the way they read a mediocre one. `default: false` rather than deleted:
+      // finance/quant postings sometimes require it, so it is one flag away.
+      { id: 'gpa', default: false, text: 'GPA: 3.7/4.0' },
+      // Certifications moved here 2026-07-26 from the WE Accelerate entry,
+      // which came off the classic page entirely (see selections.ts). They are
+      // real credentials and they belong under Education, not inside a PD
+      // program's work-experience block; the line they cost is the one the GPA
+      // bullet gave back.
+      {
+        id: 'certs',
+        // "and", not a comma: with two items the comma read as the start of a
+        // longer list, and it left "Microsoft" looking like it qualified only
+        // the first certification when it qualifies both.
+        text: 'Certifications: Microsoft Azure Fundamentals (AZ-900) and Azure AI Fundamentals (AI-900)',
+      },
       // William's call (ATS review, July 2026): optionally swap the coursework
       // bullet for an availability line, e.g.
       //   'Seeking <FILL: e.g. Fall 2026 (Sept-Dec)> software engineering internship'

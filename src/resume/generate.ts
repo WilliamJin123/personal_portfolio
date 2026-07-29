@@ -37,16 +37,27 @@ function items(entry: ResumeEntry, ids: string[]): string {
   return `      \\resumeItemListStart\n${lines}\n      \\resumeItemListEnd`;
 }
 
+// Both shells render slot #1 bold-and-large and slot #3 at body weight
+// ("\textbf{#1} | #3"), so which of role/organization gets the emphasis is
+// decided HERE by swapping the arguments — no shell change needed.
+//
+// Experience leads with the ROLE (external review, 2026-07-26: "role should be
+// bolded & larger instead of company"). A recruiter scanning the page is
+// pattern-matching job titles, not employer names, and the employer still reads
+// clearly at body weight one token later. Education keeps the institution in
+// front: there the school IS the recognizable token, not the degree name.
 function subheading(e: ResumeEntry, ids: string[]): string {
   // Location travels in the right-hand cell with the date ("Ottawa, ON (Remote)
   // | Jan 2026 - May 2026") so every entry carries a visible, ATS-parseable
   // location without adding a second heading line.
   const when = [e.location, e.dateLabel].filter(Boolean).join(' | ');
+  const role = e.role ?? '';
+  const [lead, trail] = e.section === 'experience' && role ? [role, e.title] : [e.title, role];
   return [
     '  \\resumeSubheading',
-    `      {${escapeLatex(e.title)}}`,
+    `      {${escapeLatex(lead)}}`,
     '      {}',
-    `      {${escapeLatex(e.role ?? '')}}{${escapeLatex(when)}}`,
+    `      {${escapeLatex(trail)}}{${escapeLatex(when)}}`,
     items(e, ids),
   ].join('\n');
 }
@@ -236,10 +247,15 @@ function skillsBlock(groups: SkillGroup[]): string {
 }
 
 // Classic skills table: a fixed-width bold label column ("Languages:" at 11pt;
-// the original was 12pt/85pt — 88pt fits "Cloud & Tools:") and space-separated
-// \skilltag items, vs the modern comma-separated line. The items sit in a
-// top-aligned \parbox so a row that overflows wraps under its own first item
-// (hanging indent), not back under the label column.
+// the original was 12pt/85pt — 88pt fits "Cloud & Tools:") and \skilltag items.
+// The items sit in a top-aligned \parbox so a row that overflows wraps under its
+// own first item (hanging indent), not back under the label column.
+//
+// Comma-separated since 2026-07-26 (external review). The wide-gap-only
+// separator the W25 design used made each row read as one undifferentiated run
+// of tokens — wherever a skill was two words ("Hugging Face", "Tailwind CSS")
+// you could not see where one ended and the next began. The comma rides INSIDE
+// the \mbox with its item so it can never orphan to the head of the next line.
 function skillsBlockClassic(groups: SkillGroup[]): string {
   const rows = groups
     .map(
@@ -247,14 +263,21 @@ function skillsBlockClassic(groups: SkillGroup[]): string {
         `  \\item \\makebox[88pt][l]{\\fontsize{11pt}{11pt}\\selectfont\\textbf{${escapeLatex(
           g.category,
         )}:}}%\n        \\parbox[t]{\\dimexpr\\linewidth-88pt\\relax}{\\raggedright ${g.items
-          .map((s) => `\\skilltag{${escapeLatex(s)}}`)
-          .join(' ')}}`,
+          .map((s, i) => `\\skilltag{${escapeLatex(s)}${i < g.items.length - 1 ? ',' : ''}}`)
+          .join('')}}`,
     )
     .join('\n');
   return [
     '\\section{\\textbf{Skills}}',
-    '\\vspace{-0.4mm}',
-    '\\begin{itemize}[leftmargin=*, itemsep=0.8mm, rightmargin=2ex, label={}]',
+    // Skills used to butt right against its rule while every other section got
+    // ~8pt (their first row arrives via \resumeSubheading, which carries a
+    // 2.4mm pre-gap). This pads the first row off the rule; it is paid for by
+    // the tighter rows below rather than by the page.
+    '\\vspace{1.8mm}',
+    // 0.2mm rows (was 0.8): the fixed label column already separates the rows,
+    // so they read fine tighter — and the reclaimed points buy the top pad
+    // above plus the entry gaps in Experience/Projects (William, 2026-07-25).
+    '\\begin{itemize}[leftmargin=*, itemsep=0.2mm, rightmargin=2ex, label={}]',
     rows,
     '\\end{itemize}',
     // -4.5mm (modern: -3.5): Skills hands its boundary space to Experience.
@@ -267,27 +290,26 @@ export function generateBody(
   sel: Selection,
   variant: ResumeVariant = 'modern',
 ): string {
-  // Section order: the modern one-pager leads with Education (current student —
-  // recruiters and ATS scans look for it up top), then Skills, Experience,
-  // Projects. The classic layout keeps the W25 order: Skills first, Education
-  // closing the page.
+  // Section order: Education -> Experience -> Projects -> Skills, both variants
+  // (external review, 2026-07-26; previously modern ran Education/Skills/
+  // Experience/Projects and classic ran Skills/.../Education).
+  //
+  // Education leads because he is a current student: program, honours, and grad
+  // year are the first filter a co-op recruiter applies. Skills closes because
+  // it is the one section that gets read by machines more than by people — an
+  // ATS parses the whole document regardless of order, so the keyword block
+  // loses nothing at the bottom, while a human scanning top-down now hits real
+  // work before a wall of tool names.
   const parts: string[] = [header(lib.profile, variant)];
   const edu = renderSection(lib, sel, 'education', variant);
   const exp = renderSection(lib, sel, 'experience', variant);
   const proj = renderSection(lib, sel, 'projects', variant);
   const skills = variant === 'classic' ? skillsBlockClassic(lib.skills) : skillsBlock(lib.skills);
 
-  if (variant === 'classic') {
-    parts.push(skills);
-    if (exp.trim()) parts.push(sectionBlock('Experience', exp));
-    if (proj.trim()) parts.push(sectionBlock('Projects', proj));
-    if (edu.trim()) parts.push(sectionBlock('Education', edu));
-  } else {
-    if (edu.trim()) parts.push(sectionBlock('Education', edu));
-    parts.push(skills);
-    if (exp.trim()) parts.push(sectionBlock('Experience', exp));
-    if (proj.trim()) parts.push(sectionBlock('Projects', proj));
-  }
+  if (edu.trim()) parts.push(sectionBlock('Education', edu));
+  if (exp.trim()) parts.push(sectionBlock('Experience', exp));
+  if (proj.trim()) parts.push(sectionBlock('Projects', proj));
+  parts.push(skills);
   return parts.join('\n\n');
 }
 

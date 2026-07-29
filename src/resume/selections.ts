@@ -2,38 +2,35 @@ import type { ResumeLibrary, Selection } from './types';
 
 // The classic (W25-layout) variant carries its own content calls, applied as
 // selection overrides so entries.ts — and with it the modern one-pager and
-// the site viewer — stays untouched:
-//  - WE Accelerate comes back (the W25 résumé carried it; it holds the AZ-900/
-//    AI-900 certs even though it's a PD program, not validated employment).
-//  - SolShare is abbreviated to its award line + the one-liner on what it is;
-//    the wins do the talking and the reclaimed lines pay for WE Accelerate.
-//  - Tract sits out: with WE Accelerate in, the airier W25 layout can't hold
-//    four projects, and Tract is the only one without an award/grant — every
-//    project the classic page keeps gets the design's signature achievement
-//    line. The modern one-pager still carries it.
-//  - Jindon reads above WE Accelerate (render order follows entryIds — the swap
-//    lives here, classic-only), and both are trimmed to their two strongest
-//    bullets: Jindon keeps what he built + the 10x metric, WE Accelerate keeps
-//    what the program was + the AZ-900/AI-900 certs.
+// the site viewer — stays untouched.
+//
+// Rewritten 2026-07-26 after external review. The page previously ran WE
+// Accelerate as a fourth Experience entry, and paid for it by cutting Tract and
+// by squeezing SolShare down to a single bullet and Jindon to two. The reviewer
+// hit every symptom of that trade at once: SolShare "needs more description
+// than 1 point", "a project without any technical implementation description
+// will look shallow", and on WE Accelerate itself, "move into projects (if even
+// worth it)".
+//
+// So the trade is reversed. WE Accelerate comes OFF: it is a professional
+// development program, not validated employment, and it was occupying an
+// Experience slot — the section a recruiter weighs most — with the least
+// defensible entry on the page. Its one durable output, the AZ-900/AI-900
+// certs, moved to a Certifications line under Education (see entries.ts), so
+// nothing is actually lost.
+//
+// The four lines that frees go to depth, not to another entry: Jindon, SolShare
+// and both remaining projects go to three bullets each. Tract still sits out —
+// the reviewer's whole thesis is that a shallow project is worse than no
+// project, so a fourth project at two bullets would undo the point of removing
+// WE Accelerate. It stays on the modern one-pager.
 export function classicSelection(lib: ResumeLibrary): Selection {
-  const entries = lib.entries.filter(
-    (e) => (e.include !== false || e.id === 'weaccel') && e.id !== 'tract',
-  );
-  const entryIds = entries.map((e) => e.id);
-  const jindon = entryIds.indexOf('jindon');
-  const weaccel = entryIds.indexOf('weaccel');
-  if (weaccel >= 0 && jindon > weaccel) {
-    entryIds.splice(jindon, 1);
-    entryIds.splice(weaccel, 0, 'jindon');
-  }
+  const entries = lib.entries.filter((e) => e.include !== false && e.id !== 'tract');
   const sel: Selection = {
-    entryIds,
+    entryIds: entries.map((e) => e.id),
     bulletIds: Object.fromEntries(
       entries.map((e) => [e.id, e.bullets.filter((b) => b.default !== false).map((b) => b.id)]),
     ),
   };
-  sel.bulletIds['solshare'] = ['ios'];
-  sel.bulletIds['jindon'] = ['intake', 'sql'];
-  sel.bulletIds['weaccel'] = ['chatbot', 'certs'];
   return sel;
 }
