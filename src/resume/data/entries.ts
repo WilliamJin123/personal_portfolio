@@ -100,16 +100,26 @@ const authored: ResumeEntry[] = [
     section: 'experience',
     title: 'Correctional Service of Canada',
     location: 'Ottawa, ON (Remote)',
-    // "Software Engineer Intern" across all three Experience entries (William,
-    // 2026-07-28, taking the reviewer's note). The recorded titles were AI
-    // Analyst / Python Developer / Java Developer, which read as
-    // language-contractor labels rather than engineering ones and gave a
-    // recruiter three unrelated strings to pattern-match instead of one.
-    // FLAGGED AND OVERRULED: job titles are the only claim on this page a third
-    // party can verify independently (offer letter, WaterlooWorks record,
-    // reference call), and CSC is federal. William's call, made with that on
-    // the table. If any offer letter uses a closer real title, prefer it.
-    role: 'Software Engineer Intern',
+    // Titles, settled 2026-07-28 after two passes. The recorded set was AI
+    // Analyst / Python Developer / Java Developer; the reviewer's note was to
+    // put "Software Engineer Intern" on all three. That was tried and reverted
+    // the same day: because the generator renders the ROLE in the bold \large
+    // slot, three identical titles printed the same bold string three times
+    // down the page and flattened the only thing distinguishing the entries
+    // from each other (a federal agency, a university lab, a company), all of
+    // which sit at body weight one token later.
+    //
+    // What landed keeps the reviewer's actual point — a language name in a job
+    // title reads as contract work, not engineering — while staying varied:
+    // AI Developer (CSC), Software Developer (UAlberta), Backend Developer
+    // (Jindon).
+    //
+    // FLAGGED AND OVERRULED, still true of this set: job titles are the one
+    // claim on the page a third party can check independently (offer letter,
+    // WaterlooWorks record, reference call). Two of the three are not the
+    // recorded title. William's call, made with that on the table. "Analyst"
+    // -> "Developer" is the smallest possible move here: the work was building.
+    role: 'AI Developer',
     dateLabel: 'Jan 2026 – May 2026',
     bullets: [
       {
@@ -174,7 +184,11 @@ const authored: ResumeEntry[] = [
     section: 'experience',
     title: 'UAlberta Energy Mechatronics Lab',
     location: 'Edmonton, AB',
-    role: 'Software Engineer Intern', // see the CSC entry for the reasoning + the flag
+    // Was "Python Developer". Generalized, not inflated: the work here was a
+    // Selenium scraper, a Folium map and a SQL Server database, which is plain
+    // software work that happened to be in Python. See the CSC entry for the
+    // full titles rationale and the flag.
+    role: 'Software Developer',
     dateLabel: 'Jul 2025 – Sep 2025',
     bullets: [
       {
@@ -261,7 +275,12 @@ const authored: ResumeEntry[] = [
     section: 'experience',
     title: 'Jindon International Ltd.',
     location: 'Waterloo, ON',
-    role: 'Software Engineer Intern', // see the CSC entry for the reasoning + the flag
+    // Was "Java Developer". "Backend" is carried by two of the three bullets
+    // (the Java platform work and the 10x Oracle query optimization) and it
+    // matches the "Backend Development" keyword on the skills row. Slight
+    // tension with the third bullet's UI defects, which is normal on a small
+    // team and defensible in an interview. See the CSC entry for the flag.
+    role: 'Backend Developer',
     dateLabel: 'Jun 2025 – Jul 2025',
     bullets: [
       {
