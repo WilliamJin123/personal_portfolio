@@ -111,15 +111,18 @@ const authored: ResumeEntry[] = [
     //
     // What landed keeps the reviewer's actual point — a language name in a job
     // title reads as contract work, not engineering — while staying varied:
-    // AI Developer (CSC), Software Developer (UAlberta), Backend Developer
-    // (Jindon).
+    // AI Engineer (CSC), Software Engineer (UAlberta), Full Stack Engineer
+    // (Jindon). "Developer" was the intermediate step; William moved all three
+    // to "Engineer" on 2026-07-28, which is the register the rest of the page
+    // is written in (Bachelor of Software Engineering, and every bullet
+    // describes building rather than assisting).
     //
     // FLAGGED AND OVERRULED, still true of this set: job titles are the one
     // claim on the page a third party can check independently (offer letter,
-    // WaterlooWorks record, reference call). Two of the three are not the
-    // recorded title. William's call, made with that on the table. "Analyst"
-    // -> "Developer" is the smallest possible move here: the work was building.
-    role: 'AI Developer',
+    // WaterlooWorks record, reference call). None of the three is the recorded
+    // title now — the originals were AI Analyst, Python Developer and Java
+    // Developer. William's call, made with that on the table.
+    role: 'AI Engineer',
     dateLabel: 'Jan 2026 – May 2026',
     bullets: [
       {
@@ -188,7 +191,7 @@ const authored: ResumeEntry[] = [
     // Selenium scraper, a Folium map and a SQL Server database, which is plain
     // software work that happened to be in Python. See the CSC entry for the
     // full titles rationale and the flag.
-    role: 'Software Developer',
+    role: 'Software Engineer',
     dateLabel: 'Jul 2025 – Sep 2025',
     bullets: [
       {
@@ -275,12 +278,13 @@ const authored: ResumeEntry[] = [
     section: 'experience',
     title: 'Jindon International Ltd.',
     location: 'Waterloo, ON',
-    // Was "Java Developer". "Backend" is carried by two of the three bullets
-    // (the Java platform work and the 10x Oracle query optimization) and it
-    // matches the "Backend Development" keyword on the skills row. Slight
-    // tension with the third bullet's UI defects, which is normal on a small
-    // team and defensible in an interview. See the CSC entry for the flag.
-    role: 'Backend Developer',
+    // Was "Java Developer", then briefly "Backend Developer". "Full Stack" is
+    // the better fit and closes the seam the backend title opened: the three
+    // bullets run case search and intake forms (UI), a 10x Oracle query
+    // optimization (data layer) and unit tests plus UI defect fixes, which is
+    // both ends of the stack rather than one. It also matches the "Full-Stack
+    // Development" keyword on the skills row. See the CSC entry for the flag.
+    role: 'Full Stack Engineer',
     dateLabel: 'Jun 2025 – Jul 2025',
     bullets: [
       {
