@@ -336,10 +336,16 @@ const authored: ResumeEntry[] = [
     dateLabel: 'Feb 2026 – Mar 2026',
     links: [{ label: 'repo', href: 'https://github.com/WilliamJin123/tract' }],
     bullets: [
-      // Tract renders on the modern one-pager only (classicSelection drops it),
-      // but the modern one-pager IS the published /resume.pdf — so these two get
-      // the same 2026-07-26 pass as the classic page: numbers-only bold, and no
-      // parenthetical tool inventory.
+      // STALE AS OF 2026-07-29 — kept for the record. Tract used to render on
+      // the modern one-pager only, because classicSelection dropped it. It now
+      // renders on BOTH: the classic page carries it in place of SolShare (see
+      // selections.ts for why), which means every line below is on the document
+      // he applies with as well as on the published /resume.pdf. Edit
+      // accordingly — a width regression here shows up in two places, and the
+      // classic shell is the tighter of the two.
+      //
+      // These two get the same 2026-07-26 pass as the classic page:
+      // numbers-only bold, and no parenthetical tool inventory.
       //
       // One-line pass 2026-07-28. These were the only wrapped bullets on either
       // variant: two bullets at two rendered lines each, on the document served
@@ -356,8 +362,84 @@ const authored: ResumeEntry[] = [
         // three-way merge and rebase on an LLM context is the claim nothing
         // else on the page makes. The colon replaces ", with a ... supporting",
         // which was six words of connective tissue.
-        text: 'Architected a git-style version-control engine for LLM context in Python: branching, three-way merge, and rebase',
+        //
+        // KEVIN PASS 2026-07-29. Tract had never had the external reviewer's
+        // treatment because he only ever saw the classic page, which did not
+        // carry Tract until this change. Two of his rules bite here: "talk about
+        // how, not what", and the "too casual" note that killed Stitch's
+        // colon-plus-inventory shape. "Architected a git-style version-control
+        // engine" was the what; a colon followed by three nouns was the shape.
+        // Rewritten to lead with the data structure, which IS the how.
+        // Content addressing verified in the repo, not assumed:
+        // src/tract/engine/hashing.py hashes canonical JSON with SHA-256 and
+        // blobs are keyed by content_hash; the DAG walk and common-ancestor
+        // search live in operations/dag.py (find_merge_base).
+        //
+        // "three-way merge" CUT 2026-07-29 (William: "it doesn't really make
+        // sense"). He is right, and the reason matters for anything written
+        // about Tract later. Three-way merge is git vocabulary for reconciling
+        // two texts against a common ancestor; Tract does not diff text at all.
+        // It reconciles OPERATIONS. The claim moved to its own `merge` bullet
+        // below, said in the repo's own terms. What stays here is the structure
+        // plus where it lives, which is Kevin's "how the backend works".
+        // Width pass: the first cut ran "... commit DAG in Python, with
+        // branching and rebase over a SQLite object store" and wrapped to two
+        // rendered lines. "object store" went (SQLite says where it lives
+        // without it), and the clause order flipped so "over SQLite" attaches to
+        // the DAG rather than dangling off "rebase", which is what it modified
+        // in the long version and read wrong.
+        //
+        // "content-addressed commit DAG" REVERTED 2026-07-29, same day it went
+        // in. Running Kevin's full note set against this bullet caught the
+        // error: his "be more technical" and his "recruiters will get confused
+        // at 'mid-chunk truncation'" are the same rule seen from two sides, and
+        // the tiebreaker is what he actually approved. Both of his technical
+        // rewrites landed on NAMED, RECOGNIZABLE TECHNOLOGY — Solana's "how not
+        // what" became "X25519 ... TweetNaCl", Stitch's "how the backend works"
+        // became "Supabase Postgres ... FFmpeg in Next.js API routes". Neither
+        // became CS theory vocabulary. "content-addressed commit DAG" is CS
+        // theory vocabulary, and it was the most opaque phrase on the page.
+        // Corroborating: Tract's own README headline is "Git-like version
+        // control for LLM context windows" — the project leads with the legible
+        // framing, and this bullet had stopped doing so. Content addressing is
+        // also the least surprising thing about a VCS; branch/rebase on a
+        // CONVERSATION is the striking claim, and `merge` below carries the
+        // mechanism that content addressing exists to serve.
+        // Attachment fix 2026-07-29 (William: "backed by doesn't make sense").
+        // Correct — "with branching and rebase backed by SQLite" hung the
+        // prepositional phrase off the two OPERATIONS, and an operation is not
+        // backed by a database. The thing SQLite actually holds is the commit
+        // rows (storage/engine.py, a SQLAlchemy engine over SQLite carrying
+        // commits, blobs, refs and annotations). So "stored in SQLite" now
+        // modifies "commits", which is the noun it is true of. Third phrasing of
+        // this clause: "over a SQLite object store" wrapped the line, "over
+        // SQLite" and "backed by SQLite" both dangled.
+        text: 'Built git-style version control for LLM context in Python, branching and rebasing commits stored in SQLite',
         tags: ['systems', 'python'],
+      },
+      {
+        id: 'merge',
+        // NEW 2026-07-29, and the strongest single line on the entry: it is the
+        // one claim on the whole résumé that nothing else comes near.
+        //
+        // Written off a read of src/tract/operations/merge.py, not from memory.
+        // Every commit row carries an operation — CommitOperation.APPEND, or
+        // EDIT with an edit_target — and SKIP rides as an annotation. So a merge
+        // is not a text diff; detect_conflicts() reconciles what each branch DID
+        // to shared history, by exactly three structural rules named in its
+        // docstring: both_edit (both branches EDIT the same target), skip_vs_edit
+        // (one SKIPs what the other EDITs), and edit_plus_append (one EDITs a
+        // pre-merge-base commit while the other APPENDs). When a rule fires the
+        // ConflictInfo handed to the resolver carries content_a_text,
+        // content_b_text and merge_base_hash, and under strategy="semantic" that
+        // resolver is an LLM which writes the resolution (MergeStrategy.OURS /
+        // THEIRS are the non-LLM fallbacks).
+        //
+        // "Detected ... structurally" was in an earlier draft and came out:
+        // naming the three operations IS the structure, so the adverb was
+        // telling the reader what the rest of the sentence already shows.
+        text: "Detected merge conflicts from each commit's edit, append, and skip operations, then resolved them with an LLM",
+        tags: ['systems', 'ai', 'python'],
       },
       {
         id: 'agent',
@@ -371,7 +453,21 @@ const authored: ResumeEntry[] = [
         // W, the bold 28) runs wider than the count suggests. Character count is
         // a proxy, not a ruler — always recompile. The verb form is also less
         // nouny than the compound it replaces.
-        text: 'Wrapped the engine in an async agent loop exposing **28** LLM tools, with token budgeting and auto-compression',
+        //
+        // COUNT CORRECTED 2026-07-29: 28 -> 29. Both independent sources in the
+        // repo agree — the ToolName Literal in toolkit/models.py has 29 members
+        // and toolkit/definitions.py constructs 29 ToolDefinition(...) objects.
+        // No profile exposes 28 either (self=23, supervisor=29), so 28 was
+        // simply wrong. This bullet also renders on the published /resume.pdf,
+        // which is why the fix is made here rather than as a classic override.
+        //
+        // KEVIN PASS 2026-07-29 ("how, not what"): "with token budgeting and
+        // auto-compression" listed two features side by side without saying
+        // what connects them. loop.py:259 says exactly what connects them —
+        // threshold = int(cfg.max_tokens * cfg.auto_compress_threshold), and
+        // the loop compresses once compiled context crosses it. Stating the
+        // trigger is the mechanism; naming the two knobs was the product blurb.
+        text: 'Drove the engine from an async agent loop of **29** LLM tools that compresses context at a token-budget threshold',
         tags: ['ai', 'agents', 'python'],
       },
       {
@@ -390,8 +486,21 @@ const authored: ResumeEntry[] = [
         // Re-bolded to the numbers-only convention (SQLite/SQLAlchemy/pytest
         // were carrying the old all-tech bolding, per the file header) and the
         // parenthetical unpacked: "auto-migrating schema" cut for width.
-        text: 'Persisted the object store in SQLite via SQLAlchemy, backed by a property-based and end-to-end pytest suite',
-        tags: ['backend', 'database'],
+        //
+        // DEMOTED 2026-07-29 to make the slot for `merge`. Not a downgrade of
+        // the claim — the `dag` bullet now carries "over a SQLite object store",
+        // so the persistence half was being said twice, and `merge` is a far
+        // better use of a line than saying SQLite again. What is genuinely lost
+        // is the testing signal, which is why the bullet is rewritten to lead
+        // with it rather than deleted: swap it in for any JD that names TDD or
+        // test coverage (CAO's posting does). Repo numbers behind it, 2026-07-29
+        // audit: 95 test modules, 49,138 lines of tests against 41,087 lines of
+        // source, hypothesis property tests in tests/strategies.py and
+        // test_content.py, four integration modules, and storage/engine.py
+        // migrates an existing database v1 -> v13 on open.
+        default: false,
+        text: 'Covered the engine with a property-based and end-to-end pytest suite, running more test code than source',
+        tags: ['backend', 'database', 'testing'],
       },
     ],
   },
