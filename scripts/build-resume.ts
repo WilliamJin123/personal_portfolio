@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import { library } from '../src/resume/data/index';
 import { defaultSelection, generateResume, type ResumeVariant } from '../src/resume/generate';
-import { classicSelection } from '../src/resume/selections';
+import { classicSelection, roleSelection, ROLE_VARIANTS, type RoleVariant } from '../src/resume/selections';
 import { assertValid, formatIssues } from '../src/resume/validate';
 import type { ResumeLibrary, Selection } from '../src/resume/types';
 
@@ -22,13 +22,17 @@ const variants: { variant: ResumeVariant; lib: ResumeLibrary; shell: string; out
   { variant: 'classic', lib: library, shell: 'src/resume/shell-classic.tex', out: 'out/resume-classic.tex', selection: classicSelection(library) },
   // Same modern layout, phone-free header; compiled + published below.
   { variant: 'modern', lib: webLibrary, shell: 'src/resume/shell.tex', out: 'out/resume-web.tex', selection: defaultSelection(webLibrary) },
+  // Role variants for the apply pipeline: classic page, one project swapped (selections.ts).
+  ...(Object.keys(ROLE_VARIANTS) as RoleVariant[]).map((r) => ({
+    variant: 'classic' as const, lib: library, shell: 'src/resume/shell-classic.tex', out: `out/variants/${r}.tex`, selection: roleSelection(library, r),
+  })),
 ];
 
-// Layout (2026-10-19): `out/` holds ONLY the three generated base variants
-// below. Anything tied to one application (a tailored cut, a letter, an
+// Layout (2026-10-19): `out/` holds ONLY the generated base variants below
+// (three layouts, plus the role variants in out/variants/). Anything tied to one application (a tailored cut, a letter, an
 // email, a JD, prep notes) lives in `applications/<company>/` — gitignored,
 // one folder per company. Never write per-application files into `out/`.
-mkdirSync(resolve(root, 'out'), { recursive: true });
+mkdirSync(resolve(root, 'out/variants'), { recursive: true });
 
 for (const v of variants) {
   const shell = readFileSync(resolve(root, v.shell), 'utf8');
@@ -70,3 +74,10 @@ try {
 }
 copyFileSync(resolve(root, 'out/resume-web.pdf'), resolve(root, 'public/resume.pdf'));
 console.log('Published public/resume.pdf (web variant — no phone in the header)');
+
+// The applied-with PDFs: classic plus the role variants. The apply pipeline
+// uploads these, so they are compiled on every build and can never go stale.
+for (const tex of ['out/resume.tex', 'out/resume-classic.tex', ...Object.keys(ROLE_VARIANTS).map((r) => `out/variants/${r}.tex`)]) {
+  execFileSync('tectonic', [resolve(root, tex), '--outdir', resolve(root, dirname(tex))], { stdio: ['ignore', 'ignore', 'inherit'] });
+}
+console.log(`Compiled out/resume.pdf, out/resume-classic.pdf and out/variants/{${Object.keys(ROLE_VARIANTS).join(',')}}.pdf`);

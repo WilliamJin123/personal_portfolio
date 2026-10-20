@@ -76,3 +76,32 @@ export function classicSelection(lib: ResumeLibrary): Selection {
   };
   return sel;
 }
+
+// ---------------------------------------------------------------------------
+// 2026-10-19: role variants for the apply pipeline (scripts/internships).
+// enrich.mjs tags each backlog row classic | ios | blockchain | fintech |
+// ml-data; apply uploads out/variants/<variant>.pdf. Each is the classic page
+// with ONE project swap for Stitch, the slot that costs least to lose. The page
+// has no spare line, so a swap must not be longer than Stitch.
+//   ios         SolShare (a Swift iOS app)
+//   blockchain  SolShare (Solana, two track wins)
+//   fintech     SolShare (consumer payments on-chain)
+//   ml-data     none yet: apply falls back to the classic page
+// Measured: Hiya (for ios) and Swarm RAG (for ml-data) push the page to two:
+// their bullets are the old multi-line style, and Hiya's say "shipping" (the
+// Hiya audit rules that word out). Rewrite them to one line each, then swap
+// them in here.
+export const ROLE_VARIANTS = { ios: 'solshare', blockchain: 'solshare', fintech: 'solshare' } as const;
+export type RoleVariant = keyof typeof ROLE_VARIANTS;
+
+export function roleSelection(lib: ResumeLibrary, variant: RoleVariant): Selection {
+  const base = classicSelection(lib);
+  const swapIn = ROLE_VARIANTS[variant];
+  const entry = lib.entries.find((e) => e.id === swapIn);
+  if (!entry) throw new Error(`role variant ${variant}: no entry ${swapIn}`);
+  const { stitch: _drop, ...bulletIds } = base.bulletIds;
+  return {
+    entryIds: base.entryIds.map((id) => (id === 'stitch' ? swapIn : id)),
+    bulletIds: { ...bulletIds, [swapIn]: entry.bullets.filter((b) => b.default !== false).map((b) => b.id) },
+  };
+}
