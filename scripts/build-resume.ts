@@ -24,6 +24,10 @@ const variants: { variant: ResumeVariant; lib: ResumeLibrary; shell: string; out
   { variant: 'modern', lib: webLibrary, shell: 'src/resume/shell.tex', out: 'out/resume-web.tex', selection: defaultSelection(webLibrary) },
 ];
 
+// Layout (2026-10-19): `out/` holds ONLY the three generated base variants
+// below. Anything tied to one application (a tailored cut, a letter, an
+// email, a JD, prep notes) lives in `applications/<company>/` — gitignored,
+// one folder per company. Never write per-application files into `out/`.
 mkdirSync(resolve(root, 'out'), { recursive: true });
 
 for (const v of variants) {

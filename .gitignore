@@ -247,3 +247,9 @@ Thumbs.db
 /out/
 /src/resume/data/profile.ts
 /src/resume/data/index.ts
+
+# Per-application material (résumé cuts, letters, emails, prep, JDs)
+/applications/
+
+# Answer-bank seed: phone, demographics, work authorization (public repo)
+/scripts/internships/answers.seed.mjs
