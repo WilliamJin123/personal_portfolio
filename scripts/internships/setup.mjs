@@ -10,7 +10,7 @@ import { sheets, SHEET_ID } from "./sheet.mjs";
 // Seed rows live in answers.seed.mjs (gitignored: personal facts, public repo).
 import { SEED } from "./answers.seed.mjs";
 
-export const STATUSES = ["todo", "needs-answer", "ready", "applied", "confirmed", "oa", "interview", "offer", "rejected", "closed", "skip", "needs-human"];
+export const STATUSES = ["todo", "needs-answer", "ready", "go", "applied", "confirmed", "oa", "interview", "offer", "rejected", "closed", "skip", "needs-human"];
 
 
 if (process.argv[1]?.endsWith("setup.mjs")) {

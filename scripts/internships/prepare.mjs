@@ -12,24 +12,23 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { sheets } from "./sheet.mjs";
 import { COLS, ats } from "./enrich.mjs";
+import { clean, loadAnswers, match } from "./answers.mjs";
 
 const STATE = process.env.INTERNSHIPS_STATE || `${process.env.HOME}/.local/share/internships`;
 // playwright: the launchd install dir has its own copy; in the repo, borrow autobrowse's.
 const PW = async () => { try { return await import("playwright"); } catch { return import("/Users/williamjin/Documents/wren_automation/autobrowse/node_modules/playwright/index.mjs"); } };
 // Next co-op term is May–Aug 2027. Anything that names another term or a longer
 // commitment goes to William.
-const TERM_CONFLICT = /\b(8|12|eight|twelve)[- ]month|january\s*(\d{1,2},?\s*)?20?27|\bjan(\.|uary)?\s*[-–]|winter\s*20?27|fall\s*20?27|sept(ember)?\s*20?27|aug(ust)?\s*20?27\s*(to|[-–])\s*(dec|apr)/i;
+const TERM_CONFLICT = /\b(8|12|eight|twelve)[- ]month|january\s*(\d{1,2},?\s*)?20?27|\bjan(\.|uary)?\s*[-–]|winter\s*20?27|fall\s*20?27|fall (semester|term)|sept(ember)?\s*20?27|aug(ust)?\s*20?27\s*(to|[-–])\s*(dec|apr)/i;
 const BUILT = new Set(["greenhouse", "ashby", "lever"]);
-const DECLINE = /decline|prefer not|don'?t wish|do not wish|not to (answer|say|disclose)|rather not|i do not want/i;
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-const clean = (s) => s.replace(/[✱*]/g, " ").replace(/\b(required|optional)\b/gi, " ").replace(/\s+/g, " ").trim();
 
 // ---- field extraction -------------------------------------------------------
 // Board slug + job id. Many links hide the slug (careerpuck, company pages with
 // gh_jid): scan the page for a greenhouse board reference, else try the path
 // segments and the company name against the API.
-async function greenhouseJob(link, company) {
+export async function greenhouseJob(link, company) {
   const m = link.match(/greenhouse\.io\/(?:embed\/job_app\?for=)?([a-z0-9_-]+)\/jobs\/(\d+)/i);
   if (m) return { board: m[1], id: m[2] };
   const id = (link.match(/gh_jid=(\d+)/) || link.match(/\/jobs?\/(\d{7,})/) || [])[1];
@@ -47,6 +46,7 @@ async function greenhouseFields(link, company) {
   const job = await greenhouseJob(link, company);
   if (!job) return null;
   const r = await fetch(`https://boards-api.greenhouse.io/v1/boards/${job.board}/jobs/${job.id}?questions=true`);
+  if (r.status === 404) return { closed: true };
   if (!r.ok) return null;
   const j = await r.json();
   const field = (q, eeo) => ({ label: clean(q.label), required: !!q.required, type: q.fields.map((f) => f.type).join("+"), options: (q.fields[0]?.values || []).map((v) => v.label), eeo });
@@ -108,63 +108,13 @@ async function pageFields(link) {
   } finally { await browser.close(); }
 }
 
-// ---- matching ---------------------------------------------------------------
-function loadAnswers(values) {
-  const [h, ...rows] = values; const i = Object.fromEntries(h.map((x, k) => [x, k]));
-  return rows.filter((r) => r[i.Pattern]).map((r) => ({ re: new RegExp(r[i.Pattern], "i"), answer: r[i.Answer] ?? "", approved: (r[i.Approved] || "").toLowerCase() }));
-}
-// The option an answer selects, or null when the field has options and none fits.
-const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "");
-export function fitOption(answer, options) {
-  if (!options?.length) return answer;
-  const a = answer.toLowerCase(), an = norm(answer);
-  const exact = options.find((o) => norm(o) === an); if (exact) return exact;
-  if (DECLINE.test(answer)) { const d = options.find((o) => DECLINE.test(o)); if (d) return d; }
-  if (/^yes\b/.test(a)) { const o = options.find((o) => /^(yes|i am (willing|able|authorized)|i can\b|i would|i agree|i acknowledge|i certify)/i.test(o)); if (o) return o; }
-  if (/^no\b/.test(a)) { const o = options.find((o) => /^(no\b|i am not|i cannot|i can't|i do not)/i.test(o)); if (o) return o; }
-  const part = options.find((o) => norm(o).includes(an) || an.includes(norm(o))); if (part) return part;
-  const year = answer.match(/\b20\d\d\b/); if (year) { const ys = options.filter((o) => o.includes(year[0])); if (ys.length === 1) return ys[0]; }
-  if (answer === "Other") return options.find((o) => /^other/i.test(o)) || null;
-  return null;
-}
-// Answer cell grammar: alternatives split on " | ", tried in order.
-// "canada:Yes" applies only when the row's Region matches (canada / us / remote);
-// "/regex/" picks the first option the regex matches.
-function resolve(answer, options, region) {
-  for (let alt of answer.split(/\s\|\s/)) {
-    const r = alt.match(/^(canada|us|remote):\s*(.*)$/i);
-    if (r) { if (r[1].toLowerCase() !== (region || "").toLowerCase()) continue; alt = r[2]; }
-    const rx = alt.match(/^\/(.+)\/$/);
-    if (rx) { const o = (options || []).find((o) => new RegExp(rx[1], "i").test(o)); if (o) return o; continue; }
-    const v = fitOption(alt, options); if (v !== null) return v;
-  }
-  return null;
-}
-function match(fields, answers, region) {
-  const filled = [], open = [];
-  for (const f of fields) {
-    const label = clean(f.label);
-    // A consent box carries its text in the option; a "no" rule also looks at
-    // the options (sponsorship hides inside work-authorization choices).
-    const text = f.options?.length === 1 ? `${label} ${f.options[0]}` : label;
-    const blocked = answers.some((a) => a.approved === "no" && (f.options || []).some((o) => a.re.test(o)));
-    const hits = blocked ? [] : answers.filter((a) => a.re.test(text));
-    let done = false;
-    for (const a of hits) {
-      if (a.approved === "no" || !a.answer) break; // the first rule that matches decides, top to bottom
-      const v = resolve(a.answer, f.options, region);
-      if (v !== null) { filled.push({ ...f, label, answer: v }); done = true; break; }
-    }
-    if (!done && (f.required || hits.length || blocked)) open.push(f.options?.length ? `${label} [${f.options.slice(0, 8).join(" / ")}]` : label);
-  }
-  return { filled, open };
-}
-
 export async function prepareRow(row, answers) {
   const kind = row.ATS || ats(row.Link);
   if (!BUILT.has(kind)) return { status: "todo", note: `no apply flow for ${kind} yet`, skip: true };
   let form = kind === "greenhouse" ? await greenhouseFields(row.Link, row.Company) : null;
-  if (!form) form = await pageFields(row.Link).catch((e) => ({ error: e.message }));
+  if (form?.closed) return { status: "closed", note: "posting closed (Greenhouse 404)" };
+  // An API that lists almost nothing (a custom board) is not a form read: use the page.
+  if (!form || form.fields.length < 3) form = await pageFields(row.Link).catch((e) => ({ error: e.message }));
   if (form.error || !form.fields?.length) return { status: "needs-human", note: `could not read form: ${form.error || "no fields found"}` };
   const conflict = TERM_CONFLICT.exec(`${row.Role} ${form.title} ${form.description}`);
   const { filled, open } = match(form.fields, answers, row.Region);
@@ -172,6 +122,7 @@ export async function prepareRow(row, answers) {
   const file = `${dir}/form-${slug(row.Role).slice(0, 60) || createHash("md5").update(row.Link).digest("hex").slice(0, 8)}.json`;
   writeFileSync(file, JSON.stringify({ link: row.Link, applyUrl: form.applyUrl || null, ats: kind, title: form.title, variant: row.Variant, filled, open, conflict: conflict?.[0] || null, fetchedAt: new Date().toISOString() }, null, 2));
   if (conflict) return { status: "needs-human", note: `term conflict: "${conflict[0]}"`, file, filled, open };
+  if (filled.length < 3) return { status: "needs-human", note: `form unreadable: ${filled.length} fields matched`, file, filled, open };
   if (open.length) return { status: "needs-answer", note: open.map((q) => `Q: ${q}`).join("\n"), file, filled, open };
   return { status: "ready", note: `${filled.length} fields matched`, file, filled, open };
 }
