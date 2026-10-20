@@ -57,6 +57,15 @@ import type { ResumeLibrary, Selection } from './types';
 // than a rule. TO FLIP IT for iOS, crypto, fintech or consumer-payments roles
 // — where SolShare's two track wins outrank Stitch's — change 'solshare' to
 // 'stitch' on the filter below. Nothing else needs to move.
+// ---------------------------------------------------------------------------
+// 2026-10-19: page recomposed in entries.ts itself (William). Five Experience
+// rows (Food For Good, CSC, the SolShare grant as a job, UAlberta, Jindon) and
+// two Projects (autobrowse, Stitch). SolShare-the-hackathon and Tract are
+// include:false there, so the `solshare` filter below is now a no-op kept for
+// the day it comes back into the pool. Measured: the classic page ends at
+// y=782.6 of 792 with every bullet on one line. There is NO room for a third
+// bullet on CSC, UAlberta or Jindon in this variant; the modern page has ~3
+// lines spare (ends at 729).
 export function classicSelection(lib: ResumeLibrary): Selection {
   const entries = lib.entries.filter((e) => e.include !== false && e.id !== 'solshare');
   const sel: Selection = {

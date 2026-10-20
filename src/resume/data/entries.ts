@@ -23,6 +23,11 @@ import { byDateDesc } from './order';
 // Bold the OUTCOME, not the input: on a bullet carrying both a result and an
 // eval size, the result is bold and the sample size stays plain.
 //
+// Page composition 2026-10-19 (William): Experience = Food For Good, CSC,
+// SolShare grant (Solana SDK, moved up from Projects), UAlberta, Jindon;
+// Projects = autobrowse, Stitch. SolShare (hackathon) and Tract are off.
+// CSC, UAlberta and Jindon run two bullets so the five-job column fits.
+//
 // The include:false swap-in pool below (Hiya, Batch, Swarm RAG, KAN-CPPN,
 // VolleyClip, RLM++, GraphRAG Agent, Email-Style LLM SFT) still carries the OLD
 // all-tech bolding. Anything promoted onto the page needs the same pass first.
@@ -92,6 +97,85 @@ const authored: ResumeEntry[] = [
         id: 'web',
         text: 'Shipped a **Next.js**/**React** web reader on **Vercel** that visualizes a recipe\'s fork-and-merge history as an interactive **DAG** (deterministic **Dagre** layout), served from a git-backed JSON store baked into the build',
         tags: ['frontend', 'typescript'],
+      },
+    ],
+  },
+  {
+    id: 'food-for-good',
+    section: 'experience',
+    title: 'Food For Good',
+    location: 'Toronto, ON',
+    // Recorded title on the work term record (2026-10-19) is "IT Systems &
+    // Operations Coordinator". Rendered as Software Engineer to match the
+    // register of the other three titles; same flag as the CSC entry — this is
+    // the one claim a background check compares. William's call.
+    //
+    // Everything below is audited off the repos (githubFood4Good/API branch
+    // feature/ambassador-module, AmbassadorPanel, SuperAdminPanel; 2026-10-19):
+    // 284 panel commits and 335 API commits on the module branch, all his.
+    // Counts are from the clone, not from memory: 234 route handlers, 26
+    // worker jobs, 111 migrations, 5 roles, 70 panel routes, 684 French keys.
+    // NOT on the page, by rule: "deployed", "in production", user counts —
+    // the module is an open draft PR and the security fixes are open PRs.
+    role: 'Software Engineer',
+    dateLabel: 'Sep 2026 – Present',
+    bullets: [
+      {
+        id: 'system',
+        // Reworded 2026-10-19 (William: endpoint and job counts "don't
+        // highlight what it does, why it's useful"). Purpose from the scope
+        // doc and the audit: schedule student volunteers for meal and grocery
+        // deliveries at partner schools, track hours, report to sponsors.
+        // Stack moved to the end so the bullet still names it. No usage
+        // claim: the module is not in production.
+        // 2026-10-19 (William's pick): "Designed and built" over "Solely built";
+        // permissions fold in as the #4 opener (William, later 2026-10-19).
+        text: 'Designed and built a volunteer scheduler for a food charity, with role-scoped SQL access and an append-only audit log',
+        tags: ['backend', 'fullstack', 'node'],
+      },
+      {
+        id: 'crons',
+        // William's merge 2026-10-19. Evidence: API commits 10-09..10-19
+        // (crons/registry.js, scripts/cron-sim/): the simulator boots the real
+        // app.js, captures every cron handler and runs it at a chosen time in
+        // one transaction that always rolls back; emails, SMS and S3 are
+        // recorded instead of sent. "Every email is a catalog template,
+        // editable on the Email Templates page" (95dc855b). 50+ = the 51
+        // cron.schedule calls counted in ffg_docs/10-13/cron_plan.md.
+        text: 'Made **50+** cron jobs and their emails editable by ops, with a simulator that fires any job in a rolled-back transaction',
+        tags: ['backend', 'tooling'],
+      },
+      {
+        id: 'permissions',
+        // Off 2026-10-19: folded into the opener to make room for crons. If it
+        // comes back, 1,500+ stays PLAIN (a test size, not an outcome).
+        default: false,
+        // 1,500+ = the 1,522 probes in William's own handoff note
+        // (test/permissions.js, every capability x role x scope over HTTP).
+        // A test-suite size, not a pass rate; no CI runs it.
+        text: 'Designed role-based permissions with SQL row scoping and an append-only audit log, verified by 1,500+ HTTP probes',
+        tags: ['security', 'backend', 'sql'],
+      },
+      {
+        id: 'security',
+        // ffg_docs/10-14/grocery_security_release.md: API #1170 (bound queries,
+        // one-time-code caps + reset token, account scoping, auth bypasses).
+        // "Fixed" per William 2026-10-19; the PRs are open, not merged.
+        // "production" describes the legacy API (it is live), not the fix.
+        text: 'Fixed SQL injection, account takeover and cross-account authorization bypasses in the legacy production API',
+        tags: ['security', 'backend'],
+      },
+      {
+        id: 'matching',
+        default: false,
+        text: 'Wrote an assignment engine that fills delivery shifts from weighted, explained scores, with a Gini fairness report on the results',
+        tags: ['algorithms', 'backend'],
+      },
+      {
+        id: 'app',
+        default: false,
+        text: 'Built an installable student app with offline reads, push and live SSE updates in English and French, plus TOTP and Google/Microsoft sign-in',
+        tags: ['frontend', 'react', 'pwa'],
       },
     ],
   },
@@ -170,6 +254,9 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'ui',
+        // Off the page 2026-10-19 (William: shorter CSC/UAlberta/Jindon so the
+        // Solana grant work fits as Experience). Still true; one flag away.
+        default: false,
         // "thumbs-up/down feedback loop" was the reviewer's "sounds too casual".
         // Same mechanism, named the way the team would write it up.
         // Diction pass 2026-07-26 (William: "track quality is a bit ambiguous").
@@ -212,6 +299,8 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'map',
+        // Off again 2026-10-19 (two-bullet trim, see CSC `ui`).
+        default: false,
         // Promoted to a rendered bullet 2026-07-26 (reviewer: "add a third
         // point if possible"). It was already written and already true; it was
         // sitting out purely on the old line budget.
@@ -313,6 +402,8 @@ const authored: ResumeEntry[] = [
       },
       {
         id: 'tests',
+        // Off again 2026-10-19 (two-bullet trim, see CSC `ui`).
+        default: false,
         // Promoted 2026-07-26: with WE Accelerate off the classic page, Jindon
         // can carry three bullets, and a two-bullet entry next to two
         // three-bullet ones reads as the thin one. "Curam" dropped by the
@@ -331,6 +422,7 @@ const authored: ResumeEntry[] = [
   {
     id: 'tract',
     section: 'projects',
+    include: false, // off 2026-10-19 (William): autobrowse takes the solo-systems slot
     title: 'Tract',
     subtitle: 'Personal Project',
     dateLabel: 'Feb 2026 – Mar 2026',
@@ -610,6 +702,80 @@ const authored: ResumeEntry[] = [
     ],
   },
   {
+    id: 'autobrowse',
+    section: 'projects',
+    title: 'autobrowse',
+    subtitle: 'Personal Project',
+    dateLabel: 'Sep 2026 – Present',
+    links: [
+      { label: 'repo', href: 'https://github.com/wrenautomation/autobrowse' },
+      { label: 'npm', href: 'https://www.npmjs.com/package/@wrenautomation/autobrowse' },
+    ],
+    // Audited 2026-10-19 off the local repo: 626 commits, all William's, every
+    // one with a Claude co-author trailer (say "co-developed with Claude Code"
+    // if asked). Counts from the clone: 271 route method lines across the site
+    // modules, 123 defineFlow calls, 47 irreversible routes, tags v0.2.0–v0.4.0.
+    // "200+ routes" and "20 sites" are floors under two independent counts.
+    // NOT on the page: LOC (82k in five weeks invites "who wrote this"),
+    // self-heal (off by default, AUTO_HEAL unset), any usage or scale metric
+    // (none exist), the remote Browserbase tier (prod runs local Chrome only).
+    bullets: [
+      {
+        id: 'runtime',
+        // Reworded 2026-10-19 (William: "shaped" was vague). src/sites/facade.ts
+        // calls itself "the facade over every site": match the official path,
+        // validate as the official API would, answer via the API leg when a
+        // token is held, else the browser leg. Restate moved off this line;
+        // it stays on the skills row. Later 2026-10-19: William picked the
+        // "one REST client" wording; 200+ routes dropped (an input count, not
+        // impact), 20 sites bold as scope.
+        text: 'Built a REST facade over **20** sites that uses each site\'s own API when it has a token, else drives a Playwright browser',
+        tags: ['typescript', 'automation', 'playwright'],
+      },
+      {
+        id: 'engine',
+        // Reworded 2026-10-19 (William): the point is no model on repeat runs.
+        // "self-repair" = src/browser/repair.ts (on whenever a model key is
+        // set; fixes remembered and tried first next run). "human-like" =
+        // src/browser/human (curved mouse reach, typing rhythm), the one door
+        // every compiled act goes through. No "branching": the outline is a
+        // straight list of ops.
+        // src/explore/server.ts (a model or a person maps a flow, every act
+        // journaled as a recording) -> src/compiler (structure, polish,
+        // render to a typed TS module). 27 workflows in src/workflows.
+        text: 'Turned one-off agent runs into deterministic workflows that self-repair and replay with human-like mouse and typing',
+        tags: ['distributed', 'restate', 'architecture'],
+      },
+      {
+        id: 'durable',
+        // William's pick 2026-10-19 (variation #5). src/engine/object.ts: one
+        // Restate Virtual Object per workflow; `step` runs one step and sends
+        // itself the next, so pause/reset/approve never queue behind a run; a
+        // generation number fences stale messages (interview detail).
+        text: 'Designed a durable Restate engine where each step chains the next, so pauses and approvals never block a run',
+        tags: ['distributed', 'restate', 'architecture'],
+      },
+      {
+        id: 'auth',
+        default: false,
+        text: 'Automated sign-in via TOTP, inbox-read one-time codes and passkeys from a virtual WebAuthn authenticator',
+        tags: ['auth', 'security', 'webauthn'],
+      },
+      {
+        id: 'recorder',
+        default: false,
+        text: 'Built a record-and-compile loop: an in-page recorder captures clicks with locator hints and emits typed TypeScript workflows plus tests',
+        tags: ['tooling', 'typescript'],
+      },
+      {
+        id: 'npm',
+        default: false,
+        text: 'Published it to npm with trusted publishing and provenance (v0.4.0), with a human-pace input layer and a vision-model captcha solver',
+        tags: ['open-source', 'npm'],
+      },
+    ],
+  },
+  {
     id: 'stitch',
     section: 'projects',
     title: 'Stitch',
@@ -752,10 +918,21 @@ const authored: ResumeEntry[] = [
   },
   {
     id: 'solana-sdk',
-    section: 'projects',
-    title: 'Solana Swift SDK',
+    // Moved to Experience 2026-10-19 (William): "we all worked on it in joint,
+    // I contributed across the whole thing ... if I can explain it we can
+    // embellish with it." Grant-funded work, so a job title is defensible;
+    // "Software Developer" over "Blockchain Developer" because the backlog
+    // has 3 blockchain rows in 1,154 and the title has to read for general
+    // SWE. The experience heading does not render `grants`, so the $40K
+    // moved into the first bullet (it is the entry's one number). The viewer
+    // still shows the grant badge.
+    // Attribution on record, unchanged: core SDK 5 of 57 commits, GraphRAG
+    // agent and demo agent 100% his. See [[solshare-sdk-true-story]].
+    section: 'experience',
+    role: 'Software Developer',
+    title: 'SolShare (Solana Foundation Grant)',
     grants: ['$40K USD Solana Foundation grant'],
-    dateLabel: 'Oct 2025 – Nov 2025',
+    dateLabel: 'Oct 2025 – Dec 2025',
     links: [{ label: 'repo', href: 'https://github.com/The-SolShare-Team' }],
     bullets: [
       {
@@ -765,7 +942,7 @@ const authored: ResumeEntry[] = [
         // "leading" is a claim the résumé cannot support, and the three wallet
         // names mean nothing to a screener outside crypto while eating most of
         // the line. What replaced it says what the SDK actually gives you.
-        text: "Developed Solana's first official native Swift SDK, a typed iOS client for multi-wallet connection and signing",
+        text: "Built Solana's first official native Swift SDK on a **$40K** grant: a typed iOS client for wallet connection and signing",
         tags: ['swift', 'sdk'],
       },
       {
@@ -832,6 +1009,10 @@ const authored: ResumeEntry[] = [
   {
     id: 'solshare',
     section: 'projects',
+    // Off 2026-10-19 (William). Same team and chain as the SDK entry above,
+    // now an Experience row. Flip ON for iOS, crypto and fintech variants:
+    // it carries the Hack the North 1st-place line.
+    include: false,
     title: 'SolShare',
     subtitle: 'Hack the North 2025',
     awards: ['1st Place: Cohere API Best Use', 'Solana Best Consumer Payment Experience'],
@@ -909,7 +1090,7 @@ const authored: ResumeEntry[] = [
     // the transcript. Watch this row if the degree line ever grows again —
     // tectonic reports it as "Overfull \hbox ... in alignment".
     role: 'Bachelor of Software Engineering, Honours',
-    dateLabel: 'Sep 2024 – May 2029',
+    dateLabel: 'Sep 2024 – May 2028',
     bullets: [
       // GPA off the page 2026-07-26 (reviewer: "remove gpa"). 3.7/4.0 is a
       // perfectly good Waterloo SE average, but printing it invites a

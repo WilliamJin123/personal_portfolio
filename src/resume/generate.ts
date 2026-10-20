@@ -119,6 +119,7 @@ function project(e: ResumeEntry, ids: string[]): string {
 function sourceName(l: { label: string; href: string }): string {
   if (/github\.com/i.test(l.href)) return 'GitHub';
   if (/devpost\.com/i.test(l.href)) return 'Devpost';
+  if (/npmjs\.com/i.test(l.href)) return 'npm'; // the registry's own lowercase spelling
   return l.label.replace(/(^|\s)\S/g, (c) => c.toUpperCase());
 }
 

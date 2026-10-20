@@ -76,10 +76,12 @@ export const skills: SkillGroup[] = [
     // plain-weight tags freed the width; Firebase tried and wrapped the line.
     // Order (2026-07-18): web UI -> mobile UI -> server -> data; Tailwind
     // used to sit after SwiftUI, splitting the web cluster mid-row.
-    items: ['React', 'Next.js', 'Tailwind CSS', 'SwiftUI', 'Node.js', 'Express.js', 'PostgreSQL', 'MySQL', 'Supabase'],
+    items: ['React', 'Next.js', 'Tailwind CSS', 'SwiftUI', 'Node.js', 'Express.js', 'Hono', 'PostgreSQL', 'MySQL', 'Supabase'],
   },
   {
-    category: 'Cloud & Tools',
+    // "Cloud & DevOps" collided with the item column in the classic shell's
+    // fixed-width label cell; "Infra" is as wide as the old "Tools".
+    category: 'Cloud & Infra',
     // Claude Code removed 2026-07-26 (external review). It is genuinely his
     // daily driver and tract ships a ClaudeCodeClient backend, but listing an
     // AI coding assistant as a skill reads to a screener as a claim that using
@@ -90,7 +92,18 @@ export const skills: SkillGroup[] = [
     // runtime infra (Docker, OTel) -> dev tools.
     // GCP: flagged 2026-07-18 — no audited project shows GCP infra (Gemini
     // API calls aren't GCP); kept pending William's own evidence.
-    items: ['Azure', 'GCP', 'Cloudflare', 'Vercel', 'Docker', 'OpenTelemetry', 'Git', 'Linux'],
+    // Rebuilt 2026-10-19 (William: "I use a lot of AWS now"). Evidence, all
+    // in repos he wrote solo: AWS = wren/deploy/terraform (Lambda, S3, SSM,
+    // IAM, CloudWatch) + @aws-sdk clients for EC2/Route 53/CloudFront;
+    // Cloudflare Workers = wren apps (llm-gateway, phone) on wrangler;
+    // Terraform = same folder; GitHub Actions = ci/release/deploy workflows
+    // in wren, autobrowse, credvault, mailifier; Restate = autobrowse + wren
+    // durable workflows. Playwright is off the row for width; it is in the
+    // autobrowse bullet text, where an ATS still matches it.
+    // OFF: GCP (never evidenced), Vercel, OpenTelemetry (only Tract had it,
+    // and Tract is off the page), Git and Linux (assumed of every engineer;
+    // the row must fit one line), SSM (cut from the AWS list on width).
+    items: ['AWS (Lambda, EC2, S3)', 'Cloudflare Workers', 'Azure', 'Terraform', 'Docker', 'GitHub Actions', 'Restate'],
   },
   {
     category: 'Concepts',
@@ -106,9 +119,13 @@ export const skills: SkillGroup[] = [
       // "Software Development" cut on width: it is the one term on the row that
       // the rest of the page already proves twice over, so it was the cheapest
       // line to buy back.
-      'Backend Development', 'Full-Stack Development',
+      // 2026-10-19: Distributed Systems (Restate durable workflows, a
+      // leased worker at Food For Good) and CI/CD (GitHub Actions above)
+      // now have evidence and come on; GenAI comes off for width (RAG and
+      // AI Agents carry the AI story).
+      'Backend Development', 'Full-Stack Development', 'Distributed Systems',
       'Data Structures & Algorithms', 'Object-Oriented Programming',
-      'REST APIs', 'Machine Learning', 'GenAI', 'RAG', 'AI Agents',
+      'REST APIs', 'CI/CD', 'Machine Learning', 'RAG', 'AI Agents',
     ],
   },
 ];
