@@ -10,3 +10,5 @@ done
 curl -fsSL https://raw.githubusercontent.com/speedyapply/2027-SWE-College-Jobs/main/INTERN_INTL.md -o "$work/repos/speedyapply_INTERN_INTL.md"
 REPOS="$work/repos" OUT="$work/backlog.csv" python3 -I "$here/parse.py" >/dev/null
 node "$here/push.mjs" "$work/backlog.csv"
+# Re-read needs-answer forms once per poll: bank or draft changes free rows.
+node "$here/prepare.mjs" --recheck

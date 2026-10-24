@@ -5,12 +5,14 @@ import { execFileSync } from "node:child_process";
 export const SHEET_ID = process.env.SHEET_ID ?? "1ojSRq2fTXyQMhn_OHFO2yxKEaqs1-gMq8aW8t3yZuHU";
 
 export async function sheets() {
-  const token = execFileSync("node", [new URL("./sa-token.mjs", import.meta.url).pathname]).toString();
-  const H = { Authorization: `Bearer ${token}`, "content-type": "application/json" };
+  // The token lasts an hour; a long batch gets a fresh one on the first 401.
+  const mint = () => ({ Authorization: `Bearer ${execFileSync("node", [new URL("./sa-token.mjs", import.meta.url).pathname]).toString()}`, "content-type": "application/json" });
+  let H = mint();
   // Google's edge drops connections now and then; three tries, short backoff.
   const call = async (p, init, attempt = 1) => {
     try {
-      const r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}${p}`, { headers: H, ...init });
+      let r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}${p}`, { headers: H, ...init });
+      if (r.status === 401) { H = mint(); r = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}${p}`, { headers: H, ...init }); }
       const j = await r.json();
       if (!r.ok) throw new Error(`sheets ${p}: ${JSON.stringify(j.error ?? j)}`);
       return j;

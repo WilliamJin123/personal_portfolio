@@ -2,8 +2,11 @@
 # Install the pipeline's launchd agents. Re-run after any edit here, after
 # `npm run resume` (it copies the PDFs), and after a new transcript.
 #   poll  9:00 and 18:00: fetch the GitHub lists into the Sheet, enrich
-#   work  hourly: prepare (todo → ready / needs-answer / needs-human), then
-#         apply (ready tier B and go rows → applied / needs-human)
+#   Loops (launchd KeepAlive: each exits after a short pass, restarts 30-60 s later):
+#   prepare  todo → ready / needs-answer / needs-human
+#   draft    Claude answers what the bank cannot
+#   apply-0..2  three workers, sharded by posting key: ready rows → applied / needs-human
+#   mail     every 3 min: inbox → statuses, verification links, Applied tab
 # A fire missed while asleep runs on wake. macOS TCC blocks launchd from
 # ~/Documents, so code goes to ~/.local/share/internships-poll and state
 # (PDFs, form dumps, screenshots, browser profile) to ~/.local/share/internships,
@@ -23,12 +26,17 @@ cp "$here"/flows/*.mjs "$dest/flows/"
 rm -rf "$state/resumes"/*
 mkdir -p "$state/resumes/classic" && cp "$repo/out/resume-classic.pdf" "$state/resumes/classic/William_Jin_Resume.pdf"
 for f in "$repo"/out/variants/*.pdf; do v=$(basename "$f" .pdf); mkdir -p "$state/resumes/$v"; cp "$f" "$state/resumes/$v/William_Jin_Resume.pdf"; done
+for f in "$repo"/out/companies/*.pdf; do v=company-$(basename "$f" .pdf); mkdir -p "$state/resumes/$v"; cp "$f" "$state/resumes/$v/William_Jin_Resume.pdf"; done
 transcript=$(ls -t "$repo"/applications/_profile/transcript-*.pdf | head -1)
 cp "$transcript" "$state/profile/William_Jin_Transcript.pdf"
+# Facts for draft.mjs: the résumé as text and the work term record.
+pdftotext -layout "$repo/out/resume-classic.pdf" "$state/profile/resume.txt"
+cp "$(ls -t "$repo"/applications/_profile/work-term-record-*.txt | head -1)" "$state/profile/work-term-record.txt"
 echo "files: $(ls "$state/resumes" | tr '\n' ' ')+ transcript $(basename "$transcript")"
 
 nodedir=$(dirname "$(command -v node)")
-printf '#!/usr/bin/env bash\ncd "%s" && node prepare.mjs; exec node apply.mjs\n' "$dest" > "$dest/work.sh"; chmod +x "$dest/work.sh"
+# draft: its own loop, beside apply (Claude CLI, no browser).
+printf '#!/usr/bin/env bash\ncd "%s" && exec node draft.mjs\n' "$dest" > "$dest/draft.sh"; chmod +x "$dest/draft.sh"
 
 agent() { # label script log schedule-xml
   local plist=$HOME/Library/LaunchAgents/$1.plist
@@ -38,7 +46,7 @@ agent() { # label script log schedule-xml
 <plist version="1.0"><dict>
   <key>Label</key><string>$1</string>
   <key>ProgramArguments</key><array><string>/bin/bash</string><string>$dest/$2</string></array>
-  <key>EnvironmentVariables</key><dict><key>PATH</key><string>$nodedir:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string></dict>
+  <key>EnvironmentVariables</key><dict><key>PATH</key><string>$nodedir:$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string></dict>
   $4
   <key>StandardOutPath</key><string>$HOME/Library/Logs/$3.log</string>
   <key>StandardErrorPath</key><string>$HOME/Library/Logs/$3.log</string>
@@ -50,8 +58,19 @@ PL
 }
 
 agent dev.williamjin.internships-poll poll.sh internships-poll '<key>StartCalendarInterval</key><array><dict><key>Hour</key><integer>9</integer><key>Minute</key><integer>0</integer></dict><dict><key>Hour</key><integer>18</integer><key>Minute</key><integer>0</integer></dict></array>'
-agent dev.williamjin.internships-work work.sh internships-work '<key>StartInterval</key><integer>3600</integer>'
+# Three apply workers, sharded by posting key (APPLY_SHARD), each with its own lock and browser profiles.
+for k in 0 1 2; do
+  printf '#!/usr/bin/env bash\ncd "%s" && APPLY_SHARD=%s/3 APPLY_PER_RUN=${APPLY_PER_RUN:-10} exec ./watchdog.sh "$HOME/Library/Logs/internships-apply-%s.log" node apply.mjs\n' "$dest" "$k" "$k" > "$dest/apply-$k.sh"; chmod +x "$dest/apply-$k.sh"
+  agent dev.williamjin.internships-apply-$k apply-$k.sh internships-apply-$k '<key>KeepAlive</key><true/><key>ThrottleInterval</key><integer>30</integer>'
+done
+# prepare: its own loop (no browser for most rows).
+printf '#!/usr/bin/env bash\ncd "%s" && exec node prepare.mjs\n' "$dest" > "$dest/prepare.sh"; chmod +x "$dest/prepare.sh"
+agent dev.williamjin.internships-prepare prepare.sh internships-prepare '<key>KeepAlive</key><true/><key>ThrottleInterval</key><integer>60</integer>'
+# The single work job (2026-10-22) is replaced by the apply workers.
+oldw=$HOME/Library/LaunchAgents/dev.williamjin.internships-work.plist
+if [ -f "$oldw" ]; then launchctl bootout "gui/$(id -u)" "$oldw" 2>/dev/null || true; rm -f "$oldw"; fi
+agent dev.williamjin.internships-draft draft.sh internships-draft '<key>KeepAlive</key><true/><key>ThrottleInterval</key><integer>60</integer>'
+# Mail poll: every 3 min, its own job so a long apply run does not delay it.
+printf '#!/usr/bin/env bash\ncd "%s" && exec node mail.mjs\n' "$dest" > "$dest/mail.sh"; chmod +x "$dest/mail.sh"
+agent dev.williamjin.internships-mail mail.sh internships-mail '<key>StartInterval</key><integer>180</integer>'
 
-# The old prepare-only agent (2026-10-19) is replaced by work.
-old=$HOME/Library/LaunchAgents/dev.williamjin.internships-prepare.plist
-if [ -f "$old" ]; then launchctl bootout "gui/$(id -u)" "$old" 2>/dev/null || true; rm -f "$old"; echo "removed dev.williamjin.internships-prepare"; fi

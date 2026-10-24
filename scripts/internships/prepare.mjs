@@ -8,19 +8,28 @@
 //
 //   node prepare.mjs                 # all todo rows, writes to the Sheet
 //   node prepare.mjs --dry <url>...  # given links only, prints, writes nothing
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { sheets } from "./sheet.mjs";
 import { COLS, ats } from "./enrich.mjs";
-import { clean, loadAnswers, match } from "./answers.mjs";
+import { clean, loadAnswers, match, usOnly } from "./answers.mjs";
+import { draftAnswers } from "./draft.mjs";
 
 const STATE = process.env.INTERNSHIPS_STATE || `${process.env.HOME}/.local/share/internships`;
 // playwright: the launchd install dir has its own copy; in the repo, borrow autobrowse's.
 const PW = async () => { try { return await import("playwright"); } catch { return import("/Users/williamjin/Documents/wren_automation/autobrowse/node_modules/playwright/index.mjs"); } };
-// Next co-op term is May–Aug 2027. Anything that names another term or a longer
-// commitment goes to William.
-const TERM_CONFLICT = /\b(8|12|eight|twelve)[- ]month|january\s*(\d{1,2},?\s*)?20?27|\bjan(\.|uary)?\s*[-–]|winter\s*20?27|fall\s*20?27|fall (semester|term)|sept(ember)?\s*20?27|aug(ust)?\s*20?27\s*(to|[-–])\s*(dec|apr)/i;
-const BUILT = new Set(["greenhouse", "ashby", "lever"]);
+// Next co-op term is May–Aug 2027. Anything that names another term goes to
+// William. 8 and 12 month terms are fine (William, 2026-10-20).
+const TERM = /january\s*(\d{1,2},?\s*)?20?27|\bjan(\.|uary)?\s*[-–]|(winter|hiver|automne)\s*20?27|fall\s*20?27|fall (semester|term)|sept(ember)?\s*20?27|aug(ust)?\s*20?27\s*(to|[-–])\s*(dec|apr)/ig;
+// "Graduating between Fall 2027 and Spring 2028" is a grad window, not the term.
+const GRAD = /graduat|degree|expected|class of|completion/i;
+// A posting that also offers summer lists other terms as options.
+const SUMMER = /summer\s*(\(|'?\d|term|intern|co-?op|or)|\bmay\s*(\/\s*june|[-–]|to|through)/i;
+const termConflict = (text) => {
+  const summer = SUMMER.test(text);
+  return [...text.matchAll(TERM)].find((m) => !GRAD.test(text.slice(Math.max(0, m.index - 100), m.index)) && !summer);
+};
+const BUILT = new Set(["greenhouse", "ashby", "lever", "workday"]);
 
 const slug = (s) => s.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
@@ -40,6 +49,22 @@ export async function greenhouseJob(link, company) {
     const r = await fetch(`https://boards-api.greenhouse.io/v1/boards/${board}/jobs/${id}`);
     if (r.ok) return { board, id };
   }
+  // A page that loads its board by script: watch a real browser's requests. The
+  // slug is cached per host.
+  const host = new URL(link).host, cacheFile = `${STATE}/gh-boards.json`;
+  const cache = existsSync(cacheFile) ? JSON.parse(readFileSync(cacheFile, "utf8")) : {};
+  const tryBoard = async (board) => board && (await fetch(`https://boards-api.greenhouse.io/v1/boards/${board}/jobs/${id}`)).ok;
+  if (await tryBoard(cache[host])) return { board: cache[host], id };
+  const { chromium } = await PW();
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage();
+    const seen = new Set();
+    page.on("request", (q) => { const m = q.url().match(/greenhouse\.io\/(?:v1\/boards\/|embed\/job_(?:app|board)(?:\/js)?\?(?:[^#]*&)?for=)([a-z0-9_-]{2,})/i); if (m) seen.add(m[1].toLowerCase()); });
+    await page.goto(link, { waitUntil: "networkidle", timeout: 45000 }).catch(() => {});
+    for (const f of page.frames()) { const m = f.url().match(/for=([a-z0-9_-]{2,})/i); if (/greenhouse/.test(f.url()) && m) seen.add(m[1].toLowerCase()); }
+    for (const board of seen) if (await tryBoard(board)) { cache[host] = board; mkdirSync(STATE, { recursive: true }); writeFileSync(cacheFile, JSON.stringify(cache, null, 2)); return { board, id }; }
+  } finally { await browser.close(); }
   return null;
 }
 async function greenhouseFields(link, company) {
@@ -111,12 +136,23 @@ async function pageFields(link) {
 export async function prepareRow(row, answers) {
   const kind = row.ATS || ats(row.Link);
   if (!BUILT.has(kind)) return { status: "todo", note: `no apply flow for ${kind} yet`, skip: true };
+  // Workday renders every step in the browser and its questions change per step: the apply flow reads them as it goes.
+  if (kind === "workday") {
+    const job = await workdayJob(row.Link);
+    if (job === "gone") return { status: "closed", note: "posting closed (Workday API)" };
+    const us = usOnly(job?.jobPostingInfo?.jobDescription?.replace(/<[^>]+>/g, " "));
+    if (us) return { status: "skip", note: `US citizen or green card required: "${us.slice(0, 120)}"` };
+    const conflict = termConflict(row.Role);
+    return conflict ? { status: "needs-human", note: `term conflict: "${conflict[0]}"` } : { status: "ready", note: "workday: the flow reads the steps" };
+  }
   let form = kind === "greenhouse" ? await greenhouseFields(row.Link, row.Company) : null;
   if (form?.closed) return { status: "closed", note: "posting closed (Greenhouse 404)" };
   // An API that lists almost nothing (a custom board) is not a form read: use the page.
   if (!form || form.fields.length < 3) form = await pageFields(row.Link).catch((e) => ({ error: e.message }));
   if (form.error || !form.fields?.length) return { status: "needs-human", note: `could not read form: ${form.error || "no fields found"}` };
-  const conflict = TERM_CONFLICT.exec(`${row.Role} ${form.title} ${form.description}`);
+  const us = usOnly(form.description);
+  if (us) return { status: "skip", note: `US citizen or green card required: "${us.slice(0, 120)}"` };
+  const conflict = termConflict(`${row.Role} ${form.title} ${form.description}`.replace(/\s+/g, " "));
   const { filled, open } = match(form.fields, answers, row.Region);
   const dir = `${STATE}/forms/${slug(row.Company)}`; mkdirSync(dir, { recursive: true });
   const file = `${dir}/form-${slug(row.Role).slice(0, 60) || createHash("md5").update(row.Link).digest("hex").slice(0, 8)}.json`;
@@ -127,10 +163,23 @@ export async function prepareRow(row, answers) {
   return { status: "ready", note: `${filled.length} fields matched`, file, filled, open };
 }
 
+/** A Workday posting from the public API: "gone" (403/404), the job JSON, or null (not a Workday job URL or no answer). */
+export async function workdayJob(url) {
+  const m = url.replace(/\/apply.*$/, "").match(/^https:\/\/([^.]+)\.(wd\d+)\.myworkdayjobs\.com\/(?:[a-z]{2}-[A-Z]{2}\/)?([^/]+)(\/job\/.*)$/);
+  if (!m) return null;
+  const res = await fetch(`https://${m[1]}.${m[2]}.myworkdayjobs.com/wday/cxs/${m[1]}/${m[3]}${m[4]}`, { headers: { Accept: "application/json" } }).catch(() => null);
+  if (res?.status === 403 || res?.status === 404) return "gone";
+  return res?.ok ? res.json().catch(() => null) : null;
+}
+
 // ---- main -------------------------------------------------------------------
 if (process.argv[1]?.endsWith("prepare.mjs")) {
   const api = await sheets();
   const answers = loadAnswers((await api.get("Answers!A1:D")).values);
+  const drafts = (await api.get("Drafts!A1:G").catch(() => ({}))).values;
+  const answersFor = (row) => [...draftAnswers(drafts, row.Link), ...answers];
+  // --recheck: also re-read `needs-answer` rows, after the bank or drafts change.
+  const recheck = process.argv.includes("--recheck");
   if (process.argv.includes("--dry")) {
     for (const link of process.argv.slice(3)) {
       const r = await prepareRow({ Link: link, Company: "dry-run", Role: "", Variant: "classic", ATS: ats(link), Region: process.env.REGION || "Canada" }, answers);
@@ -139,12 +188,12 @@ if (process.argv[1]?.endsWith("prepare.mjs")) {
     }
     process.exit(0);
   }
-  const [header, ...rows] = (await api.get("Backlog!A1:R")).values; const idx = Object.fromEntries(header.map((h, i) => [h, i]));
+  const [header, ...rows] = (await api.get("Backlog!A1:T")).values; const idx = Object.fromEntries(header.map((h, i) => [h, i]));
   const updates = []; let n = 0, waiting = 0;
   for (let i = 0; i < rows.length; i++) {
     const row = Object.fromEntries(COLS.map((c) => [c, rows[i][idx[c]] ?? ""]));
-    if (row.Status !== "todo") continue;
-    const r = await prepareRow(row, answers);
+    if (row.Status !== "todo" && !(recheck && row.Status === "needs-answer")) continue;
+    const r = await prepareRow(row, answersFor(row));
     if (r.skip) { waiting++; continue; }
     n++;
     updates.push({ range: `Backlog!A${i + 2}`, values: [[r.status]] }, { range: `Backlog!K${i + 2}`, values: [[r.note]] });

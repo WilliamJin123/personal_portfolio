@@ -4,7 +4,8 @@
   "type": "module",
   "description": "Backlog poll, prepare and apply workers. Installed by install.sh outside ~/Documents (launchd cannot read it).",
   "dependencies": {
-    "@wrenautomation/autobrowse": "0.4.0",
+    "@wrenautomation/autobrowse": "^0.7.0",
+    "credvault": "0.13.0",
     "playwright": "1.63.0"
   }
 }

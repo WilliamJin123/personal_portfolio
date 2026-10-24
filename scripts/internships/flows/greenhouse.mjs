@@ -28,6 +28,10 @@ const FIELDS = `(() => {
   const labelOf = (id) => txt(document.getElementById(id + "-label")) || txt(form.querySelector('label[for="' + CSS.escape(id) + '"]'));
   const req = (e, label) => e.required || e.getAttribute("aria-required") === "true" || /\\*\\s*$/.test(label);
   const out = [];
+  // An "Employment" block repeats the date labels of the education block. Its ids end in -<n> (company-name-0);
+  // education's end in --<n> (school--0).
+  const employment = !!form.querySelector("input[id^=company-name-]");
+  const section = (e) => (employment && /[^-]-\\d+$/.test(e.id) ? "Employment: " : "");
   for (const e of form.querySelectorAll("input[id], textarea[id]")) {
     if (e.id.startsWith("iti-") || e.type === "hidden" || e.type === "checkbox" || e.type === "radio") continue;
     if (e.type === "file") {
@@ -36,8 +40,9 @@ const FIELDS = `(() => {
       out.push({ id: e.id, kind: "file", label, required: /\\*/.test(label) || !!wrap?.querySelector(".required"), options: [] });
       continue;
     }
-    const label = labelOf(e.id);
-    if (!label) continue;
+    const own = labelOf(e.id);
+    if (!own) continue;
+    const label = /^(company( name)?|title|start date|end date)\\b/i.test(own) ? section(e) + own : own;
     const kind = e.getAttribute("role") === "combobox" ? "select" : e.tagName === "TEXTAREA" ? "textarea" : "text";
     out.push({ id: e.id, kind, label, required: req(e, label), options: [] });
   }
@@ -52,8 +57,8 @@ const FIELDS = `(() => {
 })()`;
 
 const listbox = (id) => `#react-select-${CSS_ESCAPE(id)}-listbox`;
-// CSS.escape for the ids Greenhouse uses (question_1, school--0, question_1[]).
-function CSS_ESCAPE(id) { return id.replace(/([[\]#.:\s"'])/g, "\\$1"); }
+// CSS.escape for the ids Greenhouse uses (question_1, school--0, question_1[]; a leading digit needs the hex form).
+function CSS_ESCAPE(id) { return id.replace(/[^a-zA-Z0-9_-]/g, (c) => "\\" + c).replace(/^(\d)/, (_, d) => "\\3" + d + " "); }
 const byId = (id) => ({ css: `#${CSS_ESCAPE(id)}` });
 const quoted = (s) => JSON.stringify(s);
 
@@ -126,7 +131,8 @@ export const greenhouseApply = defineFlow({
         if (!shown) fp.human(`the upload of ${name} for "${f.label}" did not finish`);
       } else if (f.kind === "text" || f.kind === "textarea") {
         if (a.startsWith("FILE:")) continue; // a "paste it" box next to an upload
-        await fp.act({ kind: "fill", value: a }, byId(f.id), { goal: `fill "${f.label}"` });
+        if (a === "TODAY" || /^(today.s )?date$|signature date|date signed/i.test(f.label)) { const d = new Date(); f.answer = `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`; }
+        await fp.act({ kind: "fill", value: f.answer }, byId(f.id), { goal: `fill "${f.label}"` });
       } else if (f.kind === "select") {
         // Typing filters the list, so the option is on screen however long the list is.
         await fp.act({ kind: "fill", value: a }, byId(f.id), { goal: `filter "${f.label}"` });
@@ -134,7 +140,7 @@ export const greenhouseApply = defineFlow({
         await pick(fp, f, a);
       } else if (f.kind === "search") {
         const got = await search(fp, f, input.region);
-        if (!got) fp.human(`no option for "${f.raw || a}" in "${f.label}"`);
+        if (!got) { if (f.required) fp.human(`no option for "${f.raw || a}" in "${f.label}"`); continue; } // an optional field with no fitting option stays empty
         f.answer = got;
       } else if (f.kind === "checkboxes") {
         for (const want of a.split(/\s*;\s*/)) {
@@ -146,6 +152,20 @@ export const greenhouseApply = defineFlow({
       await fp.wait(150);
     }
 
+    // An employment block: the current role has no end date (the form rejects one in the future).
+    if (fields.some((f) => f.label.startsWith("Employment: "))) {
+      const cur = await fp.page.evaluate(() => { const c = [...document.querySelectorAll("input[type=checkbox]")].find((b) => /current role/i.test(document.querySelector(`label[for="${b.id}"]`)?.innerText || "")); return c && !c.checked ? c.id : ""; });
+      if (cur) await fp.act({ kind: "click" }, { css: `label[for="${cur}"]` }, { goal: "tick the current role" });
+    }
+
+    // Data-consent boxes (GDPR) are not in the job board API's questions. Tick only the required ones;
+    // an optional "keep my data for future roles" box stays empty.
+    const consents = await fp.page.evaluate(() => [...document.querySelectorAll("input[type=checkbox]")].filter((c) => {
+      const text = `${c.name} ${c.id} ${document.querySelector(`label[for="${c.id}"]`)?.innerText || ""}`;
+      return !c.checked && (c.required || c.getAttribute("aria-required") === "true") && /consent|\bagree/i.test(text);
+    }).map((c, i) => (c.setAttribute("data-consent", String(i)), String(i))));
+    for (const i of consents) await fp.act({ kind: "click" }, { css: `input[data-consent="${i}"]` }, { goal: "tick the required data consent" });
+
     const out = { filled: filled.map((f) => ({ label: f.label, answer: f.answer })) };
     if (input.dryRun) {
       if (input.screenshot) await fp.page.screenshot({ path: input.screenshot, fullPage: true });
@@ -153,6 +173,7 @@ export const greenhouseApply = defineFlow({
     }
 
     await fp.act({ kind: "click" }, { css: 'button[type="submit"]' }, { goal: "submit the application", irreversible: true });
+    let codeSent = false;
     for (let t = 0; t < 30_000; t += 1_000) {
       await fp.wait(1_000);
       const body = (await fp.text()).toLowerCase();
@@ -160,7 +181,15 @@ export const greenhouseApply = defineFlow({
         if (input.screenshot) await fp.page.screenshot({ path: input.screenshot, fullPage: true });
         return { status: "submitted", ...out };
       }
-      if (/security code|verification code|code (was )?sent to/.test(body)) fp.human("asks for the email security code (inbox step not built)");
+      if (/security code|verification code|code (was )?sent to/.test(body) && !codeSent) {
+        // Greenhouse mails an 8-character code for first-time applicants: read it from the inbox, type it, submit again.
+        const code = await input.fetchCode?.();
+        if (!code) fp.human("asks for the email security code (none found in the inbox)");
+        codeSent = true;
+        await fp.act({ kind: "fill", value: code }, { css: "input[id^=security-input]" }, { goal: "type the security code" });
+        await fp.act({ kind: "click" }, { css: 'button[type="submit"]' }, { goal: "submit with the security code", irreversible: true });
+        continue;
+      }
       if (/captcha|i'?m not a robot/.test(body)) {
         const c = await fp.captcha();
         if (c && c.solved === false) fp.human(`captcha not solved (${c.reason ?? "unknown"})`);
